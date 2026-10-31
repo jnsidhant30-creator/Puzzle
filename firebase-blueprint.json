@@ -1,0 +1,711 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Registered player profile with progression and statistics.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "username": { "type": "string", "maxLength": 30 },
+        "displayName": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "role": { "type": "string", "enum": ["PLAYER", "ADMIN"] },
+        "level": { "type": "number" },
+        "xp": { "type": "number" },
+        "totalGames": { "type": "number" },
+        "totalWins": { "type": "number" },
+        "bestScore": { "type": "number" },
+        "bestTime": { "type": "number" },
+        "currentStreak": { "type": "number" },
+        "longestStreak": { "type": "number" },
+        "coins": { "type": "number" },
+        "hints": { "type": "number" },
+        "selectedTitle": { "type": "string", "maxLength": 50 },
+        "unlockedTitles": { "type": "array" },
+        "favoriteGameTypes": { "type": "array" },
+        "bio": { "type": "string", "maxLength": 150 },
+        "preferences": { "type": "object" },
+        "privacy": { "type": "object" },
+        "personalBests": { "type": "object" },
+        "adaptiveProfiles": { "type": "object" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "username", "role", "level", "xp"]
+    },
+    "GameSession": {
+      "title": "Game Session",
+      "description": "Completed game session record.",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string" },
+        "userId": { "type": "string" },
+        "puzzleType": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "score": { "type": "number" },
+        "timeSeconds": { "type": "number" },
+        "moves": { "type": "number" },
+        "won": { "type": "boolean" },
+        "isDailyPuzzle": { "type": "boolean" },
+        "dailyPuzzleDate": { "type": "string" },
+        "isReplay": { "type": "boolean" },
+        "originalSessionId": { "type": "string" },
+        "puzzleSeed": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "puzzleType", "score", "won"]
+    },
+    "PersonalBestHistory": {
+      "title": "Personal Best History Item",
+      "description": "Historical record of broken personal records.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "puzzleType": { "type": "string" },
+        "score": { "type": "number" },
+        "timeSeconds": { "type": "number" },
+        "difficulty": { "type": "string" },
+        "improvementScore": { "type": "number" },
+        "improvementTime": { "type": "number" },
+        "recordType": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "puzzleType", "score", "recordType"]
+    },
+    "LeaderboardEntry": {
+      "title": "Leaderboard Entry",
+      "description": "High score leaderboard entry.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "period": { "type": "string", "enum": ["ALL_TIME", "DAILY", "WEEKLY", "MONTHLY"] },
+        "periodKey": { "type": "string" },
+        "puzzleType": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "score": { "type": "number" },
+        "bestTime": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "username", "period", "score"]
+    },
+    "UserAchievement": {
+      "title": "User Achievement",
+      "description": "User unlocked achievement state.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "achievementId": { "type": "string" },
+        "unlocked": { "type": "boolean" },
+        "unlockedAt": { "type": "string" },
+        "progress": { "type": "number" }
+      },
+      "required": ["userId", "achievementId", "unlocked"]
+    },
+    "DailyReward": {
+      "title": "Daily Reward Claim",
+      "description": "Daily streak and claim log.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "lastClaimDate": { "type": "string" },
+        "streak": { "type": "number" },
+        "lastClaimedAt": { "type": "string" }
+      },
+      "required": ["userId", "lastClaimDate", "streak"]
+    },
+    "FriendRequest": {
+      "title": "Friend Request",
+      "description": "Invitation between two players.",
+      "type": "object",
+      "properties": {
+        "requestId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "ACCEPTED", "REJECTED"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["senderId", "receiverId", "status"]
+    },
+    "FriendChallenge": {
+      "title": "Friend Challenge",
+      "description": "Custom puzzle challenge room created for a friend.",
+      "type": "object",
+      "properties": {
+        "creatorUid": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "puzzleType": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "targetScore": { "type": "number" },
+        "targetTime": { "type": "number" },
+        "seed": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["creatorUid", "puzzleType", "seed"]
+    },
+    "CommunityPuzzle": {
+      "title": "Community Puzzle",
+      "description": "User created custom puzzle.",
+      "type": "object",
+      "properties": {
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "title": { "type": "string", "maxLength": 60 },
+        "description": { "type": "string", "maxLength": 200 },
+        "puzzleType": { "type": "string" },
+        "puzzleData": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "status": { "type": "string", "enum": ["published", "draft"] },
+        "plays": { "type": "number" },
+        "likes": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["creatorId", "title", "puzzleType", "puzzleData", "status"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "In-app system or player notification.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "title", "message", "isRead"]
+    },
+    "Challenge": {
+      "title": "Player Challenge 2.0",
+      "description": "Deterministic competitive challenge between players.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "creatorUid": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "creatorAvatar": { "type": "string" },
+        "opponentUid": { "type": "string" },
+        "opponentName": { "type": "string" },
+        "opponentAvatar": { "type": "string" },
+        "puzzleType": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "targetScore": { "type": "number" },
+        "targetTime": { "type": "number" },
+        "seed": { "type": "number" },
+        "status": { "type": "string", "enum": ["PENDING", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "EXPIRED", "CANCELLED"] },
+        "creatorScore": { "type": "number" },
+        "creatorTime": { "type": "number" },
+        "opponentScore": { "type": "number" },
+        "opponentTime": { "type": "number" },
+        "winnerUid": { "type": "string" },
+        "winnerName": { "type": "string" },
+        "xpReward": { "type": "number" },
+        "coinsReward": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "expiresAt": { "type": "string" }
+      },
+      "required": ["creatorUid", "puzzleType", "difficulty", "seed", "status", "createdAt"]
+    },
+    "PlayerGoal": {
+      "title": "Player Goal",
+      "description": "Personal and periodic gameplay goals with progress tracking.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 200 },
+        "type": { "type": "string", "enum": ["daily", "weekly", "personal", "returning"] },
+        "category": { "type": "string" },
+        "targetValue": { "type": "number" },
+        "currentValue": { "type": "number" },
+        "rewardXP": { "type": "number" },
+        "rewardCoins": { "type": "number" },
+        "status": { "type": "string", "enum": ["ACTIVE", "COMPLETED", "EXPIRED"] },
+        "claimed": { "type": "boolean" },
+        "deadline": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "title", "type", "category", "targetValue", "currentValue", "status", "claimed"]
+    },
+    "ShowcaseConfig": {
+      "title": "Player Showcase Configuration",
+      "description": "User showcase preferences and featured achievements/records.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "featuredTitle": { "type": "string" },
+        "featuredAchievementIds": { "type": "array", "items": { "type": "string" } },
+        "featuredBadge": { "type": "string" },
+        "featuredPuzzleTypes": { "type": "array", "items": { "type": "string" } },
+        "featuredChallengeIds": { "type": "array", "items": { "type": "string" } },
+        "featuredEventIds": { "type": "array", "items": { "type": "string" } },
+        "itemOrder": { "type": "array", "items": { "type": "string" } },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "updatedAt"]
+    },
+    "PuzzleCollection": {
+      "title": "Puzzle Collection",
+      "description": "Curated set of themed puzzles and playlists.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "estimatedMinutes": { "type": "number" },
+        "items": { "type": "array", "items": { "type": "object" } },
+        "status": { "type": "string", "enum": ["active", "inactive", "draft"] },
+        "startAt": { "type": "string" },
+        "endAt": { "type": "string" },
+        "featured": { "type": "boolean" },
+        "rewardXP": { "type": "number" },
+        "rewardCoins": { "type": "number" },
+        "badgeTitle": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "category", "difficulty", "items", "status", "rewardXP", "rewardCoins", "createdAt"]
+    },
+    "UserCollectionProgress": {
+      "title": "User Collection Progress",
+      "description": "User completion status and completed puzzle indices for curated collections.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "collectionId": { "type": "string" },
+        "completedPuzzleIndices": { "type": "array", "items": { "type": "number" } },
+        "status": { "type": "string", "enum": ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"] },
+        "completedAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "collectionId", "completedPuzzleIndices", "status", "updatedAt"]
+    },
+    "UserJourneyProgress": {
+      "title": "User Journey Progress",
+      "description": "User completed stage IDs and current active stage in campaign mode.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "completedStageIds": { "type": "array", "items": { "type": "string" } },
+        "currentStageId": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "completedStageIds", "currentStageId", "updatedAt"]
+    },
+    "PuzzleGuide": {
+      "title": "Puzzle Guide",
+      "description": "Educational guide and strategy documentation for puzzle types.",
+      "type": "object",
+      "properties": {
+        "puzzleType": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "iconName": { "type": "string" },
+        "badgeColor": { "type": "string" },
+        "overview": { "type": "string" },
+        "objective": { "type": "string" },
+        "rules": { "type": "array", "items": { "type": "string" } },
+        "controls": { "type": "array", "items": { "type": "string" } },
+        "difficultyExplanation": { "type": "object" },
+        "basicStrategy": { "type": "array", "items": { "type": "string" } },
+        "advancedStrategy": { "type": "array", "items": { "type": "string" } },
+        "commonMistakes": { "type": "array", "items": { "type": "string" } },
+        "proTips": { "type": "array", "items": { "type": "string" } },
+        "relatedPuzzleTypes": { "type": "array", "items": { "type": "string" } },
+        "active": { "type": "boolean" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["puzzleType", "title", "overview", "objective", "rules", "active"]
+    },
+    "UserMasteryProfile": {
+      "title": "User Mastery Profile",
+      "description": "Calculated puzzle mastery records and level progression.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "overallMasteryLevel": { "type": "number" },
+        "overallMasteryPercent": { "type": "number" },
+        "totalMasteryPoints": { "type": "number" },
+        "records": { "type": "object" },
+        "strongestPuzzleTypes": { "type": "array" },
+        "developingPuzzleTypes": { "type": "array" },
+        "recommendedMasteryTarget": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "overallMasteryLevel", "overallMasteryPercent"]
+    },
+    "UserPracticeProgress": {
+      "title": "User Practice Progress",
+      "description": "Completed practice challenge IDs for mastery practice.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "completedChallengeIds": { "type": "array" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "completedChallengeIds"]
+    },
+    "Club": {
+      "title": "Player Club",
+      "description": "Puzzle community team/club entity.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 30 },
+        "tag": { "type": "string", "maxLength": 5 },
+        "description": { "type": "string", "maxLength": 150 },
+        "icon": { "type": "string" },
+        "themeColor": { "type": "string" },
+        "privacy": { "type": "string", "enum": ["public", "invite_only", "private"] },
+        "primaryFocus": { "type": "string" },
+        "memberCount": { "type": "number" },
+        "maxMembers": { "type": "number" },
+        "ownerUid": { "type": "string" },
+        "ownerName": { "type": "string" },
+        "adminUids": { "type": "array" },
+        "totalClubXP": { "type": "number" },
+        "level": { "type": "number" },
+        "weeklyPoints": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "tag", "ownerUid", "memberCount"]
+    },
+    "ClubMember": {
+      "title": "Club Member Record",
+      "description": "Membership mapping between user and club.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clubId": { "type": "string" },
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "role": { "type": "string", "enum": ["OWNER", "ADMIN", "MEMBER"] },
+        "totalContributionXP": { "type": "number" },
+        "weeklyContributionXP": { "type": "number" },
+        "joinedAt": { "type": "string" },
+        "lastActiveAt": { "type": "string" }
+      },
+      "required": ["clubId", "userId", "role"]
+    },
+    "ClubChatMessage": {
+      "title": "Club Chat Message",
+      "description": "Wall or chat message inside a club.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clubId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "message": { "type": "string", "maxLength": 300 },
+        "isSystemActivity": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["clubId", "userId", "message", "createdAt"]
+    },
+    "ClubCompetition": {
+      "title": "Club Competition",
+      "description": "Weekly club competition event.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["upcoming", "active", "completed"] },
+        "startAt": { "type": "string" },
+        "endAt": { "type": "string" },
+        "eligibleGames": { "type": "array" },
+        "milestoneTarget": { "type": "number" },
+        "milestoneRewardXP": { "type": "number" },
+        "milestoneRewardCoins": { "type": "number" },
+        "rules": { "type": "array" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "status", "milestoneTarget"]
+    },
+    "ClubCompetitionScore": {
+      "title": "Club Competition Score",
+      "description": "Club leaderboard ranking for team competition.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "competitionId": { "type": "string" },
+        "clubId": { "type": "string" },
+        "clubName": { "type": "string" },
+        "clubTag": { "type": "string" },
+        "totalPoints": { "type": "number" },
+        "memberContributionsCount": { "type": "number" },
+        "milestoneCompleted": { "type": "boolean" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["competitionId", "clubId", "totalPoints"]
+    },
+    "ClubDuelChallenge": {
+      "title": "Club Duel Challenge",
+      "description": "Direct club vs club 3-day showdown.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "challengerClubId": { "type": "string" },
+        "challengerClubName": { "type": "string" },
+        "targetClubId": { "type": "string" },
+        "targetClubName": { "type": "string" },
+        "puzzleTypes": { "type": "array" },
+        "durationDays": { "type": "number" },
+        "challengerScore": { "type": "number" },
+        "targetScore": { "type": "number" },
+        "status": { "type": "string", "enum": ["PENDING", "ACTIVE", "COMPLETED", "DECLINED"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["challengerClubId", "targetClubId", "status"]
+    },
+    "ClubEvent": {
+      "title": "Club Event",
+      "description": "Scheduled community event or puzzle session organized by a club.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clubId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "eventType": { "type": "string" },
+        "puzzleFocus": { "type": "string" },
+        "startAt": { "type": "string" },
+        "endAt": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdByName": { "type": "string" },
+        "status": { "type": "string", "enum": ["scheduled", "active", "completed", "cancelled"] },
+        "participantCount": { "type": "number" },
+        "interestedCount": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["clubId", "title", "startAt", "endAt", "createdBy", "status"]
+    },
+    "ClubEventParticipant": {
+      "title": "Club Event Participant",
+      "description": "RSVP registration record for a club event.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "eventId": { "type": "string" },
+        "clubId": { "type": "string" },
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "status": { "type": "string", "enum": ["participating", "interested"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["eventId", "clubId", "userId", "status"]
+    },
+    "ClubMilestone": {
+      "title": "Club Milestone",
+      "description": "Collective puzzle milestone target and progress for a club.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clubId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "targetPuzzles": { "type": "number" },
+        "achievedPuzzles": { "type": "number" },
+        "isCompleted": { "type": "boolean" },
+        "rewardXP": { "type": "number" }
+      },
+      "required": ["clubId", "title", "targetPuzzles", "achievedPuzzles", "isCompleted"]
+    },
+    "ClubDiscussion": {
+      "title": "Club Discussion",
+      "description": "Discussion topic or strategy thread within a club.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clubId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 100 },
+        "content": { "type": "string", "maxLength": 2000 },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "category": { "type": "string" }
+      },
+      "required": ["clubId", "title", "content", "authorId", "category"]
+    },
+    "ClubDiscussionReply": {
+      "title": "Club Discussion Reply",
+      "description": "Reply or comment inside a club discussion thread.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "discussionId": { "type": "string" },
+        "clubId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "content": { "type": "string", "maxLength": 1000 }
+      },
+      "required": ["discussionId", "clubId", "authorId", "content"]
+    },
+    "ClubGuide": {
+      "title": "Club Guide",
+      "description": "Knowledge base manual or community guide written by club members.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clubId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 100 },
+        "summary": { "type": "string", "maxLength": 300 },
+        "content": { "type": "string", "maxLength": 5000 },
+        "authorId": { "type": "string" },
+        "category": { "type": "string" }
+      },
+      "required": ["clubId", "title", "summary", "content", "authorId", "category"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profile records"
+    },
+    "/gameSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/GameSession" },
+      "description": "History of completed game sessions"
+    },
+    "/personalBestHistory/{pbId}": {
+      "schema": { "$ref": "#/entities/PersonalBestHistory" },
+      "description": "History of broken personal records"
+    },
+    "/leaderboards/{leaderboardId}": {
+      "schema": { "$ref": "#/entities/LeaderboardEntry" },
+      "description": "Period and game-specific leaderboard entries"
+    },
+    "/userAchievements/{userAchievementId}": {
+      "schema": { "$ref": "#/entities/UserAchievement" },
+      "description": "Achievements unlocked by players"
+    },
+    "/dailyRewards/{userId}": {
+      "schema": { "$ref": "#/entities/DailyReward" },
+      "description": "Daily streak and login reward claims"
+    },
+    "/friendRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/FriendRequest" },
+      "description": "Pending and completed friend requests"
+    },
+    "/friendChallenges/{challengeId}": {
+      "schema": { "$ref": "#/entities/FriendChallenge" },
+      "description": "Custom friend challenge seeds"
+    },
+    "/challenges/{challengeId}": {
+      "schema": { "$ref": "#/entities/Challenge" },
+      "description": "Player Challenges 2.0 competitive sessions"
+    },
+    "/playerGoals/{goalId}": {
+      "schema": { "$ref": "#/entities/PlayerGoal" },
+      "description": "Player goals and progress tracking records"
+    },
+    "/showcaseConfigs/{userId}": {
+      "schema": { "$ref": "#/entities/ShowcaseConfig" },
+      "description": "User showcase display preferences"
+    },
+    "/puzzleCollections/{collectionId}": {
+      "schema": { "$ref": "#/entities/PuzzleCollection" },
+      "description": "Curated puzzle collections and playlists"
+    },
+    "/userCollectionProgress/{progressId}": {
+      "schema": { "$ref": "#/entities/UserCollectionProgress" },
+      "description": "User progress records for puzzle collections"
+    },
+    "/journeyProgress/{userId}": {
+      "schema": { "$ref": "#/entities/UserJourneyProgress" },
+      "description": "User progress records for Campaign/Journey mode"
+    },
+    "/masteryProgress/{userId}": {
+      "schema": { "$ref": "#/entities/UserMasteryProfile" },
+      "description": "User mastery profile and skill level tracking"
+    },
+    "/practiceProgress/{userId}": {
+      "schema": { "$ref": "#/entities/UserPracticeProgress" },
+      "description": "User practice challenge completion records"
+    },
+    "/puzzleGuides/{puzzleType}": {
+      "schema": { "$ref": "#/entities/PuzzleGuide" },
+      "description": "Educational guides and strategies for games"
+    },
+    "/communityPuzzles/{puzzleId}": {
+      "schema": { "$ref": "#/entities/CommunityPuzzle" },
+      "description": "User created custom puzzles"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "User notifications"
+    },
+    "/clubs/{clubId}": {
+      "schema": { "$ref": "#/entities/Club" },
+      "description": "Player clubs and puzzle community groups"
+    },
+    "/clubs/{clubId}/events/{eventId}": {
+      "schema": { "$ref": "#/entities/ClubEvent" },
+      "description": "Scheduled events for a club"
+    },
+    "/clubs/{clubId}/events/{eventId}/participants/{participantId}": {
+      "schema": { "$ref": "#/entities/ClubEventParticipant" },
+      "description": "RSVP participants for a club event"
+    },
+    "/clubs/{clubId}/milestones/{milestoneId}": {
+      "schema": { "$ref": "#/entities/ClubMilestone" },
+      "description": "Collective milestones for a club"
+    },
+    "/clubMembers/{memberId}": {
+      "schema": { "$ref": "#/entities/ClubMember" },
+      "description": "Global index of club member affiliations"
+    },
+    "/clubCompetitions/{competitionId}": {
+      "schema": { "$ref": "#/entities/ClubCompetition" },
+      "description": "Weekly team competition events"
+    },
+    "/clubScores/{scoreId}": {
+      "schema": { "$ref": "#/entities/ClubCompetitionScore" },
+      "description": "Club competition leaderboards"
+    },
+    "/clubDuels/{duelId}": {
+      "schema": { "$ref": "#/entities/ClubDuelChallenge" },
+      "description": "Direct club vs club 3-day showdowns"
+    },
+    "/clubs/{clubId}/discussions/{discussionId}": {
+      "schema": { "$ref": "#/entities/ClubDiscussion" },
+      "description": "Discussion topics within a club"
+    },
+    "/clubs/{clubId}/discussions/{discussionId}/replies/{replyId}": {
+      "schema": { "$ref": "#/entities/ClubDiscussionReply" },
+      "description": "Replies inside a club discussion"
+    },
+    "/clubs/{clubId}/guides/{guideId}": {
+      "schema": { "$ref": "#/entities/ClubGuide" },
+      "description": "Knowledge base manuals and guides"
+    },
+    "/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/ContentReport" },
+      "description": "Moderation reports flagged by players"
+    },
+    "/users/{userId}/wall/{postId}": {
+      "schema": { "$ref": "#/entities/PlayerWallPost" },
+      "description": "Notes left on player wall guestbook"
+    },
+    "/socialFeed/{feedId}": {
+      "schema": { "$ref": "#/entities/SocialFeedItem" },
+      "description": "Social activity pulse feed items"
+    },
+    "/kudosGifts/{kudosId}": {
+      "schema": { "$ref": "#/entities/KudosGift" },
+      "description": "Kudos and energy gifts sent to players"
+    }
+  }
+}

@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pv-dragon-fruit: #FF4696;
+  --color-pv-dragon-fruit-deep: #E83B86;
+  --color-pv-dragon-fruit-soft: #FF6EAC;
+  --color-pv-dragon-fruit-light: #FF9AC5;
+
+  --color-pv-night-violet: #1E1033;
+  --color-pv-night-violet-deep: #120A20;
+  --color-pv-night-violet-dark: #160B28;
+
+  --color-pv-surface-primary: #1E1033;
+  --color-pv-surface-secondary: #24133D;
+  --color-pv-surface-highlight: #2C1849;
+  --color-pv-surface-soft: #352052;
+
+  --color-pv-border-violet: rgba(255, 70, 150, 0.16);
+  --color-pv-border-strong: rgba(255, 70, 150, 0.30);
+
+  --color-pv-bg-primary: #1E1033;
+  --color-pv-bg-secondary: #120A20;
+  --color-pv-bg-tertiary: #160B28;
+
+  --color-pv-text-primary: #FDF7FB;
+  --color-pv-text-secondary: #D8C9DA;
+  --color-pv-text-muted: #A99AAF;
+  --color-pv-text-disabled: #76667D;
+
+  --color-pv-error: #FF8F8F;
+  --color-pv-success: #4FD1A5;
+}
+
+@layer utilities {
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+}
+
+  .bg-gradient-premium {
+    background-image: linear-gradient(135deg, var(--color-pv-night-violet-deep) 0%, var(--color-pv-night-violet) 55%, var(--color-pv-surface-secondary) 100%);
+  }
+  .bg-gradient-sidebar {
+    background-color: var(--color-pv-bg-secondary);
+  }
+  .bg-gradient-nav-active {
+    background-color: rgba(255, 70, 150, 0.10);
+    border: 1px solid var(--color-pv-border-strong);
+  }
+  .bg-gradient-card-1 {
+    background-color: var(--color-pv-surface-primary);
+  }
+  .bg-gradient-card-2 {
+    background-color: var(--color-pv-surface-secondary);
+  }
+  .bg-gradient-card-3 {
+    background-color: var(--color-pv-surface-highlight);
+  }
+  .bg-gradient-hero {
+    background-image: linear-gradient(135deg, var(--color-pv-night-violet), var(--color-pv-night-violet-deep));
+  }
+  .bg-gradient-primary-btn {
+    background-image: linear-gradient(135deg, var(--color-pv-dragon-fruit), var(--color-pv-dragon-fruit-deep));
+  }
+  .bg-gradient-primary-btn-hover {
+    background-image: linear-gradient(135deg, var(--color-pv-dragon-fruit-soft), var(--color-pv-dragon-fruit));
+  }
+  .bg-gradient-secondary-btn {
+    background-color: var(--color-pv-surface-secondary);
+    border: 1px solid var(--color-pv-border-strong);
+  }
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

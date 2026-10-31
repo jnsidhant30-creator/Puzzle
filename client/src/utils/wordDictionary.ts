@@ -1,0 +1,111 @@
+export const EASY_WORDS = [
+  { word: 'CAT', hint: 'A common pet.' },
+  { word: 'DOG', hint: 'Man\'s best friend.' },
+  { word: 'SUN', hint: 'The star at the center of our solar system.' },
+  { word: 'TREE', hint: 'A tall plant with a trunk and branches.' },
+  { word: 'BOOK', hint: 'Pages bound together for reading.' },
+  { word: 'FISH', hint: 'Lives in the water.' },
+  { word: 'BIRD', hint: 'Has feathers and wings.' },
+  { word: 'STAR', hint: 'A bright point in the night sky.' },
+  { word: 'APPLE', hint: 'A common red or green fruit.' },
+  { word: 'HOUSE', hint: 'A place where people live.' },
+  { word: 'MILK', hint: 'A white liquid produced by cows.' },
+  { word: 'DOOR', hint: 'Used to enter or exit a room.' },
+  { word: 'MOON', hint: 'Earth\'s natural satellite.' },
+  { word: 'CAR', hint: 'A four-wheeled motor vehicle.' },
+  { word: 'FIRE', hint: 'Produces heat and light.' },
+  { word: 'WATER', hint: 'H2O.' },
+  { word: 'BALL', hint: 'A round object used in games.' },
+  { word: 'SHOE', hint: 'Worn on the foot.' },
+  { word: 'HAT', hint: 'Worn on the head.' },
+  { word: 'PEN', hint: 'Used for writing in ink.' },
+];
+
+export const MEDIUM_WORDS = [
+  { word: 'PLANET', hint: 'A celestial body moving in an elliptical orbit.' },
+  { word: 'GUITAR', hint: 'A stringed musical instrument.' },
+  { word: 'OCEAN', hint: 'A very large expanse of sea.' },
+  { word: 'PUZZLE', hint: 'A game or problem designed to test ingenuity.' },
+  { word: 'ROCKET', hint: 'A cylindrical projectile that can be propelled to a great height.' },
+  { word: 'DRAGON', hint: 'A mythical fire-breathing beast.' },
+  { word: 'PIRATE', hint: 'A person who attacks and robs ships at sea.' },
+  { word: 'CASTLE', hint: 'A large building fortified against attack.' },
+  { word: 'BICYCLE', hint: 'A vehicle with two wheels, pedaled by the rider.' },
+  { word: 'MOUNTAIN', hint: 'A large natural elevation of the earth\'s surface.' },
+  { word: 'LIBRARY', hint: 'A place with a collection of books.' },
+  { word: 'JOURNEY', hint: 'An act of traveling from one place to another.' },
+  { word: 'DIAMOND', hint: 'A precious stone consisting of a clear and colorless crystalline form of pure carbon.' },
+  { word: 'FALCON', hint: 'A bird of prey with long pointed wings.' },
+  { word: 'VOLCANO', hint: 'A mountain with a crater through which lava erupts.' },
+  { word: 'FOREST', hint: 'A large area covered chiefly with trees and undergrowth.' },
+  { word: 'ISLAND', hint: 'A piece of land surrounded by water.' },
+  { word: 'DESERT', hint: 'A dry, barren area of land.' },
+  { word: 'CAMERA', hint: 'A device for recording visual images.' },
+  { word: 'TIGER', hint: 'A large feline with a yellow-orange coat and dark stripes.' }
+];
+
+export const HARD_WORDS = [
+  { word: 'SYMPHONY', hint: 'An elaborate musical composition for full orchestra.' },
+  { word: 'ECLIPSE', hint: 'An obscuring of the light from one celestial body by the passage of another.' },
+  { word: 'VELOCITY', hint: 'The speed of something in a given direction.' },
+  { word: 'PARADOX', hint: 'A seemingly absurd or self-contradictory statement.' },
+  { word: 'LABYRINTH', hint: 'A complicated irregular network of passages or paths.' },
+  { word: 'DINOSAUR', hint: 'A fossil reptile of the Mesozoic era.' },
+  { word: 'TREASURE', hint: 'A quantity of precious metals, gems, or other valuable objects.' },
+  { word: 'UNICORN', hint: 'A mythical animal represented as a horse with a single straight horn.' },
+  { word: 'METEOR', hint: 'A small body of matter from outer space that enters the earth\'s atmosphere.' },
+  { word: 'PYRAMID', hint: 'A monumental structure with a square or triangular base and sloping sides.' },
+  { word: 'TELESCOPE', hint: 'An optical instrument designed to make distant objects appear nearer.' },
+  { word: 'MYSTERY', hint: 'Something that is difficult or impossible to understand or explain.' },
+  { word: 'FOSSIL', hint: 'The remains or impression of a prehistoric organism.' },
+  { word: 'GALAXIES', hint: 'A system of millions or billions of stars.' },
+  { word: 'NEBULA', hint: 'A cloud of gas and dust in outer space.' },
+  { word: 'AQUARIUM', hint: 'A transparent tank of water in which fish and other water creatures and plants are kept.' },
+  { word: 'GRAVITY', hint: 'The force that attracts a body toward the center of the earth.' },
+  { word: 'HORIZON', hint: 'The line at which the earth\'s surface and the sky appear to meet.' },
+  { word: 'GLACIER', hint: 'A slowly moving mass or river of ice.' },
+  { word: 'CYBORG', hint: 'A fictional or hypothetical person whose physical abilities are extended beyond normal human limitations by mechanical elements.' }
+];
+
+export const EXPERT_WORDS = [
+  { word: 'EPHEMERAL', hint: 'Lasting for a very short time.' },
+  { word: 'QUINTESSENTIAL', hint: 'Representing the most perfect or typical example of a quality or class.' },
+  { word: 'OBFUSCATE', hint: 'Render obscure, unclear, or unintelligible.' },
+  { word: 'CACOPHONY', hint: 'A harsh discordant mixture of sounds.' },
+  { word: 'UBIQUITOUS', hint: 'Present, appearing, or found everywhere.' },
+  { word: 'SERENDIPITY', hint: 'The occurrence and development of events by chance in a happy or beneficial way.' },
+  { word: 'KALEIDOSCOPE', hint: 'A constantly changing pattern or sequence of elements.' },
+  { word: 'ENIGMATIC', hint: 'Difficult to interpret or understand; mysterious.' },
+  { word: 'SYNERGY', hint: 'The interaction or cooperation of two or more organizations, substances, or other agents to produce a combined effect.' },
+  { word: 'PARADIGM', hint: 'A typical example or pattern of something; a model.' },
+  { word: 'DIAPHANOUS', hint: 'Light, delicate, and translucent (especially of fabric).' },
+  { word: 'INEFFABLE', hint: 'Too great or extreme to be expressed or described in words.' },
+  { word: 'MELLIFLUOUS', hint: 'Sweet or musical; pleasant to hear.' },
+  { word: 'OMNIPRESENT', hint: 'Widely or constantly encountered; common or widespread.' },
+  { word: 'PHILANTHROPY', hint: 'The desire to promote the welfare of others, expressed especially by the generous donation of money to good causes.' },
+  { word: 'RESILIENCE', hint: 'The capacity to recover quickly from difficulties; toughness.' },
+  { word: 'SAGACIOUS', hint: 'Having or showing keen mental discernment and good judgment; shrewd.' },
+  { word: 'TREPIDATION', hint: 'A feeling of fear or agitation about something that may happen.' },
+  { word: 'VACILLATE', hint: 'Alternate or waver between different opinions or actions; be indecisive.' },
+  { word: 'ZEALOUS', hint: 'Having or showing great energy or enthusiasm in pursuit of a cause or an objective.' }
+];
+
+export const DEFINITIONS = [
+  { word: 'FAST', prompt: 'Which word means "Quick"?', options: ['SLOW', 'FAST', 'WEAK', 'SMALL'] },
+  { word: 'GIGANTIC', prompt: 'Which word means "Very large"?', options: ['TINY', 'GIGANTIC', 'AVERAGE', 'NARROW'] },
+  { word: 'TRANSPARENT', prompt: 'Which word means "Allowing light to pass through"?', options: ['OPAQUE', 'SOLID', 'TRANSPARENT', 'CLOUDY'] },
+  { word: 'ELOQUENT', prompt: 'Which word means "Fluent or persuasive in speaking"?', options: ['MUTE', 'CLUMSY', 'ELOQUENT', 'SHY'] },
+  { word: 'ARROGANT', prompt: 'Which word means "Having an exaggerated sense of one\'s own importance or abilities"?', options: ['HUMBLE', 'MODEST', 'ARROGANT', 'TIMID'] },
+  { word: 'LUMINOUS', prompt: 'Which word means "Full of or shedding light; bright or shining"?', options: ['DARK', 'DULL', 'LUMINOUS', 'GLOOMY'] },
+  { word: 'TENACIOUS', prompt: 'Which word means "Tending to keep a firm hold of something; clinging or adhering closely"?', options: ['LOOSE', 'SLACK', 'TENACIOUS', 'FEEBLE'] },
+  { word: 'MELANCHOLY', prompt: 'Which word means "A feeling of pensive sadness, typically with no obvious cause"?', options: ['JOY', 'HAPPINESS', 'MELANCHOLY', 'EXCITEMENT'] },
+  { word: 'METICULOUS', prompt: 'Which word means "Showing great attention to detail; very careful and precise"?', options: ['CARELESS', 'SLOPPY', 'METICULOUS', 'HASTY'] },
+  { word: 'FRUGAL', prompt: 'Which word means "Sparing or economical with regard to money or food"?', options: ['LAVISH', 'EXTRAVAGANT', 'FRUGAL', 'WASTEFUL'] },
+];
+
+export const getAllWords = () => [
+  ...EASY_WORDS,
+  ...MEDIUM_WORDS,
+  ...HARD_WORDS,
+  ...EXPERT_WORDS
+];

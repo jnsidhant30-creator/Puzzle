@@ -1,0 +1,6 @@
+{
+  "name": "PuzzleVerse",
+  "description": "A modern gamified puzzle platform with 16 brain-challenging puzzle modes, daily rewards, leaderboards, achievements, and social challenges.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
