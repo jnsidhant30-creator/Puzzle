@@ -102,7 +102,7 @@ export const PipeConnect: React.FC<Props> = ({ difficulty, onComplete, useHint, 
   };
 
   const renderPipeSvg = (tile: PipeTile, isAligned: boolean) => {
-    const strokeClass = isAligned ? 'stroke-pv-dragon-fruit' : 'stroke-pv-text-muted';
+    const strokeClass = isAligned ? 'stroke-[#38C6BA]' : 'stroke-pv-text-muted';
     const strokeWidth = 5;
 
     return (
@@ -167,8 +167,8 @@ export const PipeConnect: React.FC<Props> = ({ difficulty, onComplete, useHint, 
       />
 
       {/* Board */}
-      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
-        <p className="text-xs text-[#C5BFD0] mb-4 text-center">
+      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+        <p className="text-xs text-[#B4C3CE] mb-4 text-center">
           Click tiles to rotate pipe segments into continuous alignment.
         </p>
 
@@ -183,7 +183,7 @@ export const PipeConnect: React.FC<Props> = ({ difficulty, onComplete, useHint, 
                 onClick={() => handleTileClick(idx)}
                 className={`aspect-square rounded-lg flex items-center justify-center border transition-all duration-150 select-none ${
                   isHint
-                    ? 'bg-pv-dragon-fruit/20 border-pv-dragon-fruit'
+                    ? 'bg-[#38C6BA]/20 border-[#38C6BA]'
                     : isAligned
                     ? 'bg-pv-surface-secondary border-pv-border-strong'
                     : 'bg-pv-surface-secondary border-pv-border hover:border-pv-border-strong'

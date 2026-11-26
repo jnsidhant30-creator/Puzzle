@@ -64,7 +64,7 @@ export const JourneyPage: React.FC = () => {
             </div>
             <div className="h-1.5 bg-pv-surface-secondary rounded-full overflow-hidden border border-pv-border">
               <div
-                className="h-full bg-pv-dragon-fruit transition-all duration-300 rounded-full"
+                className="h-full bg-[#38C6BA] transition-all duration-300 rounded-full"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -80,27 +80,27 @@ export const JourneyPage: React.FC = () => {
         <Card
           surface="featured"
           padding="none"
-          className="border-[#FF4696]/40 overflow-hidden grid grid-cols-1 md:grid-cols-12 items-stretch"
+          className="border-[#38C6BA]/40 overflow-hidden grid grid-cols-1 md:grid-cols-12 items-stretch"
         >
           <div className="md:col-span-8 p-5 sm:p-6 flex flex-col justify-between gap-4">
             <div className="space-y-1.5">
-              <span className="text-[11px] font-semibold text-[#FF82B8] uppercase tracking-wider">
+              <span className="text-[11px] font-semibold text-[#A8E5D5] uppercase tracking-wider">
                 Active Campaign Stage
               </span>
-              <h3 className="text-lg font-semibold text-[#F5F3F7]">
+              <h3 className="text-lg font-semibold text-[#F5F7F8]">
                 Chapter {nextStageToPlay.chapterNumber} · Stage {nextStageToPlay.stageNumber}: {nextStageToPlay.title}
               </h3>
-              <p className="text-xs sm:text-sm text-[#C5BFD0] max-w-xl leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#B4C3CE] max-w-xl leading-relaxed">
                 {nextStageToPlay.description}
               </p>
               <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-                <span className="px-2 py-0.5 rounded bg-[#16131C] border border-[#342D3D] text-[11px] text-[#C5BFD0] capitalize">
+                <span className="px-2 py-0.5 rounded bg-[#1C2D3B] border border-[#36515F] text-[11px] text-[#B4C3CE] capitalize">
                   {nextStageToPlay.puzzleType.replace('_', ' ')}
                 </span>
-                <span className="px-2 py-0.5 rounded bg-[#16131C] border border-[#342D3D] text-[11px] text-[#C5BFD0] capitalize">
+                <span className="px-2 py-0.5 rounded bg-[#1C2D3B] border border-[#36515F] text-[11px] text-[#B4C3CE] capitalize">
                   {nextStageToPlay.difficulty}
                 </span>
-                <span className="text-[#FF82B8] font-mono font-medium text-[11px]">
+                <span className="text-[#A8E5D5] font-mono font-medium text-[11px]">
                   +{nextStageToPlay.rewardXP} XP · +{nextStageToPlay.rewardCoins} coins
                 </span>
               </div>
@@ -108,14 +108,14 @@ export const JourneyPage: React.FC = () => {
             <div>
               <button
                 onClick={() => playJourneyStage(nextStageToPlay)}
-                className="h-10 px-5 bg-[#FF4696] hover:bg-[#E83C86] text-[#110F15] font-semibold text-xs rounded-lg inline-flex items-center justify-center gap-2 transition-colors pv-keycap cursor-pointer"
+                className="h-10 px-5 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs rounded-lg inline-flex items-center justify-center gap-2 transition-colors pv-keycap cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
                 <span>Continue Journey</span>
               </button>
             </div>
           </div>
-          <div className="md:col-span-4 bg-[#14111A] border-t md:border-t-0 md:border-l border-[#342D3D] min-h-[140px]">
+          <div className="md:col-span-4 bg-[#101E2B] border-t md:border-t-0 md:border-l border-[#36515F] min-h-[140px]">
             <PuzzleCoverArt type={nextStageToPlay.puzzleType} />
           </div>
         </Card>
@@ -134,7 +134,7 @@ export const JourneyPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-pv-border">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-pv-dragon-fruit uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-[#38C6BA] uppercase tracking-wider">
                       Chapter {chapter.number}
                     </span>
                     {isChapterComplete && (
@@ -160,7 +160,7 @@ export const JourneyPage: React.FC = () => {
                   if (status === 'COMPLETED') {
                     itemStyle = 'bg-pv-surface-secondary border-emerald-500/40 cursor-pointer';
                   } else if (status === 'CURRENT') {
-                    itemStyle = 'bg-pv-surface-soft border-pv-dragon-fruit cursor-pointer';
+                    itemStyle = 'bg-pv-surface-soft border-[#38C6BA] cursor-pointer';
                   } else if (status === 'LOCKED') {
                     itemStyle = 'bg-pv-surface-primary border-pv-border/40 opacity-40 cursor-not-allowed';
                   }
@@ -180,7 +180,7 @@ export const JourneyPage: React.FC = () => {
                         {status === 'COMPLETED' ? (
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                         ) : status === 'CURRENT' ? (
-                          <span className="text-[10px] font-semibold text-pv-dragon-fruit uppercase tracking-wider">
+                          <span className="text-[10px] font-semibold text-[#38C6BA] uppercase tracking-wider">
                             Current
                           </span>
                         ) : status === 'LOCKED' ? (
@@ -201,7 +201,7 @@ export const JourneyPage: React.FC = () => {
                         <span className="capitalize text-pv-text-muted">
                           {stage.puzzleType.replace('_', ' ')}
                         </span>
-                        <span className="text-pv-dragon-fruit font-mono font-medium">
+                        <span className="text-[#38C6BA] font-mono font-medium">
                           +{stage.rewardXP} XP
                         </span>
                       </div>
@@ -220,7 +220,7 @@ export const JourneyPage: React.FC = () => {
           <div className="bg-pv-surface-primary border border-pv-border rounded-xl p-6 max-w-md w-full space-y-4 shadow-lg relative">
             <div className="flex items-start justify-between">
               <div>
-                <span className="text-xs font-medium text-pv-dragon-fruit uppercase tracking-wider">
+                <span className="text-xs font-medium text-[#38C6BA] uppercase tracking-wider">
                   Chapter {selectedStage.chapterNumber} · Stage {selectedStage.stageNumber}
                 </span>
                 <h3 className="text-lg font-semibold text-pv-text-primary mt-0.5">{selectedStage.title}</h3>
@@ -253,13 +253,13 @@ export const JourneyPage: React.FC = () => {
               </div>
               <div>
                 <span className="text-pv-text-muted block text-[10px]">XP Reward</span>
-                <span className="font-medium text-pv-dragon-fruit font-tabular">
+                <span className="font-medium text-[#38C6BA] font-tabular">
                   +{selectedStage.rewardXP} XP
                 </span>
               </div>
               <div>
                 <span className="text-pv-text-muted block text-[10px]">Coins Reward</span>
-                <span className="font-medium text-pv-dragon-fruit font-tabular">
+                <span className="font-medium text-[#38C6BA] font-tabular">
                   +{selectedStage.rewardCoins} coins
                 </span>
               </div>
@@ -282,7 +282,7 @@ export const JourneyPage: React.FC = () => {
                   setSelectedStage(null);
                   playJourneyStage(stage);
                 }}
-                className="flex-1 h-9 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+                className="flex-1 h-9 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Play className="w-3.5 h-3.5 fill-current" /> Start Stage
               </button>

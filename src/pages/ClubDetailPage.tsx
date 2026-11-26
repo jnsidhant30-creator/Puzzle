@@ -201,8 +201,8 @@ export const ClubDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div className="space-y-6 max-w-6xl mx-auto py-12">
-        <div className="h-44 bg-pv-surface-soft border border-pv-border rounded-lg animate-pulse" />
-        <div className="h-64 bg-pv-surface-soft border border-pv-border rounded-lg animate-pulse" />
+        <div className="h-44 bg-pv-surface-soft border border-pv-border rounded-lg" />
+        <div className="h-64 bg-pv-surface-soft border border-pv-border rounded-lg" />
       </div>
     );
   }
@@ -248,15 +248,15 @@ export const ClubDetailPage: React.FC = () => {
       <Card className="p-6 md:p-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-lg bg-pv-surface-soft border border-pv-border flex items-center justify-center text-pv-dragon-fruit font-bold text-xl shrink-0 font-tabular">
+            <div className="w-16 h-16 rounded-lg bg-pv-surface-soft border border-pv-border flex items-center justify-center text-[#38C6BA] font-bold text-xl shrink-0 font-tabular">
               {club.tag}
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs uppercase font-bold text-pv-dragon-fruit tracking-wider">
+                <span className="text-xs uppercase font-bold text-[#38C6BA] tracking-wider">
                   [{club.tag}]
                 </span>
-                <span className="text-xs bg-pv-surface-soft text-pv-dragon-fruit px-2.5 py-0.5 rounded border border-pv-border font-semibold flex items-center gap-1">
+                <span className="text-xs bg-pv-surface-soft text-[#38C6BA] px-2.5 py-0.5 rounded border border-pv-border font-semibold flex items-center gap-1">
                   <Sparkles className="w-3 h-3" /> {repLabel}
                 </span>
                 <span className="text-xs bg-pv-surface-soft text-pv-text-muted px-2.5 py-0.5 rounded border border-pv-border font-tabular">
@@ -319,7 +319,7 @@ export const ClubDetailPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Card className="p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-pv-dragon-fruit shrink-0" />
+            <Calendar className="w-5 h-5 text-[#38C6BA] shrink-0" />
             <div>
               <h4 className="text-xs font-semibold text-pv-text-primary">Events & Calendar</h4>
               <p className="text-[11px] text-pv-text-muted font-tabular">
@@ -340,7 +340,7 @@ export const ClubDetailPage: React.FC = () => {
 
         <Card className="p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <MessageSquare className="w-5 h-5 text-pv-dragon-fruit shrink-0" />
+            <MessageSquare className="w-5 h-5 text-[#38C6BA] shrink-0" />
             <div>
               <h4 className="text-xs font-semibold text-pv-text-primary">Club Discussions</h4>
               <p className="text-[11px] text-pv-text-muted font-tabular">
@@ -361,7 +361,7 @@ export const ClubDetailPage: React.FC = () => {
 
         <Card className="p-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <BookOpen className="w-5 h-5 text-pv-dragon-fruit shrink-0" />
+            <BookOpen className="w-5 h-5 text-[#38C6BA] shrink-0" />
             <div>
               <h4 className="text-xs font-semibold text-pv-text-primary">Knowledge Guides</h4>
               <p className="text-[11px] text-pv-text-muted font-tabular">
@@ -401,7 +401,7 @@ export const ClubDetailPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap ${
                 isActive
-                  ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                  ? 'bg-[#38C6BA] text-[#142331] font-semibold'
                   : 'text-pv-text-secondary hover:text-pv-text-primary hover:bg-pv-surface-soft'
               }`}
             >
@@ -450,7 +450,7 @@ export const ClubDetailPage: React.FC = () => {
                           <Crown className="w-3 h-3" /> Owner
                         </span>
                       ) : isAdminRole ? (
-                        <span className="inline-flex items-center gap-1 text-pv-dragon-fruit bg-pv-dragon-fruit/10 border border-pv-dragon-fruit/20 px-2 py-0.5 rounded text-[10px] font-semibold">
+                        <span className="inline-flex items-center gap-1 text-[#38C6BA] bg-[#38C6BA]/10 border border-[#38C6BA]/20 px-2 py-0.5 rounded text-[10px] font-semibold">
                           <Shield className="w-3 h-3" /> Admin
                         </span>
                       ) : isContribRole ? (
@@ -497,7 +497,7 @@ export const ClubDetailPage: React.FC = () => {
         <div className="space-y-6">
           <Card className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-pv-surface-soft border border-pv-border text-pv-dragon-fruit font-semibold text-xs">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-pv-surface-soft border border-pv-border text-[#38C6BA] font-semibold text-xs">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Reputation: {repLabel}</span>
               </div>
@@ -530,7 +530,7 @@ export const ClubDetailPage: React.FC = () => {
 
           <Card className="p-6 space-y-4">
             <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-              <Target className="w-4 h-4 text-pv-dragon-fruit" />
+              <Target className="w-4 h-4 text-[#38C6BA]" />
               <span>Collective Puzzle Milestones</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -548,7 +548,7 @@ export const ClubDetailPage: React.FC = () => {
                           <CheckCircle2 className="w-3 h-3" /> Done
                         </span>
                       ) : (
-                        <span className="text-[10px] font-medium text-pv-dragon-fruit font-tabular">
+                        <span className="text-[10px] font-medium text-[#38C6BA] font-tabular">
                           +{ms.rewardXP} XP
                         </span>
                       )}
@@ -563,7 +563,7 @@ export const ClubDetailPage: React.FC = () => {
                       <div className="w-full h-1.5 bg-pv-surface-elevated rounded-full overflow-hidden border border-pv-border">
                         <div
                           className={`h-full rounded-full transition-all duration-300 ${
-                            ms.isCompleted ? 'bg-emerald-500' : 'bg-pv-dragon-fruit'
+                            ms.isCompleted ? 'bg-emerald-500' : 'bg-[#38C6BA]'
                           }`}
                           style={{ width: `${percent}%` }}
                         />
@@ -581,7 +581,7 @@ export const ClubDetailPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-pv-dragon-fruit" />
+              <Calendar className="w-4 h-4 text-[#38C6BA]" />
               <span>Upcoming Scheduled Events</span>
             </h3>
             <Button
@@ -596,7 +596,7 @@ export const ClubDetailPage: React.FC = () => {
             {events.slice(0, 4).map((ev) => (
               <Card key={ev.id} className="p-4 space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="px-2 py-0.5 rounded bg-pv-surface-soft border border-pv-border text-pv-dragon-fruit font-semibold uppercase text-[10px]">
+                  <span className="px-2 py-0.5 rounded bg-pv-surface-soft border border-pv-border text-[#38C6BA] font-semibold uppercase text-[10px]">
                     {ev.eventType.replace('_', ' ')}
                   </span>
                   <span className="text-pv-text-muted text-[11px] font-tabular">
@@ -687,14 +687,14 @@ export const ClubDetailPage: React.FC = () => {
             <Card className="p-6 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <span className="text-[11px] font-semibold uppercase text-pv-dragon-fruit tracking-wider block">
+                  <span className="text-[11px] font-semibold uppercase text-[#38C6BA] tracking-wider block">
                     Team Milestone Goal
                   </span>
                   <h3 className="text-base font-bold text-pv-text-primary">{activeComp.title}</h3>
                 </div>
                 <div className="text-left sm:text-right">
                   <span className="text-[10px] text-pv-text-muted uppercase font-medium block">Team Reward</span>
-                  <span className="text-pv-dragon-fruit font-bold text-xs font-tabular">
+                  <span className="text-[#38C6BA] font-bold text-xs font-tabular">
                     +{activeComp.milestoneRewardXP} XP & +{activeComp.milestoneRewardCoins} Coins
                   </span>
                 </div>
@@ -709,7 +709,7 @@ export const ClubDetailPage: React.FC = () => {
                 </div>
                 <div className="w-full h-2 bg-pv-surface-soft rounded-full overflow-hidden border border-pv-border">
                   <div
-                    className="h-full bg-pv-dragon-fruit rounded-full transition-all duration-300"
+                    className="h-full bg-[#38C6BA] rounded-full transition-all duration-300"
                     style={{
                       width: `${Math.min(100, (club.weeklyPoints / activeComp.milestoneTarget) * 100)}%`,
                     }}
@@ -721,7 +721,7 @@ export const ClubDetailPage: React.FC = () => {
 
           <Card className="p-5 space-y-4">
             <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-pv-dragon-fruit" />
+              <Trophy className="w-4 h-4 text-[#38C6BA]" />
               <span>Weekly Club Standings</span>
             </h3>
             <div className="space-y-2">
@@ -730,7 +730,7 @@ export const ClubDetailPage: React.FC = () => {
                   key={score.id}
                   className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
                     score.clubId === club.id
-                      ? 'bg-pv-surface-soft border-pv-dragon-fruit/40'
+                      ? 'bg-pv-surface-soft border-[#38C6BA]/40'
                       : 'bg-pv-surface-soft/60 border-pv-border'
                   }`}
                 >
@@ -747,7 +747,7 @@ export const ClubDetailPage: React.FC = () => {
                       #{idx + 1}
                     </span>
                     <div>
-                      <span className="text-xs font-semibold text-pv-dragon-fruit">[{score.clubTag}]</span>
+                      <span className="text-xs font-semibold text-[#38C6BA]">[{score.clubTag}]</span>
                       <span className="text-xs font-semibold text-pv-text-primary ml-2">{score.clubName}</span>
                     </div>
                   </div>
@@ -769,7 +769,7 @@ export const ClubDetailPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-                <Swords className="w-4 h-4 text-pv-dragon-fruit" />
+                <Swords className="w-4 h-4 text-[#38C6BA]" />
                 <span>Club vs Club Duels</span>
               </h3>
               <p className="text-xs text-pv-text-muted">3-day team clashes across selected puzzle types</p>
@@ -801,13 +801,13 @@ export const ClubDetailPage: React.FC = () => {
                 <Card key={duel.id} className="p-5 space-y-4">
                   <div className="flex items-center justify-between text-xs font-medium text-pv-text-muted border-b border-pv-border pb-2">
                     <span>3-Day Club Duel</span>
-                    <span className="text-pv-dragon-fruit bg-pv-surface-soft px-2 py-0.5 rounded border border-pv-border text-[10px] font-semibold uppercase">
+                    <span className="text-[#38C6BA] bg-pv-surface-soft px-2 py-0.5 rounded border border-pv-border text-[10px] font-semibold uppercase">
                       {duel.status}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="text-center space-y-1">
-                      <span className="text-xs font-semibold text-pv-dragon-fruit">[{duel.challengerClubTag}]</span>
+                      <span className="text-xs font-semibold text-[#38C6BA]">[{duel.challengerClubTag}]</span>
                       <div className="text-xs font-semibold text-pv-text-primary">{duel.challengerClubName}</div>
                       <div className="text-base font-bold text-pv-text-primary font-tabular">
                         {duel.challengerScore}
@@ -815,7 +815,7 @@ export const ClubDetailPage: React.FC = () => {
                     </div>
                     <div className="text-center font-bold text-pv-text-muted text-xs">VS</div>
                     <div className="text-center space-y-1">
-                      <span className="text-xs font-semibold text-pv-dragon-fruit">[{duel.targetClubTag}]</span>
+                      <span className="text-xs font-semibold text-[#38C6BA]">[{duel.targetClubTag}]</span>
                       <div className="text-xs font-semibold text-pv-text-primary">{duel.targetClubName}</div>
                       <div className="text-base font-bold text-pv-text-primary font-tabular">{duel.targetScore}</div>
                     </div>
@@ -836,7 +836,7 @@ export const ClubDetailPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-pv-dragon-fruit" />
+                <MessageSquare className="w-4 h-4 text-[#38C6BA]" />
                 <span>Club Strategy & Discussions</span>
               </h3>
               <p className="text-xs text-pv-text-muted">Discuss puzzle solving methods and team preparation</p>
@@ -877,12 +877,12 @@ export const ClubDetailPage: React.FC = () => {
                         {disc.category}
                       </span>
                       {disc.isPinned && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-pv-dragon-fruit/10 text-pv-dragon-fruit border border-pv-dragon-fruit/20">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#38C6BA]/10 text-[#38C6BA] border border-[#38C6BA]/20">
                           PINNED
                         </span>
                       )}
                     </div>
-                    <h4 className="text-xs font-semibold text-pv-text-primary hover:text-pv-dragon-fruit transition-colors">
+                    <h4 className="text-xs font-semibold text-pv-text-primary hover:text-[#38C6BA] transition-colors">
                       {disc.title}
                     </h4>
                     <p className="text-xs text-pv-text-secondary line-clamp-1">{disc.content}</p>
@@ -904,7 +904,7 @@ export const ClubDetailPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-pv-dragon-fruit" />
+                <BookOpen className="w-4 h-4 text-[#38C6BA]" />
                 <span>Knowledge Base & Guides</span>
               </h3>
               <p className="text-xs text-pv-text-muted">Strategy write-ups and solving walkthroughs</p>
@@ -949,7 +949,7 @@ export const ClubDetailPage: React.FC = () => {
                       {guide.category.replace('_', ' ')}
                     </span>
                   </div>
-                  <h4 className="text-xs font-semibold text-pv-text-primary hover:text-pv-dragon-fruit transition-colors">
+                  <h4 className="text-xs font-semibold text-pv-text-primary hover:text-[#38C6BA] transition-colors">
                     {guide.title}
                   </h4>
                   <p className="text-xs text-pv-text-secondary line-clamp-2 leading-relaxed">{guide.summary}</p>
@@ -966,7 +966,7 @@ export const ClubDetailPage: React.FC = () => {
           <Card className="max-w-md w-full p-6 space-y-5">
             <div className="flex items-center justify-between border-b border-pv-border pb-3">
               <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-                <Swords className="w-4 h-4 text-pv-dragon-fruit" />
+                <Swords className="w-4 h-4 text-[#38C6BA]" />
                 <span>Issue Club Duel</span>
               </h3>
               <button

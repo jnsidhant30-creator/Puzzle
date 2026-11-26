@@ -38,7 +38,7 @@ export const EventDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-pv-text-muted space-y-3">
-        <Clock className="w-8 h-8 animate-spin text-pv-dragon-fruit" />
+        <Clock className="w-8 h-8 animate-spin text-[#38C6BA]" />
         <p className="text-sm font-medium text-pv-text-secondary">Loading event details...</p>
       </div>
     );
@@ -102,7 +102,7 @@ export const EventDetailPage: React.FC = () => {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider bg-pv-dragon-fruit/10 text-pv-dragon-fruit border border-pv-dragon-fruit/20">
+              <span className="px-2.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider bg-[#38C6BA]/10 text-[#38C6BA] border border-[#38C6BA]/20">
                 {event.type.replace('_', ' ')}
               </span>
               <span className="text-xs text-pv-text-muted flex items-center gap-1 font-tabular">
@@ -117,7 +117,7 @@ export const EventDetailPage: React.FC = () => {
           {/* Progress Card Widget */}
           <div className="bg-pv-surface-soft border border-pv-border rounded-lg p-5 min-w-[220px] text-center">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-pv-text-muted">Your Completion</p>
-            <div className="text-3xl font-bold text-pv-dragon-fruit font-tabular my-1">
+            <div className="text-3xl font-bold text-[#38C6BA] font-tabular my-1">
               {attempts} / {targetAttempts}
             </div>
             <p className="text-xs text-pv-text-secondary font-medium">
@@ -155,13 +155,13 @@ export const EventDetailPage: React.FC = () => {
           {/* Rules Card */}
           <Card className="p-6">
             <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2 mb-4">
-              <ShieldCheck className="w-4 h-4 text-pv-dragon-fruit" />
+              <ShieldCheck className="w-4 h-4 text-[#38C6BA]" />
               <span>Event Rules & Guidelines</span>
             </h3>
             <ul className="space-y-2.5">
               {event.rules.map((rule, idx) => (
                 <li key={idx} className="flex items-start gap-2.5 text-xs text-pv-text-secondary">
-                  <span className="w-1.5 h-1.5 rounded-full bg-pv-dragon-fruit mt-1.5 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#38C6BA] mt-1.5 shrink-0" />
                   <span>{rule}</span>
                 </li>
               ))}
@@ -171,7 +171,7 @@ export const EventDetailPage: React.FC = () => {
           {/* Eligible Puzzles Launcher */}
           <Card className="p-6">
             <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2 mb-4">
-              <Sparkles className="w-4 h-4 text-pv-dragon-fruit" />
+              <Sparkles className="w-4 h-4 text-[#38C6BA]" />
               <span>Participating Puzzles ({event.eligibleGames.length})</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -190,7 +190,7 @@ export const EventDetailPage: React.FC = () => {
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-pv-dragon-fruit bg-pv-surface-elevated px-2 py-0.5 rounded border border-pv-border">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#38C6BA] bg-pv-surface-elevated px-2 py-0.5 rounded border border-pv-border">
                           {info.category}
                         </span>
                         {playedThisType && (
@@ -224,7 +224,7 @@ export const EventDetailPage: React.FC = () => {
           {/* Reward Summary */}
           <Card className="p-6 text-center space-y-4">
             <h3 className="text-sm font-semibold text-pv-text-primary flex items-center justify-center gap-2">
-              <Trophy className="w-4 h-4 text-pv-dragon-fruit" />
+              <Trophy className="w-4 h-4 text-[#38C6BA]" />
               <span>Event Rewards</span>
             </h3>
             <div className="grid grid-cols-2 gap-3">
@@ -235,15 +235,15 @@ export const EventDetailPage: React.FC = () => {
               </div>
               <div className="bg-pv-surface-soft p-3 rounded-lg border border-pv-border">
                 <p className="text-[10px] font-semibold text-pv-text-muted uppercase tracking-wider">Coins</p>
-                <p className="text-lg font-bold text-pv-dragon-fruit font-tabular my-0.5">+{event.rewardConfig.coins}</p>
+                <p className="text-lg font-bold text-[#38C6BA] font-tabular my-0.5">+{event.rewardConfig.coins}</p>
                 <p className="text-[10px] text-pv-text-muted">Shop currency</p>
               </div>
             </div>
             {event.rewardConfig.badgeTitle && (
               <div className="bg-pv-surface-soft border border-pv-border p-3 rounded-lg flex items-center gap-3">
-                <Award className="w-6 h-6 text-pv-dragon-fruit shrink-0" />
+                <Award className="w-6 h-6 text-[#38C6BA] shrink-0" />
                 <div className="text-left">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-pv-dragon-fruit">Exclusive Title</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[#38C6BA]">Exclusive Title</p>
                   <p className="text-xs font-semibold text-pv-text-primary">{event.rewardConfig.badgeTitle}</p>
                 </div>
               </div>
@@ -253,7 +253,7 @@ export const EventDetailPage: React.FC = () => {
           {/* Event Leaderboard */}
           <Card className="p-6">
             <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2 mb-4">
-              <Trophy className="w-4 h-4 text-pv-dragon-fruit" />
+              <Trophy className="w-4 h-4 text-[#38C6BA]" />
               <span>Event Leaderboard</span>
             </h3>
             {leaderboard.length === 0 ? (

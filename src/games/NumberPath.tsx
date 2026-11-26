@@ -85,8 +85,8 @@ export const NumberPath: React.FC<Props> = ({ difficulty, onComplete, useHint, h
       />
 
       {/* Grid */}
-      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
-        <p className="text-xs text-[#C5BFD0] mb-4 text-center">
+      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+        <p className="text-xs text-[#B4C3CE] mb-4 text-center">
           Click numbers in numerical order from 1 to {maxNumber}.
         </p>
 
@@ -102,7 +102,7 @@ export const NumberPath: React.FC<Props> = ({ difficulty, onComplete, useHint, h
             } else if (isError) {
               tileStyle = 'bg-rose-950/40 border-rose-500 text-rose-300';
             } else if (isHint) {
-              tileStyle = 'bg-pv-dragon-fruit/20 border-pv-dragon-fruit text-pv-dragon-fruit-light font-bold';
+              tileStyle = 'bg-[#38C6BA]/20 border-[#38C6BA] text-[#A8E5D5] font-bold';
             }
 
             return (

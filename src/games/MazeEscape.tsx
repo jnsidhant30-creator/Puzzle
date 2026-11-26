@@ -4,17 +4,26 @@ import { sound } from '../services/sound';
 import { RefreshCw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Lightbulb } from 'lucide-react';
 import { GameHudBar } from '../components/ui/GameHudBar';
 import { useGameTimer } from '../hooks/useGameTimer';
+import { createRng } from '../utils/prng';
 
 interface Props {
   difficulty: Difficulty;
   onComplete: (score: number, timeSeconds: number, won: boolean) => void;
   useHint: () => boolean;
   hintsLeft: number;
+  seed?: number;
   isPaused?: boolean;
 }
 
-export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft, isPaused = false }) => {
-  const size = difficulty === 'easy' ? 5 : 7;
+export const MazeEscape: React.FC<Props> = ({
+  difficulty,
+  onComplete,
+  useHint,
+  hintsLeft,
+  seed,
+  isPaused = false,
+}) => {
+  const size = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 7 : 9;
   const [player, setPlayer] = useState({ r: 0, c: 0 });
   const [walls, setWalls] = useState<boolean[][]>([]);
   const [solutionSteps, setSolutionSteps] = useState<{ r: number; c: number }[]>([]);
@@ -23,8 +32,8 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
   const [timer, setTimer] = useGameTimer(isPaused, isWon);
 
   useEffect(() => {
-    initMaze();
-  }, [difficulty]);
+    initMaze(true);
+  }, [difficulty, seed]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -61,35 +70,82 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [player, walls, size, isWon, isPaused]);
 
-  const initMaze = () => {
-    const path: { r: number; c: number }[] = [{ r: 0, c: 0 }];
-    let cr = 0;
-    let cc = 0;
-    const pathSet = new Set<string>();
-    pathSet.add('0,0');
+  const initMaze = (usePropSeed = false) => {
+    const rng = createRng(usePropSeed && typeof seed === 'number' ? seed : undefined);
+    const gridWalls: boolean[][] = Array.from({ length: size }, () =>
+      Array.from({ length: size }, () => true)
+    );
 
-    while (cr !== size - 1 || cc !== size - 1) {
-      const candidates: { r: number; c: number }[] = [];
-      if (cr < size - 1 && !pathSet.has(`${cr + 1},${cc}`)) candidates.push({ r: cr + 1, c: cc });
-      if (cc < size - 1 && !pathSet.has(`${cr},${cc + 1}`)) candidates.push({ r: cr, c: cc + 1 });
+    // Randomized recursive-backtracker carving on odd cells ensures genuine winding mazes
+    const stack: { r: number; c: number }[] = [{ r: 0, c: 0 }];
+    gridWalls[0][0] = false;
+
+    while (stack.length > 0) {
+      const cur = stack[stack.length - 1];
+      const dirs = [
+        { dr: -2, dc: 0 },
+        { dr: 2, dc: 0 },
+        { dr: 0, dc: -2 },
+        { dr: 0, dc: 2 },
+      ];
+      const candidates = dirs.filter(({ dr, dc }) => {
+        const nr = cur.r + dr;
+        const nc = cur.c + dc;
+        return nr >= 0 && nr < size && nc >= 0 && nc < size && gridWalls[nr][nc];
+      });
+
       if (candidates.length === 0) {
-        if (cr < size - 1) candidates.push({ r: cr + 1, c: cc });
-        else candidates.push({ r: cr, c: cc + 1 });
+        stack.pop();
+      } else {
+        const chosen = candidates[Math.floor(rng() * candidates.length)];
+        gridWalls[cur.r + chosen.dr / 2][cur.c + chosen.dc / 2] = false;
+        gridWalls[cur.r + chosen.dr][cur.c + chosen.dc] = false;
+        stack.push({ r: cur.r + chosen.dr, c: cur.c + chosen.dc });
       }
-      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-      cr = chosen.r;
-      cc = chosen.c;
-      pathSet.add(`${cr},${cc}`);
-      path.push(chosen);
+    }
+    gridWalls[size - 1][size - 1] = false;
+
+    // Add a few extra cross-passages for tactical variety while preserving solvable structure
+    for (let i = 0; i < Math.floor(size / 2); i++) {
+      const rr = Math.floor(rng() * size);
+      const cc = Math.floor(rng() * size);
+      gridWalls[rr][cc] = false;
     }
 
-    const wallDensity = difficulty === 'easy' ? 0.35 : 0.45;
-    const gridWalls: boolean[][] = Array.from({ length: size }, (_, r) =>
-      Array.from({ length: size }, (_, c) => {
-        if (pathSet.has(`${r},${c}`)) return false;
-        return Math.random() < wallDensity;
-      })
-    );
+    // Verify shortest path from (0, 0) to (size-1, size-1) via BFS
+    const queue: { r: number; c: number }[] = [{ r: 0, c: 0 }];
+    const parent = new Map<string, { r: number; c: number } | null>();
+    parent.set('0,0', null);
+    while (queue.length > 0) {
+      const cur = queue.shift()!;
+      if (cur.r === size - 1 && cur.c === size - 1) break;
+      for (const [dr, dc] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
+        const nr = cur.r + dr;
+        const nc = cur.c + dc;
+        const key = `${nr},${nc}`;
+        if (nr >= 0 && nr < size && nc >= 0 && nc < size && !gridWalls[nr][nc] && !parent.has(key)) {
+          parent.set(key, cur);
+          queue.push({ r: nr, c: nc });
+        }
+      }
+    }
+
+    const path: { r: number; c: number }[] = [];
+    let trace: { r: number; c: number } | null = parent.has(`${size - 1},${size - 1}`)
+      ? { r: size - 1, c: size - 1 }
+      : null;
+    while (trace) {
+      path.unshift(trace);
+      trace = parent.get(`${trace.r},${trace.c}`) || null;
+    }
+    if (path.length === 0) {
+      for (let i = 0; i < size; i++) {
+        gridWalls[0][i] = false;
+        gridWalls[i][size - 1] = false;
+        path.push({ r: 0, c: i });
+      }
+      for (let i = 1; i < size; i++) path.push({ r: i, c: size - 1 });
+    }
 
     setWalls(gridWalls);
     setSolutionSteps(path);
@@ -134,7 +190,7 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
     }
   };
 
-  const gridColsClass = size === 5 ? 'grid-cols-5' : 'grid-cols-7';
+  const gridColsClass = size === 5 ? 'grid-cols-5' : size === 7 ? 'grid-cols-7' : 'grid-cols-9';
 
   return (
     <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
@@ -147,7 +203,7 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
       />
 
       {/* Grid */}
-      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
         <div className={`grid ${gridColsClass} gap-1.5 w-full max-w-[340px] aspect-square`}>
           {Array.from({ length: size }).map((_, r) =>
             Array.from({ length: size }).map((_, c) => {
@@ -158,13 +214,13 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
 
               let cellStyle = 'bg-pv-surface-secondary border-pv-border';
               if (isPlayer) {
-                cellStyle = 'bg-pv-dragon-fruit/20 border-pv-dragon-fruit';
+                cellStyle = 'bg-[#38C6BA]/20 border-[#38C6BA]';
               } else if (isExit) {
                 cellStyle = 'bg-emerald-950/40 border-emerald-500/60 text-emerald-300';
               } else if (isWall) {
                 cellStyle = 'bg-pv-bg-primary border-pv-border-strong';
               } else if (isHintPath) {
-                cellStyle = 'bg-pv-dragon-fruit/20 border-pv-dragon-fruit text-pv-dragon-fruit-light';
+                cellStyle = 'bg-[#38C6BA]/20 border-[#38C6BA] text-[#A8E5D5]';
               }
 
               return (
@@ -173,7 +229,7 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
                   className={`aspect-square rounded-md flex items-center justify-center border transition-colors select-none ${cellStyle}`}
                 >
                   {isPlayer ? (
-                    <span className="w-3 h-3 rounded-full bg-pv-dragon-fruit" />
+                    <span className="w-3 h-3 rounded-full bg-[#38C6BA]" />
                   ) : isExit ? (
                     <span className="text-[10px] font-semibold uppercase tracking-wider">Exit</span>
                   ) : null}
@@ -229,7 +285,7 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
           <Lightbulb className="w-3.5 h-3.5" /> Hint ({hintsLeft})
         </button>
         <button
-          onClick={initMaze}
+          onClick={() => initMaze(false)}
           className="h-9 px-3 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
           title="Restart Maze"
         >

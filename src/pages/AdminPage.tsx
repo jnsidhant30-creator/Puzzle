@@ -217,7 +217,7 @@ export const AdminPage: React.FC = () => {
         title="Admin Panel"
         description="Manage live events, curated playlists, and content moderation."
         action={
-          <span className="text-xs bg-pv-surface-soft border border-pv-border text-pv-dragon-fruit px-3 py-1.5 rounded font-semibold uppercase">
+          <span className="text-xs bg-pv-surface-soft border border-pv-border text-[#38C6BA] px-3 py-1.5 rounded font-semibold uppercase">
             Admin: {user.displayName || user.username}
           </span>
         }
@@ -226,7 +226,7 @@ export const AdminPage: React.FC = () => {
       {/* Overview Cards (Real data only, no fake counters) */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card className="p-4 flex items-center gap-3">
-          <div className="p-2.5 bg-pv-surface-soft text-pv-dragon-fruit rounded border border-pv-border">
+          <div className="p-2.5 bg-pv-surface-soft text-[#38C6BA] rounded border border-pv-border">
             <Flame className="w-5 h-5" />
           </div>
           <div>
@@ -236,7 +236,7 @@ export const AdminPage: React.FC = () => {
         </Card>
 
         <Card className="p-4 flex items-center gap-3">
-          <div className="p-2.5 bg-pv-surface-soft text-pv-dragon-fruit rounded border border-pv-border">
+          <div className="p-2.5 bg-pv-surface-soft text-[#38C6BA] rounded border border-pv-border">
             <Layers className="w-5 h-5" />
           </div>
           <div>
@@ -274,7 +274,7 @@ export const AdminPage: React.FC = () => {
       <Card className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-            <Flame className="w-4 h-4 text-pv-dragon-fruit" />
+            <Flame className="w-4 h-4 text-[#38C6BA]" />
             <span>Puzzle Events Management</span>
           </h3>
           <Button
@@ -382,13 +382,13 @@ export const AdminPage: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-pv-text-primary">{ev.name}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-pv-surface-elevated border border-pv-border uppercase text-pv-dragon-fruit">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-pv-surface-elevated border border-pv-border uppercase text-[#38C6BA]">
                     {ev.status}
                   </span>
                 </div>
                 <p className="text-pv-text-muted mt-0.5 text-[11px]">{ev.description}</p>
               </div>
-              <span className="text-pv-dragon-fruit font-semibold font-tabular">
+              <span className="text-[#38C6BA] font-semibold font-tabular">
                 +{ev.rewardConfig.xp} XP
               </span>
             </div>
@@ -400,7 +400,7 @@ export const AdminPage: React.FC = () => {
       <Card className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-            <Layers className="w-4 h-4 text-pv-dragon-fruit" />
+            <Layers className="w-4 h-4 text-[#38C6BA]" />
             <span>Curated Playlists</span>
           </h3>
           <Button
@@ -522,7 +522,7 @@ export const AdminPage: React.FC = () => {
                 </div>
                 <p className="text-pv-text-muted mt-0.5 text-[11px]">{col.description}</p>
               </div>
-              <span className="text-pv-dragon-fruit font-semibold font-tabular">
+              <span className="text-[#38C6BA] font-semibold font-tabular">
                 +{col.rewardXP} XP
               </span>
             </div>
@@ -609,7 +609,7 @@ export const AdminPage: React.FC = () => {
       {/* Broadcast Announcement */}
       <Card className="p-6 space-y-4">
         <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-          <Radio className="w-4 h-4 text-pv-dragon-fruit" />
+          <Radio className="w-4 h-4 text-[#38C6BA]" />
           <span>Platform Announcement Broadcast</span>
         </h3>
 

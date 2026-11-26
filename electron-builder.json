@@ -1,0 +1,66 @@
+{
+  "appId": "com.puzzleverse.desktop",
+  "productName": "PuzzleVerse",
+  "copyright": "Copyright © 2026 Sidhant Jain / PuzzleVerse",
+  "directories": {
+    "output": "release",
+    "buildResources": "build"
+  },
+  "npmRebuild": false,
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "build/icon.ico",
+    "build/icon-256.png",
+    "package.json",
+    "!**/node_modules/**/*"
+  ],
+  "extraMetadata": {
+    "main": "electron/main.cjs"
+  },
+  "win": {
+    "icon": "build/icon.ico",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "signAndEditExecutable": true,
+    "requestedExecutionLevel": "asInvoker",
+    "verifyUpdateCodeSignature": false
+  },
+  "nsis": {
+    "artifactName": "${productName}-Setup-${version}-${arch}.${ext}",
+    "oneClick": false,
+    "perMachine": false,
+    "allowElevation": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "PuzzleVerse",
+    "menuCategory": "Games",
+    "runAfterFinish": true,
+    "installerIcon": "build/icon.ico",
+    "uninstallerIcon": "build/icon.ico",
+    "installerHeaderIcon": "build/icon.ico",
+    "installerHeader": "build/installerHeader.bmp",
+    "installerSidebar": "build/installerSidebar.bmp",
+    "uninstallDisplayName": "PuzzleVerse 1.0.0"
+  },
+  "portable": {
+    "artifactName": "${productName}-Portable-${version}-${arch}.${ext}"
+  },
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "jnsidhant30-creator",
+      "repo": "Puzzle",
+      "releaseType": "release"
+    }
+  ]
+}

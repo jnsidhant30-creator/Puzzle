@@ -181,7 +181,7 @@ export const InsightsPage: React.FC = () => {
         </Card>
         <Card className="p-3.5 text-center">
           <p className="text-[11px] text-pv-text-muted font-medium uppercase mb-1">Streak</p>
-          <p className="text-xl font-semibold text-pv-dragon-fruit font-tabular flex items-center justify-center gap-1">
+          <p className="text-xl font-semibold text-[#38C6BA] font-tabular flex items-center justify-center gap-1">
             <Flame className="w-4 h-4 fill-current" /> {user?.currentStreak || 1}d
           </p>
         </Card>
@@ -198,7 +198,7 @@ export const InsightsPage: React.FC = () => {
       {/* Coach Insights */}
       <Card className="p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <Lightbulb className="w-4 h-4 text-pv-dragon-fruit" />
+          <Lightbulb className="w-4 h-4 text-[#38C6BA]" />
           <h3 className="text-xs font-semibold text-pv-text-primary">Performance Observations</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
@@ -215,7 +215,7 @@ export const InsightsPage: React.FC = () => {
         <Card className="p-5 space-y-3">
           <div className="flex items-center justify-between border-b border-pv-border pb-2.5">
             <h3 className="text-xs font-semibold text-pv-text-primary flex items-center gap-2">
-              <Brain className="w-4 h-4 text-pv-dragon-fruit" /> Skill Distribution Radar
+              <Brain className="w-4 h-4 text-[#38C6BA]" /> Skill Distribution Radar
             </h3>
             <span className="text-[10px] text-pv-text-muted font-mono uppercase">6 Axes</span>
           </div>
@@ -228,14 +228,14 @@ export const InsightsPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between border-b border-pv-border pb-2.5 mb-3">
               <h3 className="text-xs font-semibold text-pv-text-primary flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-pv-dragon-fruit" /> Consistency Heatmap
+                <Calendar className="w-4 h-4 text-[#38C6BA]" /> Consistency Heatmap
               </h3>
               <span className="text-[10px] text-pv-text-muted font-mono">Past 5 Weeks</span>
             </div>
             <HeatmapChart data={heatmapData} />
           </div>
           <div className="bg-pv-surface-secondary p-3 rounded-lg border border-pv-border text-xs text-pv-text-secondary flex items-center justify-between">
-            <span>Daily Streak: <strong className="text-pv-dragon-fruit font-tabular">{formatCount(user?.currentStreak || 1, 'day')}</strong></span>
+            <span>Daily Streak: <strong className="text-[#38C6BA] font-tabular">{formatCount(user?.currentStreak || 1, 'day')}</strong></span>
             <span className="text-[11px] text-pv-text-muted font-medium">Keep solving daily</span>
           </div>
         </Card>
@@ -245,7 +245,7 @@ export const InsightsPage: React.FC = () => {
       <Card className="p-5 space-y-4">
         <div className="flex items-center justify-between border-b border-pv-border pb-3">
           <h3 className="text-xs font-semibold text-pv-text-primary flex items-center gap-2">
-            <BarChart2 className="w-4 h-4 text-pv-dragon-fruit" /> Game Performance Breakdown
+            <BarChart2 className="w-4 h-4 text-[#38C6BA]" /> Game Performance Breakdown
           </h3>
         </div>
 
@@ -293,7 +293,7 @@ export const InsightsPage: React.FC = () => {
                   <span>Fastest: <strong className="text-pv-text-secondary font-tabular">{formatTimeSeconds(pb?.bestTime || 0)}</strong></span>
                   <button
                     onClick={() => playGame(puzzle.id)}
-                    className="text-pv-dragon-fruit hover:underline font-medium flex items-center gap-0.5"
+                    className="text-[#38C6BA] hover:underline font-medium flex items-center gap-0.5"
                   >
                     Play <ChevronRight className="w-3 h-3" />
                   </button>
@@ -307,7 +307,7 @@ export const InsightsPage: React.FC = () => {
       {/* Recommended Next Challenges */}
       <Card className="p-5 space-y-4">
         <h3 className="text-xs font-semibold text-pv-text-primary flex items-center gap-2 border-b border-pv-border pb-2.5">
-          <Target className="w-4 h-4 text-pv-dragon-fruit" /> Recommended Puzzles
+          <Target className="w-4 h-4 text-[#38C6BA]" /> Recommended Puzzles
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {recommendedGames.map((p) => (

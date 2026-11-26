@@ -128,7 +128,7 @@ export const WordGrid: React.FC<Props> = ({ difficulty, onComplete, useHint, hin
               className={`px-3 py-1 rounded-md text-xs font-mono font-medium border uppercase transition-colors ${
                 isDone
                   ? 'bg-emerald-950/30 text-emerald-400 border-emerald-600/40 line-through'
-                  : 'bg-[#16131C] text-[#C5BFD0] border-[#342D3D]'
+                  : 'bg-[#1C2D3B] text-[#B4C3CE] border-[#36515F]'
               }`}
             >
               {w}
@@ -138,7 +138,7 @@ export const WordGrid: React.FC<Props> = ({ difficulty, onComplete, useHint, hin
       </div>
 
       {/* Board */}
-      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
         <p className="text-xs text-pv-text-secondary mb-4 text-center">
           Select adjacent letters to find each target word.
         </p>
@@ -151,9 +151,9 @@ export const WordGrid: React.FC<Props> = ({ difficulty, onComplete, useHint, hin
 
               let cellStyle = 'bg-pv-surface-secondary border-pv-border hover:border-pv-border-strong text-pv-text-primary';
               if (isSelected) {
-                cellStyle = 'bg-pv-dragon-fruit text-[#110F15] border-pv-dragon-fruit font-bold';
+                cellStyle = 'bg-[#38C6BA] text-[#142331] border-[#38C6BA] font-bold';
               } else if (isHinted) {
-                cellStyle = 'bg-pv-dragon-fruit/20 border-pv-dragon-fruit text-pv-dragon-fruit-light font-bold';
+                cellStyle = 'bg-[#38C6BA]/20 border-[#38C6BA] text-[#A8E5D5] font-bold';
               }
 
               return (
@@ -183,7 +183,7 @@ export const WordGrid: React.FC<Props> = ({ difficulty, onComplete, useHint, hin
         <button
           onClick={handleCheckWord}
           disabled={selectedChain.length === 0 || isWon}
-          className="flex-1 h-10 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40"
+          className="flex-1 h-10 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40"
         >
           <Check className="w-4 h-4" /> Submit Word
         </button>

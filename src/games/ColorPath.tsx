@@ -14,10 +14,10 @@ interface Props {
 }
 
 const COLOR_PAIRS = [
-  { id: 'rose', label: '1', bg: 'bg-rose-500', textOnFill: 'text-[#110F15]', border: 'border-rose-400', name: 'Rose (1)' },
-  { id: 'blue', label: '2', bg: 'bg-sky-400', textOnFill: 'text-[#110F15]', border: 'border-sky-300', name: 'Blue (2)' },
-  { id: 'emerald', label: '3', bg: 'bg-emerald-400', textOnFill: 'text-[#110F15]', border: 'border-emerald-300', name: 'Emerald (3)' },
-  { id: 'violet', label: '4', bg: 'bg-violet-400', textOnFill: 'text-[#110F15]', border: 'border-violet-300', name: 'Violet (4)' },
+  { id: 'rose', label: '1', bg: 'bg-rose-500', textOnFill: 'text-[#142331]', border: 'border-rose-400', name: 'Coral (1)' },
+  { id: 'blue', label: '2', bg: 'bg-sky-400', textOnFill: 'text-[#142331]', border: 'border-sky-300', name: 'Sky (2)' },
+  { id: 'emerald', label: '3', bg: 'bg-emerald-400', textOnFill: 'text-[#142331]', border: 'border-emerald-300', name: 'Mint (3)' },
+  { id: 'amber', label: '4', bg: 'bg-amber-400', textOnFill: 'text-[#142331]', border: 'border-amber-300', name: 'Gold (4)' },
 ];
 
 function arePairsSolvable(size: number, pairs: [number, number][]): boolean {
@@ -283,8 +283,8 @@ export const ColorPath: React.FC<Props> = ({ difficulty, onComplete, isPaused = 
       />
 
       {/* Board */}
-      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
-        <p className="text-xs text-[#C5BFD0] mb-4 text-center">
+      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+        <p className="text-xs text-[#B4C3CE] mb-4 text-center">
           Tap a numbered node (1-{pairCount}) and trace adjacent cells to its matching node without crossing paths.
         </p>
 
@@ -310,11 +310,11 @@ export const ColorPath: React.FC<Props> = ({ difficulty, onComplete, isPaused = 
                 }
                 className={`aspect-square rounded-md flex items-center justify-center border transition-colors select-none ${
                   cell.isEndpoint
-                    ? `${pairObj?.bg || 'bg-pv-surface-primary'} ${pairObj?.textOnFill || 'text-[#110F15]'} ${
+                    ? `${pairObj?.bg || 'bg-pv-surface-primary'} ${pairObj?.textOnFill || 'text-[#142331]'} ${
                         pairObj?.border || 'border-pv-border'
                       } font-bold shadow-sm`
                     : pathColor
-                    ? `${pairObj?.bg || 'bg-pv-surface-soft'} opacity-85 border-pv-border text-[#110F15] font-semibold`
+                    ? `${pairObj?.bg || 'bg-pv-surface-soft'} opacity-85 border-pv-border text-[#142331] font-semibold`
                     : 'bg-pv-surface-secondary border-pv-border hover:border-pv-border-strong'
                 }`}
               >

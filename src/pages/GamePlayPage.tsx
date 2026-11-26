@@ -60,11 +60,13 @@ export const GamePlayPage: React.FC = () => {
     selectedJourneyStageId,
     activePracticeChallenge,
     isReplayAttempt,
+    isDailySession,
     setActiveTab,
     viewCollectionDetail,
     viewPuzzleGuide,
-    viewMasteryDetail,
     user,
+    isGuest,
+    isOnline,
     addXPAndCoins,
     useHint,
     pbToast,
@@ -74,10 +76,11 @@ export const GamePlayPage: React.FC = () => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [didPause, setDidPause] = useState(false);
   const stageWrapperRef = useRef<HTMLDivElement>(null);
 
   const isCompetitiveOrTimed = Boolean(
-    activeChallengeId || selectedEventId || selectedPuzzle === 'challenge_mode'
+    activeChallengeId || selectedEventId || isDailySession || selectedPuzzle === 'challenge_mode'
   );
 
   useEffect(() => {
@@ -91,11 +94,27 @@ export const GamePlayPage: React.FC = () => {
       (stageWrapperRef.current as HTMLDivElement & { inert: boolean }).inert = isPaused;
     }
   }, [isPaused]);
+
+  useEffect(() => {
+    const handleEscapeToggle = () => {
+      if (!isCompetitiveOrTimed && !isCompleting) {
+        setIsPaused((prev) => {
+          const next = !prev;
+          if (next) setDidPause(true);
+          return next;
+        });
+      }
+    };
+    window.addEventListener('pv:escape-game', handleEscapeToggle);
+    return () => window.removeEventListener('pv:escape-game', handleEscapeToggle);
+  }, [isCompetitiveOrTimed, isCompleting]);
+
   const [winResult, setWinResult] = useState<{
     score: number;
     timeSeconds: number;
     won: boolean;
     xpAwarded: number;
+    coinsAwarded: number;
     isPB?: boolean;
     pbDiffMsg?: string;
     eventPointsGained?: number;
@@ -115,15 +134,18 @@ export const GamePlayPage: React.FC = () => {
   if (!selectedPuzzle) {
     return (
       <div className="text-center py-16 space-y-4">
-        <p className="text-sm text-[#B9B3C2]">No puzzle selected.</p>
+        <p className="text-sm text-[#B4C3CE]">No puzzle selected.</p>
         <Button variant="primary" onClick={() => setActiveTab('games')}>
-          Browse Puzzle Library
+          Open Games
         </Button>
       </div>
     );
   }
 
   const puzzleInfo = PUZZLE_MODES.find((p) => p.id === selectedPuzzle);
+  const currentIdx = PUZZLE_MODES.findIndex((p) => p.id === selectedPuzzle);
+  const nextSuggestedPuzzle =
+    PUZZLE_MODES[(currentIdx + 1) % PUZZLE_MODES.length] || PUZZLE_MODES[0];
 
   const handleComplete = async (score: number, timeSeconds: number, won: boolean) => {
     if (isPaused || isCompleting || winResult) return;
@@ -138,7 +160,12 @@ export const GamePlayPage: React.FC = () => {
         : 10;
       const xpEarned = isReplayAttempt ? 0 : baseXp;
 
-      const { isPB, pbDiffMsg } = await addXPAndCoins(xpEarned, score, timeSeconds, won);
+      const { isPB, pbDiffMsg, coinsAwarded } = await addXPAndCoins(
+        xpEarned,
+        score,
+        timeSeconds,
+        won
+      );
       let eventPointsGained: number | undefined = undefined;
       let isEventCompleted: boolean | undefined = undefined;
       let challengeCompleted: boolean | undefined = undefined;
@@ -266,6 +293,7 @@ export const GamePlayPage: React.FC = () => {
         timeSeconds,
         won,
         xpAwarded: xpEarned,
+        coinsAwarded,
         isPB,
         pbDiffMsg,
         eventPointsGained,
@@ -283,7 +311,7 @@ export const GamePlayPage: React.FC = () => {
       });
 
       if (user) {
-        saveGameSession(sessionData);
+        saveGameSession(sessionData, didPause);
       }
     } finally {
       setIsCompleting(false);
@@ -344,7 +372,7 @@ export const GamePlayPage: React.FC = () => {
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Focused Arena Top Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#342D3D]">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#36515F]">
         <Button
           variant="ghost"
           size="sm"
@@ -352,17 +380,20 @@ export const GamePlayPage: React.FC = () => {
           className="-ml-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Puzzle Library</span>
+          <span>Back to Games</span>
         </Button>
 
         <div className="flex items-center gap-2">
-          <h1 className="text-base sm:text-lg font-semibold text-[#F5F3F7]">
+          <h1 className="text-lg sm:text-xl font-bold text-[#F5F7F8]">
             {puzzleInfo?.name}
           </h1>
           <Badge variant="neutral" className="capitalize">
             {selectedDifficulty}
           </Badge>
           {isReplayAttempt && <Badge variant="accent">Replay</Badge>}
+          {(!isOnline || isGuest) && (
+            <Badge variant="warning">Offline Practice · Unranked</Badge>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -371,14 +402,20 @@ export const GamePlayPage: React.FC = () => {
             size="sm"
             disabled={isCompetitiveOrTimed || Boolean(winResult)}
             onClick={() => {
-              if (!isCompetitiveOrTimed && !winResult) setIsPaused((p) => !p);
+              if (!isCompetitiveOrTimed && !winResult) {
+                setIsPaused((p) => {
+                  const next = !p;
+                  if (next) setDidPause(true);
+                  return next;
+                });
+              }
             }}
             title={
               isCompetitiveOrTimed
-                ? 'Pause disabled in competitive and timed modes'
+                ? 'Pause disabled in daily, competitive, and timed modes'
                 : isPaused
                 ? 'Resume match'
-                : 'Pause match timer and board'
+                : 'Pause timer and board'
             }
           >
             {isPaused ? <Play className="w-3.5 h-3.5 fill-current" /> : <Pause className="w-3.5 h-3.5" />}
@@ -390,7 +427,7 @@ export const GamePlayPage: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={() => viewPuzzleGuide(selectedPuzzle)}
-            title="View full guide"
+            title="How to play"
           >
             <BookOpen className="w-4 h-4" />
             <span className="hidden sm:inline">Rules</span>
@@ -400,21 +437,22 @@ export const GamePlayPage: React.FC = () => {
             size="sm"
             onClick={() => {
               setIsPaused(false);
+              setDidPause(false);
               setWinResult(null);
               setResetKey((k) => k + 1);
             }}
             title="Restart puzzle"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Restart</span>
+            <span className="hidden sm:inline">Reset</span>
           </Button>
         </div>
       </div>
 
-      {/* 2-Column Tactile Gameplay Arena */}
+      {/* Board-Dominant Arena Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Main Interactive Board Stage (8 cols) */}
-        <div className="lg:col-span-8 pv-board-matte border border-[#342D3D] rounded-xl p-3 sm:p-6 min-h-[460px] lg:min-h-[540px] flex items-center justify-center relative overflow-hidden">
+        {/* Main Interactive Board Stage (9 cols desktop -> dominant focus) */}
+        <div className="lg:col-span-9 pv-board-matte border border-[#36515F] rounded-xl p-3 sm:p-6 min-h-[460px] lg:min-h-[540px] flex items-center justify-center relative overflow-hidden">
           <div
             ref={stageWrapperRef}
             aria-hidden={isPaused}
@@ -422,8 +460,8 @@ export const GamePlayPage: React.FC = () => {
           >
             <Suspense
               fallback={
-                <div className="flex flex-col items-center gap-2 text-xs text-[#9F97AB]">
-                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#342D3D] border-t-[#FF4696]" />
+                <div className="flex flex-col items-center gap-2 text-xs text-[#B4C3CE]">
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#36515F] border-t-[#38C6BA]" />
                   <span>Loading puzzle...</span>
                 </div>
               }
@@ -437,15 +475,15 @@ export const GamePlayPage: React.FC = () => {
               role="dialog"
               aria-modal="true"
               aria-label="Match paused"
-              className="absolute inset-0 z-20 bg-[#110F15] flex flex-col items-center justify-center gap-4 p-6 text-center"
+              className="absolute inset-0 z-20 bg-[#142331] flex flex-col items-center justify-center gap-4 p-6 text-center"
             >
-              <div className="w-12 h-12 rounded-xl bg-[#1E1033] border border-[#494052] flex items-center justify-center text-[#FF4696]">
+              <div className="w-12 h-12 rounded-xl bg-[#233D4A] border border-[#36515F] flex items-center justify-center text-[#38C6BA]">
                 <Pause className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-[#F5F3F7]">Match paused</h2>
-                <p className="text-xs text-[#C5BFD0] mt-1">
-                  Gameplay timer and board inputs are paused until you resume.
+                <h2 className="text-lg font-bold text-[#F5F7F8]">Match paused</h2>
+                <p className="text-xs sm:text-sm text-[#B4C3CE] mt-1 max-w-sm">
+                  Gameplay timer and board inputs are paused. Pausing excludes this run from leaderboard ranking to prevent timer exploits.
                 </p>
               </div>
               <Button variant="primary" size="md" onClick={() => setIsPaused(false)}>
@@ -456,31 +494,28 @@ export const GamePlayPage: React.FC = () => {
           )}
         </div>
 
-        {/* Right Match Inspector Console (4 cols) */}
-        <aside aria-label="Match Details" className="lg:col-span-4 space-y-4">
-          <Card padding="none" className="overflow-hidden">
-            <div className="h-24 border-b border-[#342D3D] relative bg-[#14111A]">
-              <PuzzleCoverArt type={selectedPuzzle} />
-              <div className="absolute top-2.5 left-3">
-                <Badge variant="neutral">{puzzleInfo?.category}</Badge>
-              </div>
+        {/* Clean Compact Side Controls (3 cols desktop) */}
+        <aside aria-label="Game Settings" className="lg:col-span-3 space-y-4">
+          <Card surface="ivory" padding="none" className="overflow-hidden">
+            <div className="h-24 border-b border-[#D5DEDB] relative bg-[#E9EEE8]">
+              <PuzzleCoverArt type={selectedPuzzle} variant="light" />
             </div>
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between gap-2 text-xs">
-                <span className="text-[#9F97AB]">Personal best</span>
-                <span className="font-semibold text-[#F5F3F7] font-tabular">
+                <span className="text-[#526575] font-semibold">Personal best</span>
+                <span className="font-bold text-[#142331] font-tabular">
                   {currentPB && currentPB.bestScore > 0
-                    ? `${currentPB.bestScore} pts (${currentPB.bestTime}s)`
-                    : 'No record yet'}
+                    ? `${currentPB.bestScore} pts`
+                    : 'Not played'}
                 </span>
               </div>
 
               {!activeChallengeId && !selectedEventId && !selectedCollectionId && !selectedJourneyStageId && !isReplayAttempt && (
-                <div className="pt-2 border-t border-[#342D3D]">
-                  <span className="block text-[11px] text-[#9F97AB] uppercase tracking-wider mb-1.5">
-                    Difficulty tier
+                <div className="pt-2 border-t border-[#D5DEDB]">
+                  <span className="block text-xs font-bold text-[#142331] mb-1.5">
+                    Difficulty
                   </span>
-                  <div className="grid grid-cols-3 gap-1 bg-[#110F15] p-1 rounded-lg border border-[#342D3D]">
+                  <div className="grid grid-cols-3 gap-1 bg-[#E9EEE8] p-1 rounded-lg border border-[#D5DEDB]">
                     {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
                       <button
                         key={d}
@@ -492,10 +527,10 @@ export const GamePlayPage: React.FC = () => {
                             setResetKey((k) => k + 1);
                           }
                         }}
-                        className={`py-1.5 rounded text-xs font-medium capitalize transition-colors ${
+                        className={`py-1.5 rounded text-xs font-bold capitalize transition-colors ${
                           selectedDifficulty === d
-                            ? 'bg-[#FF4696] text-[#110F15] font-semibold'
-                            : 'text-[#C5BFD0] hover:text-[#F5F3F7]'
+                            ? 'bg-[#087F8C] text-[#FFFFFF]'
+                            : 'text-[#526575] hover:text-[#142331]'
                         }`}
                       >
                         {d}
@@ -508,30 +543,25 @@ export const GamePlayPage: React.FC = () => {
           </Card>
 
           {guide && (
-            <Card padding="md" className="space-y-3">
-              <div className="flex items-center justify-between border-b border-[#342D3D] pb-2">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-[#F5F3F7]">
-                  How to play
-                </h2>
+            <Card surface="primary" padding="md" className="space-y-2.5">
+              <div className="flex items-center justify-between border-b border-[#36515F] pb-2">
+                <h2 className="text-xs font-bold text-[#F5F7F8]">How to play</h2>
                 <button
                   onClick={() => viewPuzzleGuide(selectedPuzzle)}
-                  className="text-[11px] text-[#FF82B8] hover:text-[#FF4696] font-medium"
+                  className="text-xs text-[#A8E5D5] hover:text-[#38C6BA] font-semibold"
                 >
                   Full guide
                 </button>
               </div>
-              <p className="text-xs text-[#C5BFD0] leading-relaxed">{guide.objective}</p>
-              <div className="space-y-1.5 pt-1">
-                <p className="text-[10px] font-mono uppercase tracking-wider text-[#9F97AB]">Controls</p>
-                <ul className="space-y-1 text-xs text-[#C5BFD0]">
-                  {guide.controls.slice(0, 2).map((c, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="text-[#FF4696] mt-0.5">•</span>
-                      <span>{c}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <p className="text-xs text-[#B4C3CE] leading-relaxed">{guide.objective}</p>
+              <ul className="space-y-1 text-xs text-[#B4C3CE] pt-1">
+                {guide.controls.slice(0, 2).map((c, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-[#38C6BA] mt-0.5 font-bold">•</span>
+                    <span>{c}</span>
+                  </li>
+                ))}
+              </ul>
             </Card>
           )}
         </aside>
@@ -539,20 +569,20 @@ export const GamePlayPage: React.FC = () => {
 
       {/* Personal Best Toast */}
       {pbToast?.show && (
-        <div className="fixed top-16 right-4 sm:right-6 z-50 bg-[#1C1823] border border-[#494052] rounded-xl shadow-lg animate-fade-in">
+        <div className="fixed top-20 right-4 sm:right-6 z-50 bg-[#233D4A] border border-[#38C6BA] rounded-xl animate-fade-in">
           <div className="px-4 py-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#FF4696]/15 text-[#FF82B8] flex items-center justify-center border border-[#FF4696]/30 shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-[#38C6BA]/15 text-[#38C6BA] flex items-center justify-center border border-[#38C6BA]/40 shrink-0">
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold text-[#FF82B8]">New personal best</p>
-              <p className="text-sm font-semibold text-[#F5F3F7]">{pbToast.puzzleName}</p>
-              <p className="text-xs text-[#34D399] font-tabular">{pbToast.improvementMsg}</p>
+              <p className="text-xs font-bold text-[#A8E5D5]">New personal best</p>
+              <p className="text-sm font-bold text-[#F5F7F8]">{pbToast.puzzleName}</p>
+              <p className="text-xs text-[#6EE7B7] font-tabular">{pbToast.improvementMsg}</p>
             </div>
             <button
               onClick={closePbToast}
               aria-label="Dismiss notification"
-              className="ml-2 p-1 text-[#9F97AB] hover:text-[#F5F3F7]"
+              className="ml-2 p-1 text-[#98AAB8] hover:text-[#F5F7F8]"
             >
               <X className="w-4 h-4" />
             </button>
@@ -560,7 +590,7 @@ export const GamePlayPage: React.FC = () => {
         </div>
       )}
 
-      {/* Results Dialog */}
+      {/* Clean, Restrained Game Completion Dialog */}
       {winResult && (
         <div
           role="dialog"
@@ -568,104 +598,83 @@ export const GamePlayPage: React.FC = () => {
           aria-labelledby="result-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 animate-fade-in"
         >
-          <div className="bg-[#1C1823] border border-[#494052] rounded-xl p-6 max-w-md w-full space-y-5 shadow-lg">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-11 h-11 rounded-lg flex items-center justify-center border ${
-                    winResult.won
-                      ? 'bg-[#34D399]/12 border-[#34D399]/30 text-[#34D399]'
-                      : 'bg-[#24202C] border-[#342D3D] text-[#B9B3C2]'
-                  }`}
-                >
-                  {winResult.isPB ? <Award className="w-5 h-5" /> : <Trophy className="w-5 h-5" />}
+          <div className="bg-[#233D4A] border border-[#4A6A7B] rounded-xl p-6 max-w-md w-full space-y-5">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-11 h-11 rounded-lg flex items-center justify-center border ${
+                  winResult.won
+                    ? 'bg-[#38C6BA]/15 border-[#38C6BA]/40 text-[#38C6BA]'
+                    : 'bg-[#1C2D3B] border-[#36515F] text-[#B4C3CE]'
+                }`}
+              >
+                {winResult.isPB ? <Award className="w-5 h-5" /> : <Trophy className="w-5 h-5" />}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 id="result-title" className="text-xl font-bold text-[#F5F7F8]">
+                    {winResult.won ? 'Puzzle Completed!' : 'Try Again'}
+                  </h2>
+                  {winResult.isPB && <Badge variant="accent">Personal Best</Badge>}
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 id="result-title" className="text-lg font-semibold text-[#F5F3F7]">
-                      {winResult.won ? 'Puzzle solved' : 'Game over'}
-                    </h2>
-                    {winResult.isPB && <Badge variant="accent">Personal best</Badge>}
-                  </div>
-                  <p className="text-xs text-[#9F97AB] mt-0.5">
-                    {puzzleInfo?.name} · <span className="capitalize">{selectedDifficulty}</span>
-                  </p>
-                </div>
+                <p className="text-xs text-[#B4C3CE] mt-0.5">
+                  {puzzleInfo?.name} · <span className="capitalize">{selectedDifficulty}</span>
+                </p>
               </div>
             </div>
 
-            <div className="bg-[#110F15] border border-[#342D3D] rounded-lg divide-y divide-[#342D3D] text-xs">
+            <div className="bg-[#1C2D3B] border border-[#36515F] rounded-lg divide-y divide-[#36515F] text-xs">
               <div className="px-4 py-2.5 flex items-center justify-between">
-                <span className="text-[#9F97AB]">Score</span>
-                <div className="text-right font-tabular">
-                  <span className="font-semibold text-[#F5F3F7]">{winResult.score} pts</span>
-                  {winResult.pbDiffMsg && (
-                    <span className="block text-[11px] text-[#34D399]">{winResult.pbDiffMsg}</span>
-                  )}
-                </div>
-              </div>
-              <div className="px-4 py-2.5 flex items-center justify-between">
-                <span className="text-[#9F97AB]">Time taken</span>
-                <span className="font-semibold text-[#F5F3F7] font-tabular">
+                <span className="text-[#B4C3CE]">Time taken</span>
+                <span className="font-bold text-[#F5F7F8] font-tabular">
                   {winResult.timeSeconds}s
                 </span>
               </div>
               <div className="px-4 py-2.5 flex items-center justify-between">
-                <span className="text-[#9F97AB]">XP earned</span>
-                <span className="font-semibold text-[#34D399] font-tabular">
+                <span className="text-[#B4C3CE]">Score</span>
+                <div className="text-right font-tabular">
+                  <span className="font-bold text-[#F5F7F8]">{winResult.score} pts</span>
+                  {winResult.pbDiffMsg && (
+                    <span className="block text-[11px] text-[#6EE7B7]">{winResult.pbDiffMsg}</span>
+                  )}
+                </div>
+              </div>
+              <div className="px-4 py-2.5 flex items-center justify-between">
+                <span className="text-[#B4C3CE]">XP earned</span>
+                <span className="font-bold text-[#A8E5D5] font-tabular">
                   +{winResult.xpAwarded} XP
                 </span>
               </div>
+              <div className="px-4 py-2.5 flex items-center justify-between">
+                <span className="text-[#B4C3CE]">Coins earned</span>
+                <span className="font-bold text-[#93D1F2] font-tabular">
+                  +{winResult.coinsAwarded} coins
+                </span>
+              </div>
               {winResult.eventPointsGained !== undefined && (
-                <div className="px-4 py-2.5 flex items-center justify-between bg-[#FF4696]/8">
-                  <span className="text-[#FF82B8] flex items-center gap-1.5">
+                <div className="px-4 py-2.5 flex items-center justify-between bg-[#38C6BA]/10">
+                  <span className="text-[#A8E5D5] flex items-center gap-1.5">
                     <Flame className="w-3.5 h-3.5" />
                     <span>Event points</span>
                   </span>
-                  <span className="font-semibold text-[#FF82B8] font-tabular">
+                  <span className="font-bold text-[#A8E5D5] font-tabular">
                     +{winResult.eventPointsGained} pts
                   </span>
                 </div>
               )}
               {winResult.practiceCompleted && (
-                <div className="px-4 py-2.5 flex items-center justify-between bg-[#34D399]/8">
-                  <span className="text-[#34D399] flex items-center gap-1.5">
+                <div className="px-4 py-2.5 flex items-center justify-between bg-[#10B981]/10">
+                  <span className="text-[#6EE7B7] flex items-center gap-1.5">
                     <Target className="w-3.5 h-3.5" />
                     <span>Practice bonus</span>
                   </span>
-                  <span className="font-semibold text-[#34D399] font-tabular">
+                  <span className="font-bold text-[#6EE7B7] font-tabular">
                     +{winResult.practiceRewardXP} XP / +{winResult.practiceRewardCoins} Coins
                   </span>
                 </div>
               )}
             </div>
 
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="secondary"
-                  size="md"
-                  onClick={() => {
-                    setWinResult(null);
-                    setResetKey((k) => k + 1);
-                  }}
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Play again</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="md"
-                  onClick={() => {
-                    setWinResult(null);
-                    viewMasteryDetail(selectedPuzzle);
-                  }}
-                >
-                  <Award className="w-3.5 h-3.5" />
-                  <span>Mastery</span>
-                </Button>
-              </div>
-
+            <div className="space-y-2.5">
               {selectedCollectionId ? (
                 <Button
                   variant="primary"
@@ -698,12 +707,39 @@ export const GamePlayPage: React.FC = () => {
                   className="w-full"
                   onClick={() => {
                     setWinResult(null);
+                    setDidPause(false);
+                    playGame(nextSuggestedPuzzle.id, selectedDifficulty);
+                    setResetKey((k) => k + 1);
+                  }}
+                >
+                  Play Another Puzzle
+                </Button>
+              )}
+
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => {
+                    setWinResult(null);
+                    setDidPause(false);
+                    setResetKey((k) => k + 1);
+                  }}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Replay</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={() => {
+                    setWinResult(null);
                     setActiveTab('games');
                   }}
                 >
-                  Browse puzzles
+                  <span>Back to Games</span>
                 </Button>
-              )}
+              </div>
             </div>
           </div>
         </div>

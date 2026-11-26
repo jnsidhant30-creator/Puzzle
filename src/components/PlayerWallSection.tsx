@@ -117,7 +117,7 @@ export const PlayerWallSection: React.FC<Props> = ({ profileUserId, profileUserN
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4 border-b border-pv-border pb-3">
         <div className="flex items-center gap-2.5">
-          <MessageSquare className="w-4 h-4 text-pv-dragon-fruit" />
+          <MessageSquare className="w-4 h-4 text-[#38C6BA]" />
           <h3 className="text-base font-semibold text-pv-text-primary">
             {profileUserName}'s Player Wall
           </h3>
@@ -130,7 +130,7 @@ export const PlayerWallSection: React.FC<Props> = ({ profileUserId, profileUserN
       {/* Post Input Form */}
       {user && (
         <form onSubmit={handleSubmit} className="mb-6">
-          <div className="flex items-start gap-3 bg-pv-surface-soft p-3 rounded-lg border border-pv-border focus-within:border-pv-dragon-fruit transition-colors">
+          <div className="flex items-start gap-3 bg-pv-surface-soft p-3 rounded-lg border border-pv-border focus-within:border-[#38C6BA] transition-colors">
             <img
               src={user.avatarUrl}
               alt={user.displayName}
@@ -196,7 +196,7 @@ export const PlayerWallSection: React.FC<Props> = ({ profileUserId, profileUserN
                           {post.authorName}
                         </span>
                         {post.authorTitle && (
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 bg-pv-surface-elevated text-pv-dragon-fruit-light border border-pv-border rounded">
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 bg-pv-surface-elevated text-[#A8E5D5] border border-pv-border rounded">
                             {post.authorTitle}
                           </span>
                         )}
@@ -220,7 +220,7 @@ export const PlayerWallSection: React.FC<Props> = ({ profileUserId, profileUserN
                     {user && user.uid !== post.authorId && (
                       <button
                         onClick={() => handleReport(post.id, post.authorId)}
-                        className="text-pv-text-muted hover:text-pv-dragon-fruit-light p-1 rounded transition-colors"
+                        className="text-pv-text-muted hover:text-[#A8E5D5] p-1 rounded transition-colors"
                         title="Report comment"
                         aria-label="Report comment"
                       >
@@ -237,7 +237,7 @@ export const PlayerWallSection: React.FC<Props> = ({ profileUserId, profileUserN
                     onClick={() => handleLike(post.id)}
                     className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
                       isLiked
-                        ? 'text-pv-dragon-fruit-light'
+                        ? 'text-[#A8E5D5]'
                         : 'text-pv-text-muted hover:text-pv-text-primary'
                     }`}
                   >

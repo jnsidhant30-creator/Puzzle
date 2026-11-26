@@ -73,7 +73,7 @@ export const EventsPage: React.FC = () => {
 
       {loading ? (
         <Card className="py-16 text-center">
-          <div className="w-6 h-6 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-6 h-6 border-2 border-[#38C6BA] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-xs text-pv-text-secondary font-medium">Loading events...</p>
         </Card>
       ) : displayedEvents.length === 0 ? (
@@ -109,7 +109,7 @@ export const EventsPage: React.FC = () => {
                       {event.status === 'active' ? 'Active' : event.status}
                     </span>
                     <div className="flex items-center gap-1 text-xs text-pv-text-muted font-tabular">
-                      <Clock className="w-3.5 h-3.5 text-pv-dragon-fruit" />
+                      <Clock className="w-3.5 h-3.5 text-[#38C6BA]" />
                       <span>{getTimeRemaining(event.endAt)}</span>
                     </div>
                   </div>
@@ -143,7 +143,7 @@ export const EventsPage: React.FC = () => {
                       </div>
                       <div className="w-full bg-pv-surface-primary h-1.5 rounded-full overflow-hidden border border-pv-border">
                         <div
-                          className="bg-pv-dragon-fruit h-full transition-all duration-300 rounded-full"
+                          className="bg-[#38C6BA] h-full transition-all duration-300 rounded-full"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -154,10 +154,10 @@ export const EventsPage: React.FC = () => {
                 <div className="pt-3 border-t border-pv-border flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 text-xs font-mono">
                     <span className="flex items-center gap-1 text-pv-text-secondary">
-                      <Zap className="w-3 h-3 text-pv-dragon-fruit" /> +{event.rewardConfig.xp} XP
+                      <Zap className="w-3 h-3 text-[#38C6BA]" /> +{event.rewardConfig.xp} XP
                     </span>
                     <span className="flex items-center gap-1 text-pv-text-secondary">
-                      <Award className="w-3 h-3 text-pv-dragon-fruit" /> +{event.rewardConfig.coins} coins
+                      <Award className="w-3 h-3 text-[#38C6BA]" /> +{event.rewardConfig.coins} coins
                     </span>
                   </div>
 

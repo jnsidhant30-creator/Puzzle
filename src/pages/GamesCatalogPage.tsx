@@ -4,7 +4,7 @@ import { PUZZLE_MODES } from '../data/puzzles';
 import { Difficulty } from '../types';
 import { BookOpen, Search, Heart, Play } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Card, PageHeader, Badge } from '../components/ui/Card';
+import { Card, PageHeader } from '../components/ui/Card';
 import { PuzzleCoverArt, PUZZLE_CATEGORY_ACCENT } from '../components/PuzzleArt';
 
 export const GamesCatalogPage: React.FC = () => {
@@ -31,27 +31,19 @@ export const GamesCatalogPage: React.FC = () => {
     return true;
   });
 
-  // Spotlight the first filtered puzzle (e.g. category lead) when unfiltered
-  const spotlightPuzzle = !searchQuery.trim() && !favoritesOnly ? filteredPuzzles[0] : null;
-  const spotlightDiff = spotlightPuzzle
-    ? manualDifficulty === 'auto'
-      ? getRecommendedDifficulty(spotlightPuzzle.id)
-      : manualDifficulty
-    : 'medium';
-
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="Puzzle Library"
-        description="Browse all 16 logic, word, memory, and spatial disciplines."
+        title="Games"
+        description="Choose any of the 16 puzzles and jump right in."
         action={
-          <div className="flex flex-wrap items-center gap-1 bg-[#16131C] p-1 rounded-lg border border-[#342D3D]">
+          <div className="flex flex-wrap items-center gap-1 bg-[#1C2D3B] p-1 rounded-lg border border-[#36515F]">
             <button
               onClick={() => setManualDifficulty('auto')}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
                 manualDifficulty === 'auto'
-                  ? 'bg-[#FF4696] text-[#110F15] font-semibold'
-                  : 'text-[#C5BFD0] hover:text-[#F5F3F7]'
+                  ? 'bg-[#38C6BA] text-[#142331]'
+                  : 'text-[#B4C3CE] hover:text-[#F5F7F8]'
               }`}
             >
               Auto
@@ -60,10 +52,10 @@ export const GamesCatalogPage: React.FC = () => {
               <button
                 key={d}
                 onClick={() => setManualDifficulty(d)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-colors ${
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold capitalize transition-colors ${
                   manualDifficulty === d
-                    ? 'bg-[#24202C] text-[#F5F3F7] border border-[#494052]'
-                    : 'text-[#C5BFD0] hover:text-[#F5F3F7]'
+                    ? 'bg-[#2C4654] text-[#F5F7F8] border border-[#4A6A7B]'
+                    : 'text-[#B4C3CE] hover:text-[#F5F7F8]'
                 }`}
               >
                 {d}
@@ -73,53 +65,7 @@ export const GamesCatalogPage: React.FC = () => {
         }
       />
 
-      {/* Storefront Spotlight Banner */}
-      {spotlightPuzzle && (
-        <Card
-          surface="featured"
-          padding="none"
-          className="border-[#494052] overflow-hidden grid grid-cols-1 lg:grid-cols-12"
-        >
-          <div className="lg:col-span-7 p-5 sm:p-6 flex flex-col justify-between gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="accent">Category Spotlight</Badge>
-                <Badge variant="neutral">{spotlightPuzzle.category}</Badge>
-                <Badge variant="neutral" className="capitalize">{spotlightDiff}</Badge>
-              </div>
-              <h2 className="text-xl font-semibold text-[#F5F3F7] tracking-tight">
-                {spotlightPuzzle.name}
-              </h2>
-              <p className="text-xs sm:text-sm text-[#C5BFD0] max-w-xl leading-relaxed">
-                {spotlightPuzzle.description}
-              </p>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => playGame(spotlightPuzzle.id, spotlightDiff)}
-              >
-                <Play className="w-4 h-4 fill-current" />
-                <span>Play {spotlightPuzzle.name}</span>
-              </Button>
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={() => viewPuzzleGuide(spotlightPuzzle.id)}
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>Rules &amp; tactics</span>
-              </Button>
-            </div>
-          </div>
-          <div className="lg:col-span-5 bg-[#14111A] border-t lg:border-t-0 lg:border-l border-[#342D3D] h-40 lg:h-auto">
-            <PuzzleCoverArt type={spotlightPuzzle.id} />
-          </div>
-        </Card>
-      )}
-
-      {/* Search & Filter Bar */}
+      {/* Category Filter Pills & Search */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
           {categories.map((cat) => {
@@ -131,14 +77,20 @@ export const GamesCatalogPage: React.FC = () => {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors inline-flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors inline-flex items-center gap-1.5 ${
                   selectedCategory === cat
-                    ? 'bg-[#24202C] text-[#F5F3F7] border border-[#494052]'
-                    : 'text-[#9F97AB] hover:text-[#F5F3F7] hover:bg-[#1C1823] border border-transparent'
+                    ? 'bg-[#38C6BA] text-[#142331]'
+                    : 'bg-[#1C2D3B] text-[#B4C3CE] hover:text-[#F5F7F8] hover:bg-[#233D4A] border border-[#36515F]'
                 }`}
               >
-                <span>{cat}</span>
-                <span className="text-[10px] font-mono text-[#756C82]">{count}</span>
+                <span>{cat === 'Spatial & Grid' ? 'Spatial' : cat}</span>
+                <span
+                  className={`text-[11px] font-tabular ${
+                    selectedCategory === cat ? 'text-[#142331]/80' : 'text-[#98AAB8]'
+                  }`}
+                >
+                  {count}
+                </span>
               </button>
             );
           })}
@@ -146,36 +98,36 @@ export const GamesCatalogPage: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <div className="relative flex-1 sm:w-60">
-            <Search className="w-4 h-4 text-[#9F97AB] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-[#98AAB8] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter puzzles..."
+              placeholder="Search games..."
               aria-label="Filter puzzles"
-              className="w-full h-9 pl-9 pr-3 bg-[#1C1823] border border-[#342D3D] rounded-lg text-xs text-[#F5F3F7] placeholder-[#9F97AB] focus:outline-none focus:border-[#FF4696]"
+              className="w-full h-9 pl-9 pr-3 bg-[#1C2D3B] border border-[#36515F] rounded-lg text-xs text-[#F5F7F8] placeholder-[#98AAB8] focus:outline-none focus:border-[#38C6BA]"
             />
           </div>
           {userFavs.length > 0 && (
             <button
               onClick={() => setFavoritesOnly(!favoritesOnly)}
-              className={`h-9 px-3 rounded-lg text-xs font-medium border inline-flex items-center gap-1.5 transition-colors ${
+              className={`h-9 px-3 rounded-lg text-xs font-semibold border inline-flex items-center gap-1.5 transition-colors ${
                 favoritesOnly
-                  ? 'bg-[#FF4696]/12 border-[#FF4696]/40 text-[#FF82B8]'
-                  : 'bg-[#1C1823] border-[#342D3D] text-[#C5BFD0] hover:text-[#F5F3F7]'
+                  ? 'bg-[#38C6BA]/20 border-[#38C6BA] text-[#A8E5D5]'
+                  : 'bg-[#1C2D3B] border-[#36515F] text-[#B4C3CE] hover:text-[#F5F7F8]'
               }`}
             >
-              <Heart className={`w-3.5 h-3.5 ${favoritesOnly ? 'fill-[#FF4696] text-[#FF4696]' : ''}`} />
+              <Heart className={`w-3.5 h-3.5 ${favoritesOnly ? 'fill-[#38C6BA] text-[#38C6BA]' : ''}`} />
               <span>Favorites</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Games Cover Art Grid */}
+      {/* Playable Game Collection Grid (2 columns mobile -> 3/4 columns desktop) */}
       {filteredPuzzles.length === 0 ? (
         <Card padding="lg" className="text-center space-y-3">
-          <p className="text-sm font-medium text-[#F5F3F7]">No puzzles match your filter.</p>
+          <p className="text-sm font-semibold text-[#F5F7F8]">No games match your search.</p>
           <Button
             variant="secondary"
             size="sm"
@@ -185,11 +137,11 @@ export const GamesCatalogPage: React.FC = () => {
               setFavoritesOnly(false);
             }}
           >
-            Clear filters
+            Show all games
           </Button>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {filteredPuzzles.map((p) => {
             const pb = user?.personalBests?.[p.id];
             const recDiff = getRecommendedDifficulty(p.id);
@@ -200,70 +152,58 @@ export const GamesCatalogPage: React.FC = () => {
             return (
               <Card
                 key={p.id}
+                surface="ivory"
                 padding="none"
-                interactive
-                className="flex flex-col justify-between overflow-hidden group"
+                className="flex flex-col justify-between overflow-hidden hover:border-[#087F8C] transition-colors"
               >
                 <div>
-                  {/* Game Cover Artwork */}
-                  <div className="h-28 border-b border-[#342D3D] relative overflow-hidden bg-[#14111A]">
-                    <PuzzleCoverArt type={p.id} />
-                    <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1.5">
+                  <div className="h-24 sm:h-28 border-b border-[#D5DEDB] relative overflow-hidden bg-[#E9EEE8]">
+                    <PuzzleCoverArt type={p.id} variant="light" />
+                    <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1">
                       <span
-                        className={`px-2 py-0.5 rounded border text-[10px] font-medium ${
-                          catStyle?.badge || 'bg-[#16131C] text-[#C5BFD0] border-[#342D3D]'
+                        className={`px-2 py-0.5 rounded border text-[10px] font-bold ${
+                          catStyle?.badgeLight || 'bg-white text-[#142331] border-[#C3D0CB]'
                         }`}
                       >
-                        {p.category}
+                        {p.category === 'Spatial & Grid' ? 'Spatial' : p.category}
                       </span>
-                      <span className="px-2 py-0.5 rounded bg-[#110F15]/90 border border-[#342D3D] text-[10px] font-mono text-[#C5BFD0] capitalize">
-                        {activeDifficulty}
-                      </span>
+                      {isFav && <Heart className="w-3.5 h-3.5 fill-[#087F8C] text-[#087F8C] shrink-0" />}
                     </div>
                   </div>
 
-                  <div className="p-4 pb-3">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <h3 className="text-[15px] font-semibold text-[#F5F3F7] truncate">
-                        {p.name}
-                      </h3>
-                      {isFav && <Heart className="w-3.5 h-3.5 fill-[#FF4696] text-[#FF4696] shrink-0" />}
-                    </div>
-                    <p className="text-xs text-[#C5BFD0] leading-relaxed line-clamp-2">
+                  <div className="p-3 sm:p-4 pb-2">
+                    <h3 className="text-[14px] sm:text-[16px] font-bold text-[#142331] truncate">
+                      {p.name}
+                    </h3>
+                    <p className="text-xs text-[#526575] leading-snug line-clamp-2 mt-1 hidden sm:block">
                       {p.description}
                     </p>
+                    {pb && pb.bestScore > 0 && (
+                      <p className="text-[11px] font-semibold text-[#066B75] mt-1.5 font-tabular">
+                        Best: {pb.bestScore} pts
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div className="px-4 pb-4 pt-2 space-y-3">
-                  <div className="pt-2.5 border-t border-[#342D3D] flex items-center justify-between text-xs">
-                    <span className="text-[#9F97AB]">Best record</span>
-                    <span className="font-medium text-[#F5F3F7] font-tabular">
-                      {pb && pb.bestScore > 0 ? `${pb.bestScore} pts` : 'Not played'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => playGame(p.id, activeDifficulty)}
-                      className="flex-1 h-9 group-hover:bg-[#FF4696] group-hover:text-[#110F15] group-hover:border-[#FF4696]"
-                    >
-                      <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Play</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => viewPuzzleGuide(p.id)}
-                      title="Learn rules and strategy"
-                      aria-label={`Learn rules for ${p.name}`}
-                      className="h-9 px-2.5"
-                    >
-                      <BookOpen className="w-4 h-4" />
-                    </Button>
-                  </div>
+                <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 flex items-center gap-1.5">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => playGame(p.id, activeDifficulty)}
+                    className="flex-1"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Play</span>
+                  </Button>
+                  <button
+                    onClick={() => viewPuzzleGuide(p.id)}
+                    aria-label={`${p.name} guide`}
+                    title="How to play"
+                    className="h-9 w-9 shrink-0 rounded-lg border border-[#C3D0CB] bg-[#E9EEE8] hover:bg-[#DCE4DF] text-[#142331] hidden sm:flex items-center justify-center transition-colors"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </Card>
             );

@@ -8,11 +8,11 @@ import {
 } from '../services/firebase';
 import { SocialFeedItem, HeadToHeadStats } from '../types';
 import { toast } from '../services/toast';
-import { Users, Copy, Swords, Play, Heart, Activity } from 'lucide-react';
+import { Users, Copy, Swords, Play, Heart, Activity, WifiOff } from 'lucide-react';
 import { PageHeader, Card } from '../components/ui/Card';
 
 export const FriendsPage: React.FC = () => {
-  const { user, playGame } = useStore();
+  const { user, playGame, isOnline, isGuest, retryConnection } = useStore();
   const [activeTab, setActiveTab] = useState<'feed' | 'friends' | 'rivalry'>('feed');
   const [copied, setCopied] = useState(false);
   const [challengeCode, setChallengeCode] = useState<string | null>(null);
@@ -80,13 +80,35 @@ export const FriendsPage: React.FC = () => {
         action={
           <button
             onClick={handleGenerateChallenge}
-            className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors shrink-0"
+            disabled={!isOnline || isGuest}
+            className="h-9 px-4 bg-[#087F8C] hover:bg-[#066B75] disabled:opacity-50 text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors shrink-0"
           >
             <Swords className="w-3.5 h-3.5" />
             <span>Create Challenge Room</span>
           </button>
         }
       />
+
+      {(!isOnline || isGuest) && (
+        <Card className="p-4 border-[#F59E0B]/40 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 text-xs text-[#B4C3CE]">
+            <WifiOff className="w-4 h-4 text-[#FBBF24] shrink-0" />
+            <span>
+              {!isOnline
+                ? 'Friends, social feed, and duel rooms require an active internet connection.'
+                : 'Sign in with a PuzzleVerse account to connect with friends and challenge players.'}
+            </span>
+          </div>
+          {!isOnline && (
+            <button
+              onClick={() => retryConnection()}
+              className="px-3 py-1.5 rounded-lg bg-[#233D4A] border border-[#36515F] text-xs font-bold text-[#F5F7F8]"
+            >
+              Retry Connection
+            </button>
+          )}
+        </Card>
+      )}
 
       {/* Tabs */}
       <div className="flex items-center gap-1.5 border-b border-pv-border pb-2">
@@ -124,9 +146,9 @@ export const FriendsPage: React.FC = () => {
 
       {/* Challenge Room Banner */}
       {challengeCode && (
-        <Card className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-pv-dragon-fruit/40">
+        <Card className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-[#38C6BA]/40">
           <div>
-            <p className="text-[11px] font-semibold text-pv-dragon-fruit uppercase tracking-wider">
+            <p className="text-[11px] font-semibold text-[#38C6BA] uppercase tracking-wider">
               Challenge Room Ready
             </p>
             <p className="text-sm text-pv-text-primary mt-0.5">
@@ -143,7 +165,7 @@ export const FriendsPage: React.FC = () => {
             </button>
             <button
               onClick={() => playGame('challenge_mode', 'medium')}
-              className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors"
+              className="h-9 px-4 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
               <span>Start Match</span>
@@ -192,7 +214,7 @@ export const FriendsPage: React.FC = () => {
                 </div>
                 <button
                   onClick={() => handleSendKudos(item.userName, item.userId)}
-                  className="h-8 px-2.5 rounded-lg border border-pv-border hover:border-pv-dragon-fruit/50 text-pv-text-secondary hover:text-pv-dragon-fruit text-xs font-medium flex items-center gap-1.5 transition-colors shrink-0"
+                  className="h-8 px-2.5 rounded-lg border border-pv-border hover:border-[#38C6BA]/50 text-pv-text-secondary hover:text-[#38C6BA] text-xs font-medium flex items-center gap-1.5 transition-colors shrink-0"
                 >
                   <Heart className="w-3.5 h-3.5" /> Kudos
                 </button>
@@ -217,7 +239,7 @@ export const FriendsPage: React.FC = () => {
           <div className="pt-2">
             <button
               onClick={handleGenerateChallenge}
-              className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg inline-flex items-center gap-1.5 transition-colors"
+              className="h-9 px-4 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg inline-flex items-center gap-1.5 transition-colors"
             >
               <Swords className="w-3.5 h-3.5" />
               <span>Create Challenge Room</span>
@@ -245,7 +267,7 @@ export const FriendsPage: React.FC = () => {
             <Card className="p-6 space-y-6">
               <div className="flex items-center justify-between border-b border-pv-border pb-4">
                 <h3 className="text-base font-semibold text-pv-text-primary flex items-center gap-2">
-                  <Swords className="w-4 h-4 text-pv-dragon-fruit" />
+                  <Swords className="w-4 h-4 text-[#38C6BA]" />
                   Match history: vs {selectedOpponent.name}
                 </h3>
               </div>
@@ -280,7 +302,7 @@ export const FriendsPage: React.FC = () => {
               <div className="pt-2 text-center">
                 <button
                   onClick={() => playGame('challenge_mode', 'medium')}
-                  className="h-10 px-5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg transition-colors"
+                  className="h-10 px-5 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg transition-colors"
                 >
                   Direct Rematch
                 </button>

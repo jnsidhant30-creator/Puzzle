@@ -6,18 +6,33 @@ import { onAuthStateChanged, auth, syncUserProfile, getChallenge2ById } from './
 import { getRedirectResult } from 'firebase/auth';
 import { ToastContainer } from './components/ToastContainer';
 import { BottomNavigation } from './components/BottomNavigation';
+import { PUZZLE_MODES } from './data/puzzles';
 
 const AuthLayout = lazy(() => import('./components/AuthLayout').then((m) => ({ default: m.AuthLayout })));
+const DownloadPage = lazy(() => import('./pages/DownloadPage').then((m) => ({ default: m.DownloadPage })));
+const DesktopAuthPage = lazy(() =>
+  import('./pages/DesktopAuthPage').then((m) => ({ default: m.DesktopAuthPage }))
+);
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 const LevelUpModal = lazy(() => import('./components/LevelUpModal').then((m) => ({ default: m.LevelUpModal })));
-const OnboardingTour = lazy(() => import('./components/OnboardingTour').then((m) => ({ default: m.OnboardingTour })));
 
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
-const GamesCatalogPage = lazy(() => import('./pages/GamesCatalogPage').then((m) => ({ default: m.GamesCatalogPage })));
+const GamesCatalogPage = lazy(() =>
+  import('./pages/GamesCatalogPage').then((m) => ({ default: m.GamesCatalogPage }))
+);
 const GamePlayPage = lazy(() => import('./pages/GamePlayPage').then((m) => ({ default: m.GamePlayPage })));
-const DailyPuzzlePage = lazy(() => import('./pages/DailyPuzzlePage').then((m) => ({ default: m.DailyPuzzlePage })));
-const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage })));
-const AchievementsPage = lazy(() => import('./pages/AchievementsPage').then((m) => ({ default: m.AchievementsPage })));
-const CommunityPuzzlesPage = lazy(() => import('./pages/CommunityPuzzlesPage').then((m) => ({ default: m.CommunityPuzzlesPage })));
+const DailyPuzzlePage = lazy(() =>
+  import('./pages/DailyPuzzlePage').then((m) => ({ default: m.DailyPuzzlePage }))
+);
+const LeaderboardPage = lazy(() =>
+  import('./pages/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage }))
+);
+const AchievementsPage = lazy(() =>
+  import('./pages/AchievementsPage').then((m) => ({ default: m.AchievementsPage }))
+);
+const CommunityPuzzlesPage = lazy(() =>
+  import('./pages/CommunityPuzzlesPage').then((m) => ({ default: m.CommunityPuzzlesPage }))
+);
 const FriendsPage = lazy(() => import('./pages/FriendsPage').then((m) => ({ default: m.FriendsPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })));
 const ProfilePage = lazy(() => import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage })));
@@ -27,37 +42,54 @@ const InsightsPage = lazy(() => import('./pages/InsightsPage').then((m) => ({ de
 const ChallengesPage = lazy(() => import('./pages/ChallengesPage').then((m) => ({ default: m.ChallengesPage })));
 const GoalsPage = lazy(() => import('./pages/GoalsPage').then((m) => ({ default: m.GoalsPage })));
 const ShowcasePage = lazy(() => import('./pages/ShowcasePage').then((m) => ({ default: m.ShowcasePage })));
-const CollectionsPage = lazy(() => import('./pages/CollectionsPage').then((m) => ({ default: m.CollectionsPage })));
-const CollectionDetailPage = lazy(() => import('./pages/CollectionDetailPage').then((m) => ({ default: m.CollectionDetailPage })));
+const CollectionsPage = lazy(() =>
+  import('./pages/CollectionsPage').then((m) => ({ default: m.CollectionsPage }))
+);
+const CollectionDetailPage = lazy(() =>
+  import('./pages/CollectionDetailPage').then((m) => ({ default: m.CollectionDetailPage }))
+);
 const JourneyPage = lazy(() => import('./pages/JourneyPage').then((m) => ({ default: m.JourneyPage })));
 const LearnPage = lazy(() => import('./pages/LearnPage').then((m) => ({ default: m.LearnPage })));
 const MasteryPage = lazy(() => import('./pages/MasteryPage').then((m) => ({ default: m.MasteryPage })));
 const ClubsPage = lazy(() => import('./pages/ClubsPage').then((m) => ({ default: m.ClubsPage })));
 const ClubDetailPage = lazy(() => import('./pages/ClubDetailPage').then((m) => ({ default: m.ClubDetailPage })));
 const ClubEventsPage = lazy(() => import('./pages/ClubEventsPage').then((m) => ({ default: m.ClubEventsPage })));
-const ClubDiscussionsPage = lazy(() => import('./pages/ClubDiscussionsPage').then((m) => ({ default: m.ClubDiscussionsPage })));
+const ClubDiscussionsPage = lazy(() =>
+  import('./pages/ClubDiscussionsPage').then((m) => ({ default: m.ClubDiscussionsPage }))
+);
 const ClubGuidesPage = lazy(() => import('./pages/ClubGuidesPage').then((m) => ({ default: m.ClubGuidesPage })));
 
 const PageLoader = () => (
   <div className="min-h-[420px] flex items-center justify-center" aria-label="Loading view">
-    <div className="animate-spin rounded-full h-7 w-7 border-2 border-[#342D3D] border-t-[#FF4696]" />
+    <div className="animate-spin rounded-full h-7 w-7 border-2 border-[#36515F] border-t-[#38C6BA]" />
   </div>
 );
+
+function getInitialPathRoute(): 'download' | 'desktop_auth' | null {
+  if (typeof window === 'undefined') return null;
+  const p = window.location.pathname.toLowerCase();
+  if (p === '/download') return 'download';
+  if (p === '/desktop-auth') return 'desktop_auth';
+  return null;
+}
 
 export default function App() {
   const {
     user,
     authLoading,
     activeTab,
+    selectedPuzzle,
     theme,
     setUser,
     setAuthLoading,
+    setOnlineStatus,
     playChallengeMatch,
     viewPuzzleGuide,
     viewMasteryDetail,
     setActiveTab,
   } = useStore();
   const [targetShowcaseId, setTargetShowcaseId] = React.useState<string | undefined>(undefined);
+  const [publicRoute, setPublicRoute] = React.useState<'download' | 'desktop_auth' | null>(getInitialPathRoute);
 
   useEffect(() => {
     document.documentElement.classList.remove('theme-dark', 'theme-light', 'theme-cyberpunk', 'theme-neon');
@@ -65,33 +97,83 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
+    const syncNet = () => setOnlineStatus(navigator.onLine);
+    window.addEventListener('online', syncNet);
+    window.addEventListener('offline', syncNet);
+    syncNet();
+
+    const unsubNav = window.puzzleverseDesktop?.onNavigate
+      ? window.puzzleverseDesktop.onNavigate((tab) => {
+          setActiveTab(tab as any);
+        })
+      : () => {};
+
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const hasDialog = Boolean(document.querySelector('[role="dialog"][aria-modal="true"]'));
+        if (!hasDialog && useStore.getState().activeTab === 'game_play') {
+          window.dispatchEvent(new CustomEvent('pv:escape-game'));
+        }
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+
+    return () => {
+      window.removeEventListener('online', syncNet);
+      window.removeEventListener('offline', syncNet);
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+      unsubNav();
+    };
+  }, [setOnlineStatus, setActiveTab]);
+
+  useEffect(() => {
+    const pName = selectedPuzzle ? PUZZLE_MODES.find((p) => p.id === selectedPuzzle)?.name : '';
+    window.puzzleverseDesktop?.setActiveGameState({
+      inActiveGame: activeTab === 'game_play' && Boolean(selectedPuzzle),
+      gameName: pName || '',
+    });
+  }, [activeTab, selectedPuzzle]);
+
+  useEffect(() => {
     let isMounted = true;
     let unsubscribe = () => {};
+    const isDesktop = Boolean(window.puzzleverseDesktop?.isDesktop);
 
     const initAuth = async () => {
       let isSyncing = false;
-
-      // Step 1: Await getRedirectResult first to consume any incoming redirect credentials
-      try {
-        const redirectResult = await getRedirectResult(auth);
-        sessionStorage.removeItem('pv_auth_redirect_in_progress');
-
-        if (redirectResult?.user && isMounted) {
-          isSyncing = true;
-          const profile = await syncUserProfile(redirectResult.user);
-          if (isMounted) {
-            setUser(profile, false);
-            setAuthLoading(false);
-          }
-          isSyncing = false;
+      const offlineLaunchTimer = setTimeout(() => {
+        if (isMounted && !navigator.onLine) {
+          setAuthLoading(false);
         }
-      } catch (err: any) {
+      }, 1200);
+
+      if (!isDesktop && navigator.onLine) {
+        try {
+          const redirectResult = await Promise.race([
+            getRedirectResult(auth),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),
+          ]);
+          sessionStorage.removeItem('pv_auth_redirect_in_progress');
+
+          if (redirectResult?.user && isMounted) {
+            isSyncing = true;
+            const profile = await syncUserProfile(redirectResult.user);
+            if (isMounted) {
+              setUser(profile, false);
+              setAuthLoading(false);
+            }
+            isSyncing = false;
+          }
+        } catch (err: any) {
+          sessionStorage.removeItem('pv_auth_redirect_in_progress');
+          console.error('Google Auth Redirect Error:', err);
+        }
+      } else {
         sessionStorage.removeItem('pv_auth_redirect_in_progress');
-        console.error('Google Auth Redirect Error:', err);
       }
 
-      // Step 2: Attach onAuthStateChanged to manage ongoing session restoration
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        clearTimeout(offlineLaunchTimer);
         try {
           if (firebaseUser) {
             if (!isSyncing) {
@@ -101,14 +183,15 @@ export default function App() {
               isSyncing = false;
             }
           } else {
+            const state = useStore.getState();
             const redirectPending = sessionStorage.getItem('pv_auth_redirect_in_progress') === '1';
-            if (!redirectPending && isMounted) {
+            if (!redirectPending && !state.isGuest && isMounted) {
               setUser(null, false);
             }
           }
         } catch (err) {
           console.error('Auth state change error:', err);
-          if (isMounted) setUser(null, false);
+          if (isMounted && !useStore.getState().isGuest) setUser(null, false);
         } finally {
           const redirectPending = sessionStorage.getItem('pv_auth_redirect_in_progress') === '1';
           if (!redirectPending && isMounted) {
@@ -116,9 +199,18 @@ export default function App() {
           }
         }
       });
+
+      return () => clearTimeout(offlineLaunchTimer);
     };
 
     initAuth();
+
+    const p = window.location.pathname.toLowerCase();
+    if (p === '/settings') setActiveTab('settings');
+    else if (p === '/download') setActiveTab('download');
+    else if (p === '/games') setActiveTab('games');
+    else if (p === '/daily') setActiveTab('daily');
+    else if (p === '/leaderboard') setActiveTab('leaderboard');
 
     const hash = window.location.hash;
     if (hash.startsWith('#challenge=')) {
@@ -163,16 +255,44 @@ export default function App() {
   useEffect(() => {
     if (authLoading) return;
     const path = window.location.pathname;
+    if (publicRoute === 'download' || publicRoute === 'desktop_auth') {
+      return;
+    }
     if (!user) {
-      if (path !== '/login' && path !== '/register') {
+      if (path !== '/login' && path !== '/register' && path !== '/download' && path !== '/desktop-auth') {
         window.history.replaceState(null, '', '/login');
       }
+    } else if (activeTab === 'download') {
+      if (path !== '/download') window.history.replaceState(null, '', '/download');
+    } else if (activeTab === 'settings') {
+      if (path !== '/settings') window.history.replaceState(null, '', '/settings');
     } else {
-      if (path === '/login' || path === '/register' || path === '/') {
+      if (path === '/login' || path === '/register' || path === '/' || path === '/download') {
         window.history.replaceState(null, '', '/dashboard');
       }
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, publicRoute, activeTab]);
+
+  if (publicRoute === 'desktop_auth') {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-[#142331]" />}>
+        <DesktopAuthPage />
+      </Suspense>
+    );
+  }
+
+  if (publicRoute === 'download' && !user) {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-[#142331]" />}>
+        <DownloadPage
+          onPlayWeb={() => {
+            setPublicRoute(null);
+            window.history.replaceState(null, '', '/login');
+          }}
+        />
+      </Suspense>
+    );
+  }
 
   const renderActiveTab = () => {
     switch (activeTab) {
@@ -223,6 +343,10 @@ export default function App() {
         return <AdminPage />;
       case 'profile':
         return <ProfilePage />;
+      case 'settings':
+        return <SettingsPage />;
+      case 'download':
+        return <DownloadPage embedded onPlayWeb={() => setActiveTab('dashboard')} />;
       case 'events':
         return <EventsPage />;
       case 'event_detail':
@@ -236,22 +360,27 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#110F15] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#342D3D] border-t-[#FF4696]" />
+      <div className="min-h-screen bg-[#142331] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#36515F] border-t-[#38C6BA]" />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <Suspense fallback={<div className="min-h-screen bg-[#110F15]" />}>
-        <AuthLayout />
+      <Suspense fallback={<div className="min-h-screen bg-[#142331]" />}>
+        <AuthLayout
+          onOpenDownload={() => {
+            setPublicRoute('download');
+            window.history.replaceState(null, '', '/download');
+          }}
+        />
       </Suspense>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#110F15] text-[#F5F3F7] font-sans selection:bg-[#FF4696]/30 selection:text-[#F5F3F7]">
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#142331] text-[#F5F7F8] font-sans selection:bg-[#38C6BA]/30 selection:text-[#F5F7F8]">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 pb-[env(safe-area-inset-bottom)] lg:pb-0">
         <Navbar />
@@ -262,7 +391,6 @@ export default function App() {
       <BottomNavigation />
       <Suspense fallback={null}>
         <LevelUpModal />
-        <OnboardingTour />
       </Suspense>
       <ToastContainer />
     </div>

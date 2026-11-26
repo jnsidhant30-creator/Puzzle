@@ -183,8 +183,8 @@ export const ClubEventsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="space-y-6 max-w-5xl mx-auto py-12">
-        <div className="h-32 bg-pv-surface-soft border border-pv-border rounded-lg animate-pulse" />
-        <div className="h-64 bg-pv-surface-soft border border-pv-border rounded-lg animate-pulse" />
+        <div className="h-32 bg-pv-surface-soft border border-pv-border rounded-lg" />
+        <div className="h-64 bg-pv-surface-soft border border-pv-border rounded-lg" />
       </div>
     );
   }
@@ -243,7 +243,7 @@ export const ClubEventsPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id as any)}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 isActive
-                  ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                  ? 'bg-[#38C6BA] text-[#142331] font-semibold'
                   : 'text-pv-text-muted hover:text-pv-text-primary hover:bg-pv-surface-soft'
               }`}
             >
@@ -278,7 +278,7 @@ export const ClubEventsPage: React.FC = () => {
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="px-2 py-0.5 rounded bg-pv-surface-soft border border-pv-border text-pv-dragon-fruit font-semibold uppercase text-[10px]">
+                    <span className="px-2 py-0.5 rounded bg-pv-surface-soft border border-pv-border text-[#38C6BA] font-semibold uppercase text-[10px]">
                       {ev.eventType.replace('_', ' ')}
                     </span>
                     <span
@@ -303,7 +303,7 @@ export const ClubEventsPage: React.FC = () => {
 
                   <div className="space-y-1.5 text-xs text-pv-text-muted pt-1">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5 text-pv-dragon-fruit shrink-0" />
+                      <Clock className="w-3.5 h-3.5 text-[#38C6BA] shrink-0" />
                       <span className="font-tabular">
                         {new Date(ev.startAt).toLocaleString([], {
                           dateStyle: 'medium',
@@ -312,7 +312,7 @@ export const ClubEventsPage: React.FC = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Users className="w-3.5 h-3.5 text-pv-dragon-fruit shrink-0" />
+                      <Users className="w-3.5 h-3.5 text-[#38C6BA] shrink-0" />
                       <span className="font-tabular">
                         {ev.participantCount} Attending • {ev.interestedCount} Interested
                       </span>
@@ -337,7 +337,7 @@ export const ClubEventsPage: React.FC = () => {
                       onClick={() => handleRsvp(ev.id, 'interested')}
                       className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                         userRsvp === 'interested'
-                          ? 'bg-pv-dragon-fruit/10 text-pv-dragon-fruit border border-pv-dragon-fruit/20'
+                          ? 'bg-[#38C6BA]/10 text-[#38C6BA] border border-[#38C6BA]/20'
                           : 'bg-pv-surface-soft text-pv-text-muted hover:text-pv-text-primary border border-pv-border'
                       }`}
                     >
@@ -378,7 +378,7 @@ export const ClubEventsPage: React.FC = () => {
           <Card className="max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-pv-border pb-3">
               <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4 text-pv-dragon-fruit" />
+                <CalendarIcon className="w-4 h-4 text-[#38C6BA]" />
                 <span>Schedule Club Event</span>
               </h3>
               <button

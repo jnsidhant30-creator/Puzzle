@@ -1,42 +1,56 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Nunito Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* Brand Identity */
-  --color-pv-dragon-fruit: #FF4696;
-  --color-pv-dragon-fruit-deep: #E83C86;
-  --color-pv-dragon-fruit-hover: #E83C86;
-  --color-pv-dragon-fruit-soft: #FF6EAC;
-  --color-pv-dragon-fruit-light: #FF82B8;
-  --color-pv-night-violet: #1E1033;
+  /* Core Ocean Navy, Turquoise Mint & Warm Ivory System */
+  --color-pv-navy: #142331;
+  --color-pv-sidebar: #1C2D3B;
+  --color-pv-slate: #233D4A;
+  --color-pv-elevated: #2C4654;
+  --color-pv-ivory: #F5F2E9;
+  --color-pv-mist: #E9EEE8;
+  --color-pv-turquoise: #38C6BA;
+  --color-pv-teal: #087F8C;
+  --color-pv-teal-hover: #066B75;
+  --color-pv-mint: #A8E5D5;
+  --color-pv-sky: #93D1F2;
 
-  /* Neutral Dark Surfaces */
-  --color-pv-bg-primary: #110F15;
-  --color-pv-bg-secondary: #16131C;
-  --color-pv-bg-tertiary: #16131C;
-  --color-pv-bg-sidebar: #16131C;
+  /* Remapped Semantic Tokens */
+  --color-pv-dragon-fruit: #38C6BA;
+  --color-pv-dragon-fruit-deep: #087F8C;
+  --color-pv-dragon-fruit-hover: #066B75;
+  --color-pv-dragon-fruit-soft: #7ADFD5;
+  --color-pv-dragon-fruit-light: #A8E5D5;
+  --color-pv-night-violet: #1C2D3B;
 
-  --color-pv-surface-primary: #1C1823;
-  --color-pv-surface-secondary: #24202C;
-  --color-pv-surface-elevated: #2B2533;
-  --color-pv-surface-highlight: #2B2533;
-  --color-pv-surface-soft: #322B3B;
-  --color-pv-surface: #1C1823;
-  --color-pv-surface-deep: #110F15;
+  --color-pv-bg-primary: #142331;
+  --color-pv-bg-secondary: #1C2D3B;
+  --color-pv-bg-tertiary: #1C2D3B;
+  --color-pv-bg-sidebar: #1C2D3B;
 
-  /* Crisp Borders */
-  --color-pv-border: #342D3D;
-  --color-pv-border-violet: #342D3D;
-  --color-pv-border-strong: #494052;
+  --color-pv-surface-primary: #233D4A;
+  --color-pv-surface-secondary: #1C2D3B;
+  --color-pv-surface-elevated: #2C4654;
+  --color-pv-surface-highlight: #2C4654;
+  --color-pv-surface-soft: #2C4654;
+  --color-pv-surface: #233D4A;
+  --color-pv-surface-deep: #142331;
 
-  /* Typography Hierarchy */
-  --color-pv-text-primary: #F5F3F7;
-  --color-pv-text-secondary: #C5BFD0;
-  --color-pv-text-muted: #9F97AB;
-  --color-pv-text-disabled: #756C82;
+  --color-pv-border: #36515F;
+  --color-pv-border-violet: #36515F;
+  --color-pv-border-strong: #4A6A7B;
+  --color-pv-border-light: #D5DEDB;
 
-  /* Functional Semantic Feedback */
+  /* Typography Contrast Tokens */
+  --color-pv-text-primary: #F5F7F8;
+  --color-pv-text-secondary: #B4C3CE;
+  --color-pv-text-muted: #98AAB8;
+  --color-pv-text-disabled: #6F8291;
+  --color-pv-text-dark: #142331;
+  --color-pv-text-muted-dark: #526575;
+
+  /* Functional Feedback */
   --color-pv-error: #F87171;
   --color-pv-success: #34D399;
   --color-pv-warning: #FBBF24;
@@ -45,15 +59,14 @@
 @layer base {
   html,
   body {
-    background-color: #110F15;
-    color: #F5F3F7;
+    background-color: #142331;
+    color: #F5F7F8;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
   }
 
-  /* Tabular numerals for timers, scores, ranks, and counters */
   .font-tabular {
     font-variant-numeric: tabular-nums;
   }
@@ -71,27 +84,32 @@
     }
   }
 
-  /* Tactile Puzzle Studio Surfaces */
+  /* Puzzle Board & Game Card Surfaces */
   .pv-board-matte {
-    background-color: #14111A;
-    background-image: radial-gradient(#2D2638 1px, transparent 1px);
+    background-color: #101E2B;
+    background-image: radial-gradient(#263F52 1px, transparent 1px);
     background-size: 20px 20px;
   }
 
   .pv-stage-surface {
-    background-color: #1E1033;
-    background-image: repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 14px,
-      rgba(255, 255, 255, 0.025) 14px,
-      rgba(255, 255, 255, 0.025) 15px
-    );
+    background-color: #233D4A;
+  }
+
+  .pv-ivory-surface {
+    background-color: #F5F2E9;
+    color: #142331;
+    border-color: #D5DEDB;
+  }
+
+  .pv-mist-surface {
+    background-color: #E9EEE8;
+    color: #142331;
+    border-color: #D5DEDB;
   }
 
   .pv-keycap {
     border-bottom-width: 2px;
-    border-bottom-color: #0B090E;
+    border-bottom-color: rgba(14, 28, 40, 0.35);
     transition: transform 100ms ease, border-color 150ms ease, background-color 150ms ease;
   }
 
@@ -100,7 +118,7 @@
   }
 
   .animate-fade-in {
-    animation: fadeIn 0.16s ease-out forwards;
+    animation: fadeIn 0.14s ease-out forwards;
   }
 }
 
@@ -115,41 +133,49 @@
   }
 }
 
-/* Solid surface utility mappings replacing legacy gradient classes */
-.bg-gradient-premium {
-  background-color: #110F15;
-}
-.bg-gradient-sidebar {
-  background-color: #16131C;
-}
-.bg-gradient-nav-active {
-  background-color: rgba(255, 70, 150, 0.12);
-  border: 1px solid rgba(255, 70, 150, 0.28);
-}
-.bg-gradient-card-1 {
-  background-color: #1C1823;
-}
-.bg-gradient-card-2 {
-  background-color: #24202C;
-}
-.bg-gradient-card-3 {
-  background-color: #2B2533;
-}
-.bg-gradient-hero {
-  background-color: #1C1823;
-}
-.bg-gradient-primary-btn {
-  background-color: #FF4696;
-}
-.bg-gradient-primary-btn-hover {
-  background-color: #E83C86;
-}
-.bg-gradient-secondary-btn {
-  background-color: #24202C;
-  border: 1px solid #494052;
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
-/* Hide scrollbars cleanly where used for horizontal tab bars */
+/* Solid surface utility mappings */
+.bg-gradient-premium {
+  background-color: #142331;
+}
+.bg-gradient-sidebar {
+  background-color: #1C2D3B;
+}
+.bg-gradient-nav-active {
+  background-color: #38C6BA;
+  color: #142331;
+}
+.bg-gradient-card-1 {
+  background-color: #233D4A;
+}
+.bg-gradient-card-2 {
+  background-color: #2C4654;
+}
+.bg-gradient-card-3 {
+  background-color: #1C2D3B;
+}
+.bg-gradient-hero {
+  background-color: #F5F2E9;
+}
+.bg-gradient-primary-btn {
+  background-color: #087F8C;
+}
+.bg-gradient-primary-btn-hover {
+  background-color: #066B75;
+}
+.bg-gradient-secondary-btn {
+  background-color: #2C4654;
+  border: 1px solid #36515F;
+}
+
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }

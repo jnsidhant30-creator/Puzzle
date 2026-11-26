@@ -5,7 +5,7 @@ import {
   onAuthStateChanged, setPersistence, browserLocalPersistence, User as FirebaseUser
 } from 'firebase/auth';
 import { 
-  getFirestore, doc, getDoc, getDocFromServer, setDoc, updateDoc, collection, 
+  getFirestore, doc, getDoc, setDoc, updateDoc, collection, 
   query, where, getDocs, orderBy, limit, addDoc, runTransaction
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -21,8 +21,6 @@ import {
   ClubGuide, ClubDiscussionCategory, ClubGuideCategory, ContentReport, UserBlock, UserMute, 
   ModerationAction, PlayerWallPost, SocialFeedItem, HeadToHeadStats, KudosGift
 } from '../types';
-import { DEFAULT_JOURNEY_CHAPTERS } from '../data/journeyData';
-import { DEFAULT_PUZZLE_GUIDES } from '../data/learnData';
 import { calculateUserMasteryProfile } from '../data/masteryData';
 import { 
   DEFAULT_CLUBS, DEFAULT_CLUB_MEMBERS, DEFAULT_CLUB_MESSAGES, DEFAULT_CLUB_COMPETITIONS, 
@@ -64,10 +62,7 @@ function isPermissionDeniedError(error: unknown): boolean {
   const code = (error as { code?: string })?.code;
   const msg = error instanceof Error ? error.message : String(error);
   return code === 'permission-denied' || msg.includes('Missing or insufficient permissions');
-} // Connection test
-async function testConnection() { try { await getDocFromServer(doc(db, 'test', 'connection')); } catch (error) { if (error instanceof Error && error.message.includes('offline')) { console.warn('Firestore is running in offline mode.'); } }
 }
-testConnection();
 
 /* Public Profile Sanitizer & Syncer */
 export async function syncPublicProfile(profile: Partial<UserProfile> & { uid: string }): Promise<void> {
@@ -225,8 +220,22 @@ function diffRank(d: Difficulty): number { if (d === 'hard') return 3; if (d ===
 if (newDifficulty === 'easy') newDifficulty = 'medium'; else if (newDifficulty === 'medium') newDifficulty = 'hard'; } else if (last3.length >= 3 && last3.every(r => r === false)) { /* 3 consecutive losses -> decrease difficulty */
 if (newDifficulty === 'hard') newDifficulty = 'medium'; else if (newDifficulty === 'medium') newDifficulty = 'easy'; } const updatedAdaptiveProfile: AdaptiveDifficultyProfile = { puzzleType: pType, currentRecommendedDifficulty: newDifficulty, confidence: Math.min(100, newRecentResults.length * 10), recentResults: newRecentResults, successRate, averageScore: Math.round(((currentAdaptive.averageScore * Math.max(0, newRecentResults.length - 1)) + session.score) / newRecentResults.length), averageTime: Math.round(((currentAdaptive.averageTime * Math.max(0, newRecentResults.length - 1)) + session.timeSeconds) / newRecentResults.length), recentTrend: successRate >= 70 ? 'improving' : successRate <= 30 ? 'declining' : 'stable', updatedAt: new Date().toISOString() }; const updatedUser: UserProfile = { ...currentUserProfile, personalBests: { ...existingPBs, [pType]: updatedPB }, adaptiveProfiles: { ...existingAdaptives, [pType]: updatedAdaptiveProfile } }; if (userId && !userId.startsWith('guest_')) { try { const userRef = doc(db, 'users', userId); await updateDoc(userRef, { [`personalBests.${pType}`]: updatedPB, [`adaptiveProfiles.${pType}`]: updatedAdaptiveProfile, updatedAt: new Date().toISOString() }); if (isPB) { await addDoc(collection(db, 'personalBestHistory'), { userId, puzzleType: pType, score: session.score, timeSeconds: session.timeSeconds, difficulty: session.difficulty, improvementScore: scoreDiff, improvementTime: timeDiff, recordType: recordType || 'SCORE', createdAt: new Date().toISOString() } as PersonalBestHistoryItem); await addDoc(collection(db, 'notifications'), { userId, title: 'NEW PERSONAL BEST!', message: `You set a new ${pType.toUpperCase()} record: ${session.score} PTS (${session.timeSeconds}s)!`, type: 'pb', isRead: false, createdAt: new Date().toISOString() } as NotificationItem); } } catch (err) { handleFirestoreError(err, OperationType.WRITE, `users/${userId}`); } } return { isPersonalBest: isPB, personalBestDiff: isPB ? { scoreDiff, timeDiff, recordType } : undefined, updatedUser };
 } /* Game Sessions */
-export  async function saveGameSession(session: GameSession) { const path = 'gameSessions'; try { const cleanSession = Object.fromEntries(Object.entries(session).filter(([, v]) => v !== undefined)) as GameSession; const ref = await addDoc(collection(db, 'gameSessions'), cleanSession); /* Also post to leaderboards if won and not replay */
-if (session.won && session.score > 0 && !session.isReplay) { await saveLeaderboardEntry({ userId: session.userId, username: session.username || 'Anonymous', displayName: session.username || 'Anonymous', avatarUrl: getAvatarDataUri(session.userId), period: 'ALL_TIME', periodKey: 'all', puzzleType: session.puzzleType, difficulty: session.difficulty, score: Math.min(50000, Math.round(session.score)), bestTime: Math.max(1, Math.min(36000, Math.round(session.timeSeconds || 1))), updatedAt: new Date().toISOString() }); } return ref.id; } catch (err) { handleFirestoreError(err, OperationType.WRITE, path); }
+export  async function saveGameSession(session: GameSession, skipLeaderboard = false) {
+  const path = 'gameSessions';
+  if (!session.userId || session.userId === 'guest' || session.userId.startsWith('guest_') || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return undefined;
+  }
+  try {
+    const cleanSession = Object.fromEntries(Object.entries(session).filter(([, v]) => v !== undefined)) as GameSession;
+    const ref = await addDoc(collection(db, 'gameSessions'), cleanSession);
+    /* Also post to leaderboards if won, not replay, and not paused */
+    if (session.won && session.score > 0 && !session.isReplay && !skipLeaderboard) {
+      await saveLeaderboardEntry({ userId: session.userId, username: session.username || 'Anonymous', displayName: session.username || 'Anonymous', avatarUrl: getAvatarDataUri(session.userId), period: 'ALL_TIME', periodKey: 'all', puzzleType: session.puzzleType, difficulty: session.difficulty, score: Math.min(50000, Math.round(session.score)), bestTime: Math.max(1, Math.min(36000, Math.round(session.timeSeconds || 1))), updatedAt: new Date().toISOString() });
+    }
+    return ref.id;
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, path);
+  }
 } export async function fetchUserRecentGameSessions(userId: string, limitCount = 10): Promise<GameSession[]> { 
   const path = 'gameSessions'; 
   if (!userId || userId === 'guest' || userId.startsWith('guest_')) return [];
@@ -262,8 +271,57 @@ export async function fetchPersonalBestHistory(userId: string, puzzleType?: Puzz
 
 export async function resetUserAdaptiveProfilesInDB(userId: string) { const path = `users/${userId}`; try { const userRef = doc(db, 'users', userId); await updateDoc(userRef, { adaptiveProfiles: {}, updatedAt: new Date().toISOString() }); } catch (err) { handleFirestoreError(err, OperationType.WRITE, path); }
 } /* Leaderboard Services */
-export  async function saveLeaderboardEntry(entry: LeaderboardEntry) { const path = `leaderboards/${entry.userId}_${entry.puzzleType}_${entry.period}`; try { const leaderboardRef = doc(db, 'leaderboards', `${entry.userId}_${entry.puzzleType}_${entry.period}`); const snap = await getDoc(leaderboardRef); if (snap.exists()) { const existing = snap.data() as LeaderboardEntry; if (entry.score > existing.score) { await setDoc(leaderboardRef, entry); } } else { await setDoc(leaderboardRef, entry); } } catch (err) { handleFirestoreError(err, OperationType.WRITE, path); }
-} export async function fetchTopLeaderboard(puzzleType?: string, limitCount = 20): Promise<LeaderboardEntry[]> { const path = 'leaderboards'; try { const q = puzzleType && puzzleType !== 'overall' ? query(collection(db, 'leaderboards'), where('puzzleType', '==', puzzleType), orderBy('score', 'desc'), limit(limitCount)) : query(collection(db, 'leaderboards'), orderBy('score', 'desc'), limit(limitCount)); const snap = await getDocs(q); return snap.docs.map(doc => doc.data() as LeaderboardEntry); } catch (err) { handleFirestoreError(err, OperationType.GET, path); return []; }
+export async function saveLeaderboardEntry(entry: LeaderboardEntry) {
+  const path = `leaderboards/${entry.userId}_${entry.puzzleType}_${entry.period}`;
+  if (entry.userId.startsWith('guest_') || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
+  try {
+    const leaderboardRef = doc(db, 'leaderboards', `${entry.userId}_${entry.puzzleType}_${entry.period}`);
+    const snap = await getDoc(leaderboardRef);
+    if (snap.exists()) {
+      const existing = snap.data() as LeaderboardEntry;
+      if (entry.score > existing.score) {
+        await setDoc(leaderboardRef, entry);
+      }
+    } else {
+      await setDoc(leaderboardRef, entry);
+    }
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, path);
+  }
+}
+export async function fetchTopLeaderboard(puzzleType?: string, limitCount = 20): Promise<LeaderboardEntry[]> {
+  const path = 'leaderboards';
+  try {
+    const q = puzzleType && puzzleType !== 'overall'
+      ? query(collection(db, 'leaderboards'), where('puzzleType', '==', puzzleType), orderBy('score', 'desc'), limit(limitCount))
+      : query(collection(db, 'leaderboards'), orderBy('score', 'desc'), limit(limitCount));
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => doc.data() as LeaderboardEntry);
+  } catch (err) {
+    handleFirestoreError(err, OperationType.GET, path);
+    return [];
+  }
+}
+export async function fetchPlayerGlobalRank(userId: string): Promise<{ rank: number | null; topScore: number }> {
+  if (!userId || userId.startsWith('guest_') || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return { rank: null, topScore: 0 };
+  }
+  try {
+    const entries = await fetchTopLeaderboard(undefined, 100);
+    const seen = new Set<string>();
+    const perPlayerTop: LeaderboardEntry[] = [];
+    for (const item of entries) {
+      if (!seen.has(item.userId)) {
+        seen.add(item.userId);
+        perPlayerTop.push(item);
+      }
+    }
+    const idx = perPlayerTop.findIndex((e) => e.userId === userId);
+    if (idx === -1) return { rank: null, topScore: 0 };
+    return { rank: idx + 1, topScore: perPlayerTop[idx].score };
+  } catch {
+    return { rank: null, topScore: 0 };
+  }
 } /* Friend Challenges & Community Puzzles */
 export  async function createFriendChallenge(challenge: Omit<FriendChallenge, 'id'>) { const path = 'friendChallenges'; try { const ref = await addDoc(collection(db, 'friendChallenges'), challenge); return ref.id; } catch (err) { handleFirestoreError(err, OperationType.WRITE, path); return null; }
 } export async function getFriendChallenge(challengeId: string): Promise<FriendChallenge | null> { const path = `friendChallenges/${challengeId}`; try { const ref = doc(db, 'friendChallenges', challengeId); const snap = await getDoc(ref); if (snap.exists()) { return { id: snap.id, ...snap.data() } as FriendChallenge; } return null; } catch (err) { handleFirestoreError(err, OperationType.GET, path); return null; }
@@ -429,6 +487,7 @@ export async function processJourneyStageCompletion(
   const isFirstCompletion = !completedSet.has(stageId); 
   completedSet.add(stageId); 
   const updatedCompletedIds = Array.from(completedSet); /* Determine next stage */
+  const { DEFAULT_JOURNEY_CHAPTERS } = await import('../data/journeyData');
   const allStages = DEFAULT_JOURNEY_CHAPTERS.flatMap(ch => ch.stages); 
   const currentIdx = allStages.findIndex(s => s.id === stageId); 
   const nextStage = currentIdx >= 0 && currentIdx + 1 < allStages.length ? allStages[currentIdx + 1] : null; 
@@ -461,6 +520,7 @@ export async function processJourneyStageCompletion(
 
 export async function fetchPuzzleGuides(): Promise<PuzzleGuide[]> { 
   const path = 'puzzleGuides'; 
+  const { DEFAULT_PUZZLE_GUIDES } = await import('../data/learnData');
   try { 
     const q = query(collection(db, 'puzzleGuides')); 
     const snap = await getDocs(q); 
@@ -480,6 +540,7 @@ export async function fetchPuzzleGuides(): Promise<PuzzleGuide[]> {
 
 export async function fetchPuzzleGuideByType(puzzleType: PuzzleType): Promise<PuzzleGuide> { 
   const path = `puzzleGuides/${puzzleType}`; 
+  const { DEFAULT_PUZZLE_GUIDES } = await import('../data/learnData');
   try { 
     const snap = await getDoc(doc(db, 'puzzleGuides', puzzleType)); 
     if (snap.exists()) { 

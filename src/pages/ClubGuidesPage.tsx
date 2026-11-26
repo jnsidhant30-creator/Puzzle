@@ -220,8 +220,8 @@ export const ClubGuidesPage: React.FC = () => {
   if (loading) {
     return (
       <div className="space-y-6 max-w-5xl mx-auto py-12">
-        <div className="h-32 bg-pv-surface-soft border border-pv-border rounded-lg animate-pulse" />
-        <div className="h-64 bg-pv-surface-soft border border-pv-border rounded-lg animate-pulse" />
+        <div className="h-32 bg-pv-surface-soft border border-pv-border rounded-lg" />
+        <div className="h-64 bg-pv-surface-soft border border-pv-border rounded-lg" />
       </div>
     );
   }
@@ -283,7 +283,7 @@ export const ClubGuidesPage: React.FC = () => {
               onClick={() => setTabFilter('all')}
               className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                 tabFilter === 'all'
-                  ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                  ? 'bg-[#38C6BA] text-[#142331] font-semibold'
                   : 'text-pv-text-muted hover:text-pv-text-primary'
               }`}
             >
@@ -293,7 +293,7 @@ export const ClubGuidesPage: React.FC = () => {
               onClick={() => setTabFilter('official')}
               className={`px-3 py-1 text-xs font-medium rounded transition-colors flex items-center gap-1 ${
                 tabFilter === 'official'
-                  ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                  ? 'bg-[#38C6BA] text-[#142331] font-semibold'
                   : 'text-pv-text-muted hover:text-pv-text-primary'
               }`}
             >
@@ -303,7 +303,7 @@ export const ClubGuidesPage: React.FC = () => {
               onClick={() => setTabFilter('featured')}
               className={`px-3 py-1 text-xs font-medium rounded transition-colors flex items-center gap-1 ${
                 tabFilter === 'featured'
-                  ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                  ? 'bg-[#38C6BA] text-[#142331] font-semibold'
                   : 'text-pv-text-muted hover:text-pv-text-primary'
               }`}
             >
@@ -313,7 +313,7 @@ export const ClubGuidesPage: React.FC = () => {
               onClick={() => setTabFilter('my')}
               className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                 tabFilter === 'my'
-                  ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                  ? 'bg-[#38C6BA] text-[#142331] font-semibold'
                   : 'text-pv-text-muted hover:text-pv-text-primary'
               }`}
             >
@@ -389,7 +389,7 @@ export const ClubGuidesPage: React.FC = () => {
                       </span>
                     )}
                     {guide.isFeatured && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-pv-dragon-fruit/10 text-pv-dragon-fruit border border-pv-dragon-fruit/20">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#38C6BA]/10 text-[#38C6BA] border border-[#38C6BA]/20">
                         <Sparkles className="w-2.5 h-2.5" /> FEATURED
                       </span>
                     )}
@@ -403,7 +403,7 @@ export const ClubGuidesPage: React.FC = () => {
                     )}
                   </div>
 
-                  <h3 className="text-sm font-semibold text-pv-text-primary hover:text-pv-dragon-fruit transition-colors">
+                  <h3 className="text-sm font-semibold text-pv-text-primary hover:text-[#38C6BA] transition-colors">
                     {guide.title}
                   </h3>
                   <p className="text-xs text-pv-text-secondary line-clamp-3 leading-relaxed">
@@ -429,7 +429,7 @@ export const ClubGuidesPage: React.FC = () => {
                       onClick={(e) => handleToggleBookmark(guide.id, e)}
                       className={`inline-flex items-center gap-1 text-xs transition-colors ${
                         hasBookmarked
-                          ? 'text-pv-dragon-fruit font-semibold'
+                          ? 'text-[#38C6BA] font-semibold'
                           : 'hover:text-pv-text-primary'
                       }`}
                     >
@@ -453,7 +453,7 @@ export const ClubGuidesPage: React.FC = () => {
           <Card className="max-w-xl w-full my-6 p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-pv-border pb-3">
               <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-pv-dragon-fruit" />
+                <BookOpen className="w-4 h-4 text-[#38C6BA]" />
                 <span>Publish a Community Guide</span>
               </h3>
               <button
@@ -573,7 +573,7 @@ export const ClubGuidesPage: React.FC = () => {
                       type="checkbox"
                       checked={newIsOfficial}
                       onChange={(e) => setNewIsOfficial(e.target.checked)}
-                      className="rounded border-pv-border bg-pv-surface-soft text-pv-dragon-fruit"
+                      className="rounded border-pv-border bg-pv-surface-soft text-[#38C6BA]"
                     />
                     Official Club Resource
                   </label>
@@ -582,7 +582,7 @@ export const ClubGuidesPage: React.FC = () => {
                       type="checkbox"
                       checked={newIsFeatured}
                       onChange={(e) => setNewIsFeatured(e.target.checked)}
-                      className="rounded border-pv-border bg-pv-surface-soft text-pv-dragon-fruit"
+                      className="rounded border-pv-border bg-pv-surface-soft text-[#38C6BA]"
                     />
                     Feature on Club Hub
                   </label>
@@ -639,7 +639,7 @@ export const ClubGuidesPage: React.FC = () => {
             </div>
 
             <div className="space-y-4 overflow-y-auto flex-1 pr-1">
-              <div className="p-3 bg-pv-surface-soft border-l-2 border-pv-dragon-fruit rounded-r text-xs text-pv-text-secondary italic">
+              <div className="p-3 bg-pv-surface-soft border-l-2 border-[#38C6BA] rounded-r text-xs text-pv-text-secondary italic">
                 "{selectedGuide.summary}"
               </div>
 
@@ -693,7 +693,7 @@ export const ClubGuidesPage: React.FC = () => {
                   onClick={() => handleToggleBookmark(selectedGuide.id)}
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
                     user && selectedGuide.bookmarkedBy?.includes(user.uid)
-                      ? 'bg-pv-dragon-fruit/10 border-pv-dragon-fruit/20 text-pv-dragon-fruit'
+                      ? 'bg-[#38C6BA]/10 border-[#38C6BA]/20 text-[#38C6BA]'
                       : 'bg-pv-surface-soft border-pv-border text-pv-text-muted hover:text-pv-text-primary'
                   }`}
                 >

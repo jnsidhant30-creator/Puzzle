@@ -12,9 +12,9 @@ export const PuzzleArt: React.FC<PuzzleArtProps> = ({
   size = 24,
   className = '',
 }) => {
-  const strokeMain = '#B9B3C2';
-  const accent = '#FF4696';
-  const light = '#F5F3F7';
+  const strokeMain = '#93D1F2';
+  const accent = '#38C6BA';
+  const light = '#F5F2E9';
 
   switch (type) {
     case 'number':
@@ -42,7 +42,7 @@ export const PuzzleArt: React.FC<PuzzleArtProps> = ({
       return (
         <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
           <rect x="3" y="4" width="11" height="14" rx="2" stroke={strokeMain} strokeWidth="1.75" />
-          <rect x="10" y="6" width="11" height="14" rx="2" fill="#1C1823" stroke={accent} strokeWidth="1.75" />
+          <rect x="10" y="6" width="11" height="14" rx="2" fill="#233D4A" stroke={accent} strokeWidth="1.75" />
           <circle cx="15.5" cy="13" r="2" fill={accent} />
         </svg>
       );
@@ -186,21 +186,70 @@ export const PuzzleArt: React.FC<PuzzleArtProps> = ({
   }
 };
 
-export const PUZZLE_CATEGORY_ACCENT: Record<string, { hex: string; border: string; badge: string }> = {
-  Math: { hex: '#38BDF8', border: 'border-sky-400/35', badge: 'text-sky-300 bg-sky-400/10 border-sky-400/25' },
-  Words: { hex: '#34D399', border: 'border-emerald-400/35', badge: 'text-emerald-300 bg-emerald-400/10 border-emerald-400/25' },
-  Memory: { hex: '#A78BFA', border: 'border-violet-400/35', badge: 'text-violet-300 bg-violet-400/10 border-violet-400/25' },
-  Logic: { hex: '#FBBF24', border: 'border-amber-400/35', badge: 'text-amber-300 bg-amber-400/10 border-amber-400/25' },
-  'Spatial & Grid': { hex: '#FF4696', border: 'border-[#FF4696]/40', badge: 'text-[#FF82B8] bg-[#FF4696]/12 border-[#FF4696]/30' },
-  Challenge: { hex: '#FB7185', border: 'border-rose-400/40', badge: 'text-rose-300 bg-rose-400/12 border-rose-400/30' },
+export const PUZZLE_CATEGORY_ACCENT: Record<string, { hex: string; border: string; badge: string; badgeLight: string }> = {
+  Math: {
+    hex: '#93D1F2',
+    border: 'border-[#93D1F2]/40',
+    badge: 'text-[#93D1F2] bg-[#1C2D3B] border-[#93D1F2]/35',
+    badgeLight: 'text-[#142331] bg-[#DCEEF8] border-[#93D1F2]',
+  },
+  Words: {
+    hex: '#A8E5D5',
+    border: 'border-[#A8E5D5]/40',
+    badge: 'text-[#A8E5D5] bg-[#1C2D3B] border-[#A8E5D5]/35',
+    badgeLight: 'text-[#142331] bg-[#DCF3EB] border-[#38C6BA]',
+  },
+  Memory: {
+    hex: '#38C6BA',
+    border: 'border-[#38C6BA]/40',
+    badge: 'text-[#38C6BA] bg-[#1C2D3B] border-[#38C6BA]/40',
+    badgeLight: 'text-[#142331] bg-[#D7F0EE] border-[#087F8C]',
+  },
+  Logic: {
+    hex: '#F59E0B',
+    border: 'border-[#F59E0B]/40',
+    badge: 'text-[#FCD34D] bg-[#1C2D3B] border-[#F59E0B]/35',
+    badgeLight: 'text-[#142331] bg-[#FDEFD5] border-[#D97706]',
+  },
+  'Spatial & Grid': {
+    hex: '#38C6BA',
+    border: 'border-[#38C6BA]/45',
+    badge: 'text-[#A8E5D5] bg-[#087F8C]/25 border-[#38C6BA]/45',
+    badgeLight: 'text-[#142331] bg-[#D6F1EC] border-[#087F8C]',
+  },
+  Challenge: {
+    hex: '#EF6C57',
+    border: 'border-[#EF6C57]/45',
+    badge: 'text-[#FCA5A5] bg-[#1C2D3B] border-[#EF6C57]/40',
+    badgeLight: 'text-[#142331] bg-[#FCE5DF] border-[#E0523D]',
+  },
 };
 
 interface PuzzleCoverArtProps {
   type: PuzzleType;
+  variant?: 'dark' | 'light';
   className?: string;
 }
 
-export const PuzzleCoverArt: React.FC<PuzzleCoverArtProps> = ({ type, className = '' }) => {
+export const PuzzleCoverArt: React.FC<PuzzleCoverArtProps> = ({
+  type,
+  variant = 'dark',
+  className = '',
+}) => {
+  const isLight = variant === 'light';
+  const bg = isLight ? '#E9EEE8' : '#101E2B';
+  const gridLine = isLight ? '#D5DEDB' : '#213849';
+  const tileBg = isLight ? '#FFFFFF' : '#233D4A';
+  const tileBorder = isLight ? '#B4C3CE' : '#36515F';
+  const ink = isLight ? '#142331' : '#F5F7F8';
+  const muted = isLight ? '#526575' : '#98AAB8';
+  const accent = isLight ? '#087F8C' : '#38C6BA';
+  const mint = isLight ? '#38C6BA' : '#A8E5D5';
+  const sky = isLight ? '#2B7AB3' : '#93D1F2';
+  const highlightBg = isLight ? '#D7F1EC' : '#1C2D3B';
+  const gold = '#F59E0B';
+  const coral = '#EF6C57';
+
   const renderScene = () => {
     switch (type) {
       case 'number':
@@ -208,85 +257,129 @@ export const PuzzleCoverArt: React.FC<PuzzleCoverArtProps> = ({ type, className 
           <g>
             {[0, 1, 2, 3].map((i) => (
               <g key={i} transform={`translate(${44 + i * 50}, 36)`}>
-                <rect width="38" height="46" rx="6" fill={i === 1 ? '#1E1033' : '#24202C'} stroke={i === 1 ? '#38BDF8' : '#342D3D'} strokeWidth="1.75" />
-                <text x="19" y="29" textAnchor="middle" fill={i === 1 ? '#38BDF8' : '#F5F3F7'} fontSize="16" fontFamily="monospace" fontWeight="700">
+                <rect
+                  width="38"
+                  height="48"
+                  rx="7"
+                  fill={i === 1 ? highlightBg : tileBg}
+                  stroke={i === 1 ? accent : tileBorder}
+                  strokeWidth="2"
+                />
+                <text
+                  x="19"
+                  y="30"
+                  textAnchor="middle"
+                  fill={i === 1 ? accent : ink}
+                  fontSize="17"
+                  fontFamily="sans-serif"
+                  fontWeight="800"
+                >
                   {['7', '+', '9', '16'][i]}
                 </text>
               </g>
             ))}
-            <text x="140" y="106" textAnchor="middle" fill="#9F97AB" fontSize="10" fontFamily="monospace" letterSpacing="2">
-              EVALUATE SEQUENCE
+            <text x="140" y="108" textAnchor="middle" fill={muted} fontSize="11" fontFamily="sans-serif" fontWeight="700">
+              SOLVE EQUATION
             </text>
           </g>
         );
       case 'word':
         return (
           <g>
-            {['C', 'I', 'P', 'H', 'E', 'R'].map((ch, idx) => (
-              <g key={idx} transform={`translate(${34 + idx * 36}, ${idx % 2 === 0 ? 44 : 36})`}>
-                <rect width="30" height="36" rx="5" fill={idx === 2 ? '#1E1033' : '#24202C'} stroke={idx === 2 ? '#34D399' : '#494052'} strokeWidth="1.5" />
-                <text x="15" y="24" textAnchor="middle" fill={idx === 2 ? '#34D399' : '#F5F3F7'} fontSize="15" fontFamily="monospace" fontWeight="700">
+            {['W', 'O', 'R', 'D'].map((ch, idx) => (
+              <g key={idx} transform={`translate(${54 + idx * 44}, ${idx % 2 === 0 ? 38 : 30})`}>
+                <rect
+                  width="36"
+                  height="42"
+                  rx="7"
+                  fill={idx === 1 ? highlightBg : tileBg}
+                  stroke={idx === 1 ? accent : tileBorder}
+                  strokeWidth="2"
+                />
+                <text
+                  x="18"
+                  y="27"
+                  textAnchor="middle"
+                  fill={idx === 1 ? accent : ink}
+                  fontSize="17"
+                  fontFamily="sans-serif"
+                  fontWeight="800"
+                >
                   {ch}
                 </text>
               </g>
             ))}
-            <rect x="60" y="96" width="160" height="4" rx="2" fill="#34D399" opacity="0.35" />
-            <rect x="60" y="96" width="102" height="4" rx="2" fill="#34D399" />
+            <rect x="64" y="96" width="152" height="6" rx="3" fill={tileBorder} />
+            <rect x="64" y="96" width="96" height="6" rx="3" fill={accent} />
           </g>
         );
       case 'memory':
         return (
-          <g>
-            <g transform="translate(52, 26)">
-              {[0, 1, 2, 3].map((r) => (
-                <rect
-                  key={r}
-                  x={(r % 2) * 92}
-                  y={Math.floor(r / 2) * 44}
-                  width="80"
-                  height="36"
-                  rx="6"
-                  fill={r === 0 || r === 3 ? '#1E1033' : '#24202C'}
-                  stroke={r === 0 || r === 3 ? '#A78BFA' : '#342D3D'}
-                  strokeWidth="1.75"
-                />
-              ))}
-              <circle cx="40" cy="18" r="8" fill="#A78BFA" />
-              <polygon points="132,54 140,68 124,68" fill="#FF4696" />
-              <line x1="80" y1="18" x2="92" y2="62" stroke="#A78BFA" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6" />
-            </g>
+          <g transform="translate(52, 24)">
+            {[0, 1, 2, 3].map((r) => (
+              <rect
+                key={r}
+                x={(r % 2) * 92}
+                y={Math.floor(r / 2) * 46}
+                width="82"
+                height="38"
+                rx="7"
+                fill={r === 0 || r === 3 ? highlightBg : tileBg}
+                stroke={r === 0 || r === 3 ? accent : tileBorder}
+                strokeWidth="2"
+              />
+            ))}
+            <circle cx="41" cy="19" r="9" fill={sky} />
+            <circle cx="133" cy="65" r="9" fill={accent} />
+            <polygon points="133,12 141,26 125,26" fill={gold} />
+            <polygon points="41,58 49,72 33,72" fill={gold} />
           </g>
         );
       case 'sliding':
         return (
           <g transform="translate(86, 16)">
-            <rect width="108" height="108" rx="8" fill="#110F15" stroke="#342D3D" strokeWidth="1.5" />
+            <rect width="108" height="108" rx="9" fill={isLight ? '#DDE6E2' : '#142331'} stroke={tileBorder} strokeWidth="2" />
             {[1, 2, 3, 4, 5, 6, 7, 8].map((n, i) => {
               const row = Math.floor(i / 3);
               const col = i % 3;
               const isMoved = n === 8;
               return (
                 <g key={n} transform={`translate(${8 + col * 32}, ${8 + row * 32})`}>
-                  <rect width="28" height="28" rx="4" fill={isMoved ? '#FF4696' : '#24202C'} stroke={isMoved ? '#FF82B8' : '#494052'} strokeWidth="1.2" />
-                  <text x="14" y="19" textAnchor="middle" fill={isMoved ? '#110F15' : '#F5F3F7'} fontSize="12" fontFamily="monospace" fontWeight="700">
+                  <rect
+                    width="28"
+                    height="28"
+                    rx="5"
+                    fill={isMoved ? accent : tileBg}
+                    stroke={isMoved ? accent : tileBorder}
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    x="14"
+                    y="19"
+                    textAnchor="middle"
+                    fill={isMoved ? '#FFFFFF' : ink}
+                    fontSize="13"
+                    fontFamily="sans-serif"
+                    fontWeight="800"
+                  >
                     {n}
                   </text>
                 </g>
               );
             })}
-            <rect x="72" y="72" width="28" height="28" rx="4" fill="none" stroke="#494052" strokeWidth="1.4" strokeDasharray="3 3" />
+            <rect x="72" y="72" width="28" height="28" rx="5" fill="none" stroke={muted} strokeWidth="1.5" strokeDasharray="3 3" />
           </g>
         );
       case 'logic':
         return (
           <g>
-            <circle cx="80" cy="44" r="18" fill="#24202C" stroke="#FBBF24" strokeWidth="2" />
-            <circle cx="200" cy="44" r="18" fill="#24202C" stroke="#494052" strokeWidth="2" />
-            <circle cx="140" cy="96" r="18" fill="#1E1033" stroke="#FF4696" strokeWidth="2" />
-            <path d="M95 54L126 84M185 54L154 84M98 44H182" stroke="#FBBF24" strokeWidth="1.75" opacity="0.7" />
-            <text x="80" y="49" textAnchor="middle" fill="#FBBF24" fontSize="13" fontFamily="monospace" fontWeight="700">A</text>
-            <text x="200" y="49" textAnchor="middle" fill="#C5BFD0" fontSize="13" fontFamily="monospace" fontWeight="700">B</text>
-            <text x="140" y="101" textAnchor="middle" fill="#F5F3F7" fontSize="13" fontFamily="monospace" fontWeight="700">?</text>
+            <path d="M95 54L126 84M185 54L154 84M98 44H182" stroke={sky} strokeWidth="2.5" />
+            <circle cx="80" cy="44" r="19" fill={tileBg} stroke={sky} strokeWidth="2.5" />
+            <circle cx="200" cy="44" r="19" fill={tileBg} stroke={tileBorder} strokeWidth="2.5" />
+            <circle cx="140" cy="96" r="19" fill={highlightBg} stroke={accent} strokeWidth="2.5" />
+            <text x="80" y="50" textAnchor="middle" fill={sky} fontSize="15" fontFamily="sans-serif" fontWeight="800">A</text>
+            <text x="200" y="50" textAnchor="middle" fill={ink} fontSize="15" fontFamily="sans-serif" fontWeight="800">B</text>
+            <text x="140" y="102" textAnchor="middle" fill={accent} fontSize="15" fontFamily="sans-serif" fontWeight="800">?</text>
           </g>
         );
       case 'pattern':
@@ -299,55 +392,55 @@ export const PuzzleCoverArt: React.FC<PuzzleCoverArtProps> = ({ type, className 
                 y={Math.floor(i / 3) * 36}
                 width="30"
                 height="30"
-                rx="5"
-                fill="#24202C"
-                stroke="#342D3D"
+                rx="6"
+                fill={tileBg}
+                stroke={tileBorder}
+                strokeWidth="1.5"
               />
             ))}
-            <circle cx="15" cy="15" r="7" stroke="#FBBF24" strokeWidth="2" />
-            <rect x="44" y="8" width="14" height="14" rx="2" stroke="#38BDF8" strokeWidth="2" />
-            <polygon points="87,8 94,22 80,22" stroke="#34D399" strokeWidth="2" />
-            <rect x="72" y="72" width="30" height="30" rx="5" fill="#1E1033" stroke="#FF4696" strokeWidth="2" strokeDasharray="4 3" />
-            <text x="87" y="92" textAnchor="middle" fill="#FF82B8" fontSize="14" fontFamily="monospace" fontWeight="700">?</text>
+            <circle cx="15" cy="15" r="7" stroke={gold} strokeWidth="2.5" />
+            <rect x="44" y="8" width="14" height="14" rx="2" stroke={sky} strokeWidth="2.5" />
+            <polygon points="87,8 94,22 80,22" stroke={accent} strokeWidth="2.5" />
+            <rect x="72" y="72" width="30" height="30" rx="6" fill={highlightBg} stroke={accent} strokeWidth="2" strokeDasharray="4 3" />
+            <text x="87" y="92" textAnchor="middle" fill={accent} fontSize="14" fontFamily="sans-serif" fontWeight="800">?</text>
           </g>
         );
       case 'pipe':
         return (
           <g>
-            <path d="M36 42H106V98H176V42H244" fill="none" stroke="#342D3D" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M36 42H106V98H176V42H244" fill="none" stroke="#FF4696" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="36" cy="42" r="8" fill="#F5F3F7" />
-            <circle cx="244" cy="42" r="8" fill="#FF4696" />
-            <rect x="96" y="32" width="20" height="20" rx="4" fill="#24202C" stroke="#494052" strokeWidth="1.5" />
-            <rect x="166" y="88" width="20" height="20" rx="4" fill="#24202C" stroke="#494052" strokeWidth="1.5" />
+            <path d="M36 42H106V98H176V42H244" fill="none" stroke={tileBorder} strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M36 42H106V98H176V42H244" fill="none" stroke={accent} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="36" cy="42" r="9" fill={gold} />
+            <circle cx="244" cy="42" r="9" fill={sky} />
+            <rect x="96" y="32" width="20" height="20" rx="4" fill={tileBg} stroke={tileBorder} strokeWidth="2" />
+            <rect x="166" y="88" width="20" height="20" rx="4" fill={tileBg} stroke={tileBorder} strokeWidth="2" />
           </g>
         );
       case 'color_path':
         return (
           <g>
-            <path d="M48 34H116V102H232" fill="none" stroke="#FF4696" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M48 102H82V66H198V34H232" fill="none" stroke="#38BDF8" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="48" cy="34" r="10" fill="#FF4696" />
-            <circle cx="232" cy="102" r="10" fill="#FF4696" />
-            <circle cx="48" cy="102" r="10" fill="#38BDF8" />
-            <circle cx="232" cy="34" r="10" fill="#38BDF8" />
+            <path d="M48 34H116V102H232" fill="none" stroke={accent} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M48 102H82V66H198V34H232" fill="none" stroke={gold} strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="48" cy="34" r="11" fill={accent} />
+            <circle cx="232" cy="102" r="11" fill={accent} />
+            <circle cx="48" cy="102" r="11" fill={gold} />
+            <circle cx="232" cy="34" r="11" fill={gold} />
           </g>
         );
       case 'block_escape':
         return (
           <g transform="translate(56, 18)">
-            <rect width="168" height="104" rx="8" fill="#110F15" stroke="#494052" strokeWidth="2" />
-            <line x1="168" y1="40" x2="168" y2="66" stroke="#110F15" strokeWidth="4" />
-            <rect x="12" y="42" width="66" height="22" rx="4" fill="#FF4696" />
-            <rect x="96" y="14" width="22" height="58" rx="4" fill="#2B2533" stroke="#494052" />
-            <rect x="132" y="46" width="22" height="46" rx="4" fill="#24202C" stroke="#494052" />
-            <path d="M154 53H182M174 46L182 53L174 60" stroke="#34D399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <rect width="168" height="104" rx="8" fill={isLight ? '#DCE6E2' : '#142331'} stroke={tileBorder} strokeWidth="2" />
+            <rect x="12" y="42" width="66" height="22" rx="4" fill={coral} />
+            <rect x="96" y="14" width="22" height="58" rx="4" fill={sky} />
+            <rect x="132" y="46" width="22" height="46" rx="4" fill={tileBg} stroke={tileBorder} strokeWidth="1.5" />
+            <path d="M154 53H184M176 46L184 53L176 60" stroke={accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           </g>
         );
       case 'number_path':
         return (
           <g>
-            <polyline points="54,96 104,44 156,88 224,36" fill="none" stroke="#38BDF8" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+            <polyline points="54,96 104,44 156,88 224,36" fill="none" stroke={sky} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             {[
               { x: 54, y: 96, n: '1', active: true },
               { x: 104, y: 44, n: '2', active: true },
@@ -355,8 +448,8 @@ export const PuzzleCoverArt: React.FC<PuzzleCoverArtProps> = ({ type, className 
               { x: 224, y: 36, n: '4', active: false },
             ].map((pt) => (
               <g key={pt.n} transform={`translate(${pt.x}, ${pt.y})`}>
-                <circle r="15" fill={pt.active ? '#1E1033' : '#24202C'} stroke={pt.active ? '#38BDF8' : '#FF4696'} strokeWidth="2" />
-                <text y="5" textAnchor="middle" fill="#F5F3F7" fontSize="13" fontFamily="monospace" fontWeight="700">{pt.n}</text>
+                <circle r="16" fill={pt.active ? highlightBg : accent} stroke={pt.active ? sky : accent} strokeWidth="2.5" />
+                <text y="5" textAnchor="middle" fill={pt.active ? ink : '#FFFFFF'} fontSize="14" fontFamily="sans-serif" fontWeight="800">{pt.n}</text>
               </g>
             ))}
           </g>
@@ -369,8 +462,8 @@ export const PuzzleCoverArt: React.FC<PuzzleCoverArtProps> = ({ type, className 
               const y = Math.floor(i / 2) * 56;
               return (
                 <g key={i} transform={`translate(${x}, ${y})`}>
-                  <rect width="50" height="50" rx="6" fill={i === 1 ? '#1E1033' : '#24202C'} stroke={i === 1 ? '#FF4696' : '#342D3D'} strokeWidth="1.75" />
-                  <path d="M25 10V25H40" fill="none" stroke={i === 1 ? '#FF4696' : '#C5BFD0'} strokeWidth="4" strokeLinecap="round" transform={`rotate(${i * 90} 25 25)`} />
+                  <rect width="50" height="50" rx="7" fill={i === 1 ? highlightBg : tileBg} stroke={i === 1 ? accent : tileBorder} strokeWidth="2" />
+                  <path d="M25 10V25H40" fill="none" stroke={i === 1 ? accent : sky} strokeWidth="4.5" strokeLinecap="round" transform={`rotate(${i * 90} 25 25)`} />
                 </g>
               );
             })}
@@ -379,15 +472,15 @@ export const PuzzleCoverArt: React.FC<PuzzleCoverArtProps> = ({ type, className 
       case 'word_grid':
         return (
           <g transform="translate(64, 16)">
-            <rect width="152" height="108" rx="6" fill="#110F15" stroke="#342D3D" strokeWidth="1.5" />
-            <line x1="28" y1="24" x2="124" y2="86" stroke="#34D399" strokeWidth="16" strokeLinecap="round" opacity="0.28" />
+            <rect width="152" height="108" rx="8" fill={tileBg} stroke={tileBorder} strokeWidth="2" />
+            <line x1="28" y1="24" x2="124" y2="86" stroke={mint} strokeWidth="16" strokeLinecap="round" opacity="0.5" />
             {['W', 'O', 'R', 'D', 'S'].map((l, i) => (
-              <text key={l} x={28 + i * 24} y={28 + i * 15} textAnchor="middle" fill="#34D399" fontSize="13" fontFamily="monospace" fontWeight="700">
+              <text key={l} x={28 + i * 24} y={29 + i * 15} textAnchor="middle" fill={accent} fontSize="14" fontFamily="sans-serif" fontWeight="800">
                 {l}
               </text>
             ))}
             {['A', 'M', 'X', 'T', 'Q', 'Z', 'B', 'K'].map((l, i) => (
-              <text key={i} x={126 - (i % 4) * 28} y={24 + Math.floor(i / 4) * 64} textAnchor="middle" fill="#756C82" fontSize="11" fontFamily="monospace">
+              <text key={i} x={126 - (i % 4) * 28} y={24 + Math.floor(i / 4) * 64} textAnchor="middle" fill={muted} fontSize="11" fontFamily="sans-serif" fontWeight="700">
                 {l}
               </text>
             ))}
@@ -404,8 +497,8 @@ export const PuzzleCoverArt: React.FC<PuzzleCoverArtProps> = ({ type, className 
               { x: 128, y: 46, rot: 0, active: true },
             ].map((a, idx) => (
               <g key={idx} transform={`translate(${a.x}, ${a.y})`}>
-                <rect width="52" height="38" rx="6" fill={a.active ? '#1E1033' : '#24202C'} stroke={a.active ? '#FF4696' : '#342D3D'} strokeWidth="1.5" />
-                <path d="M18 19H34M28 13L34 19L28 25" fill="none" stroke={a.active ? '#FF82B8' : '#756C82'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" transform={`rotate(${a.rot} 26 19)`} />
+                <rect width="52" height="38" rx="7" fill={a.active ? highlightBg : tileBg} stroke={a.active ? accent : tileBorder} strokeWidth="2" />
+                <path d="M18 19H34M28 13L34 19L28 25" fill="none" stroke={a.active ? accent : muted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" transform={`rotate(${a.rot} 26 19)`} />
               </g>
             ))}
           </g>
@@ -413,31 +506,31 @@ export const PuzzleCoverArt: React.FC<PuzzleCoverArtProps> = ({ type, className 
       case 'maze_escape':
         return (
           <g transform="translate(56, 18)">
-            <rect width="168" height="104" rx="6" fill="#110F15" stroke="#494052" strokeWidth="2" />
-            <path d="M36 0V68H84V28H128V80H60" fill="none" stroke="#494052" strokeWidth="4" strokeLinecap="square" />
-            <path d="M18 18V86H146V24" fill="none" stroke="#FF4696" strokeWidth="2.5" strokeDasharray="4 4" />
-            <circle cx="18" cy="18" r="6" fill="#FF4696" />
-            <rect x="140" y="18" width="12" height="12" rx="2" fill="#34D399" />
+            <rect width="168" height="104" rx="8" fill={isLight ? '#1C2D3B' : '#142331'} stroke={tileBorder} strokeWidth="2" />
+            <path d="M36 0V68H84V28H128V80H60" fill="none" stroke="#4A6A7B" strokeWidth="5" strokeLinecap="square" />
+            <path d="M18 18V86H146V24" fill="none" stroke="#38C6BA" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="18" cy="18" r="6" fill="#A8E5D5" />
+            <polygon points="146,16 158,22 146,28" fill="#EF6C57" />
           </g>
         );
       case 'laser_mirror':
         return (
           <g>
-            <polyline points="44,100 132,100 132,36 234,36" fill="none" stroke="#FF4696" strokeWidth="3" strokeLinecap="round" />
-            <line x1="120" y1="112" x2="144" y2="88" stroke="#F5F3F7" strokeWidth="4" strokeLinecap="round" />
-            <line x1="120" y1="48" x2="144" y2="24" stroke="#F5F3F7" strokeWidth="4" strokeLinecap="round" />
-            <circle cx="44" cy="100" r="8" fill="#38BDF8" />
-            <polygon points="234,24 246,36 234,48 222,36" fill="#FF4696" stroke="#F5F3F7" strokeWidth="1.5" />
+            <polyline points="44,100 132,100 132,36 234,36" fill="none" stroke={gold} strokeWidth="3.5" strokeLinecap="round" />
+            <line x1="120" y1="112" x2="144" y2="88" stroke={sky} strokeWidth="5" strokeLinecap="round" />
+            <line x1="120" y1="48" x2="144" y2="24" stroke={sky} strokeWidth="5" strokeLinecap="round" />
+            <circle cx="44" cy="100" r="9" fill={accent} />
+            <polygon points="234,24 246,36 234,48 222,36" fill={gold} stroke={ink} strokeWidth="1.5" />
           </g>
         );
       case 'challenge_mode':
       default:
         return (
           <g>
-            <circle cx="140" cy="70" r="42" fill="#1E1033" stroke="#FB7185" strokeWidth="3" />
-            <path d="M140 70L140 42M140 70L162 82" stroke="#F5F3F7" strokeWidth="3" strokeLinecap="round" />
-            <rect x="122" y="18" width="36" height="8" rx="3" fill="#FB7185" />
-            <text x="206" y="76" fill="#FB7185" fontSize="18" fontFamily="monospace" fontWeight="700">4x</text>
+            <circle cx="140" cy="70" r="42" fill={highlightBg} stroke={accent} strokeWidth="3.5" />
+            <path d="M140 70L140 42M140 70L162 82" stroke={ink} strokeWidth="3.5" strokeLinecap="round" />
+            <rect x="122" y="18" width="36" height="8" rx="3" fill={coral} />
+            <text x="206" y="76" fill={coral} fontSize="18" fontFamily="sans-serif" fontWeight="800">2x</text>
           </g>
         );
     }
@@ -451,11 +544,11 @@ export const PuzzleCoverArt: React.FC<PuzzleCoverArtProps> = ({ type, className 
       aria-hidden="true"
       className={`w-full h-full select-none ${className}`}
     >
-      <rect width="280" height="140" fill="#14111A" />
-      <pattern id={`grid-${type}`} width="20" height="20" patternUnits="userSpaceOnUse">
-        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#24202C" strokeWidth="0.75" />
+      <rect width="280" height="140" fill={bg} />
+      <pattern id={`grid-${variant}-${type}`} width="20" height="20" patternUnits="userSpaceOnUse">
+        <path d="M 20 0 L 0 0 0 20" fill="none" stroke={gridLine} strokeWidth="0.75" />
       </pattern>
-      <rect width="280" height="140" fill={`url(#grid-${type})`} />
+      <rect width="280" height="140" fill={`url(#grid-${variant}-${type})`} />
       {renderScene()}
     </svg>
   );

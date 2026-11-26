@@ -68,7 +68,7 @@ export const ShowcasePage: React.FC<ShowcasePageProps> = ({ targetUserId }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24 text-pv-text-muted">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pv-dragon-fruit" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#38C6BA]" />
       </div>
     );
   }
@@ -76,7 +76,7 @@ export const ShowcasePage: React.FC<ShowcasePageProps> = ({ targetUserId }) => {
   if (!profile) {
     return (
       <Card className="text-center py-20 p-8 space-y-4 max-w-md mx-auto">
-        <Lock className="w-10 h-10 text-pv-dragon-fruit mx-auto" />
+        <Lock className="w-10 h-10 text-[#38C6BA] mx-auto" />
         <h2 className="text-lg font-bold text-pv-text-primary">Showcase Unavailable</h2>
         <p className="text-xs text-pv-text-muted">
           The player profile or showcase record could not be found.
@@ -163,7 +163,7 @@ export const ShowcasePage: React.FC<ShowcasePageProps> = ({ targetUserId }) => {
             <div className="w-20 h-20 rounded-lg bg-pv-surface-soft border border-pv-border flex items-center justify-center text-2xl font-bold text-pv-text-primary font-tabular">
               {profile.displayName ? profile.displayName.slice(0, 2).toUpperCase() : 'PV'}
             </div>
-            <div className="absolute -bottom-2 -right-2 bg-pv-dragon-fruit text-[#110F15] font-semibold font-bold text-[10px] px-2 py-0.5 rounded uppercase font-tabular border border-pv-surface-primary">
+            <div className="absolute -bottom-2 -right-2 bg-[#38C6BA] text-[#142331] font-semibold font-bold text-[10px] px-2 py-0.5 rounded uppercase font-tabular border border-pv-surface-primary">
               Lv. {profile.level}
             </div>
           </div>
@@ -171,7 +171,7 @@ export const ShowcasePage: React.FC<ShowcasePageProps> = ({ targetUserId }) => {
           <div className="text-center sm:text-left space-y-1.5 flex-1">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h1 className="text-2xl font-bold text-pv-text-primary">{profile.displayName}</h1>
-              <span className="bg-pv-dragon-fruit/10 text-pv-dragon-fruit border border-pv-dragon-fruit/20 text-xs font-semibold px-2.5 py-0.5 rounded flex items-center gap-1">
+              <span className="bg-[#38C6BA]/10 text-[#38C6BA] border border-[#38C6BA]/20 text-xs font-semibold px-2.5 py-0.5 rounded flex items-center gap-1">
                 <Sparkles className="w-3 h-3" /> {featuredTitle}
               </span>
             </div>
@@ -191,7 +191,7 @@ export const ShowcasePage: React.FC<ShowcasePageProps> = ({ targetUserId }) => {
             </div>
             <div>
               <p className="text-[10px] text-pv-text-muted font-medium uppercase">Streak</p>
-              <p className="text-lg font-bold text-pv-dragon-fruit flex items-center justify-center gap-1 font-tabular">
+              <p className="text-lg font-bold text-[#38C6BA] flex items-center justify-center gap-1 font-tabular">
                 <Flame className="w-4 h-4 fill-current" /> {profile.currentStreak}d
               </p>
             </div>
@@ -208,7 +208,7 @@ export const ShowcasePage: React.FC<ShowcasePageProps> = ({ targetUserId }) => {
       {/* Featured Achievements Section */}
       <Card className="p-6 space-y-4">
         <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-pv-dragon-fruit" />
+          <Trophy className="w-4 h-4 text-[#38C6BA]" />
           <span>Featured Achievements</span>
         </h3>
         {featuredAchList.length === 0 ? (
@@ -220,13 +220,13 @@ export const ShowcasePage: React.FC<ShowcasePageProps> = ({ targetUserId }) => {
                 key={ach.id}
                 className="bg-pv-surface-soft p-3 rounded-lg border border-pv-border flex items-center gap-3"
               >
-                <div className="p-2.5 bg-pv-surface-elevated text-pv-dragon-fruit rounded border border-pv-border">
+                <div className="p-2.5 bg-pv-surface-elevated text-[#38C6BA] rounded border border-pv-border">
                   <Trophy className="w-5 h-5" />
                 </div>
                 <div>
                   <h4 className="text-xs font-semibold text-pv-text-primary">{ach.title}</h4>
                   <p className="text-xs text-pv-text-muted">{ach.description}</p>
-                  <span className="text-[10px] text-pv-dragon-fruit font-medium font-tabular mt-0.5 inline-block">
+                  <span className="text-[10px] text-[#38C6BA] font-medium font-tabular mt-0.5 inline-block">
                     +100 XP
                   </span>
                 </div>
@@ -239,7 +239,7 @@ export const ShowcasePage: React.FC<ShowcasePageProps> = ({ targetUserId }) => {
       {/* Personal Best Highlights */}
       <Card className="p-6 space-y-4">
         <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-          <Medal className="w-4 h-4 text-pv-dragon-fruit" />
+          <Medal className="w-4 h-4 text-[#38C6BA]" />
           <span>Personal Best Records</span>
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -269,7 +269,7 @@ export const ShowcasePage: React.FC<ShowcasePageProps> = ({ targetUserId }) => {
                     </div>
                     <div>
                       <p className="text-[10px] text-pv-text-muted font-medium uppercase">Best Time</p>
-                      <p className="text-base font-bold text-pv-dragon-fruit font-tabular">
+                      <p className="text-base font-bold text-[#38C6BA] font-tabular">
                         {pb.bestTime}s
                       </p>
                     </div>
@@ -287,7 +287,7 @@ export const ShowcasePage: React.FC<ShowcasePageProps> = ({ targetUserId }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="p-5 space-y-3">
           <h3 className="text-xs font-semibold text-pv-text-primary flex items-center gap-2">
-            <Swords className="w-4 h-4 text-pv-dragon-fruit" />
+            <Swords className="w-4 h-4 text-[#38C6BA]" />
             <span>Competitive Records</span>
           </h3>
           <div className="bg-pv-surface-soft p-3 rounded-lg border border-pv-border flex items-center justify-between">
@@ -303,11 +303,11 @@ export const ShowcasePage: React.FC<ShowcasePageProps> = ({ targetUserId }) => {
 
         <Card className="p-5 space-y-3">
           <h3 className="text-xs font-semibold text-pv-text-primary flex items-center gap-2">
-            <Target className="w-4 h-4 text-pv-dragon-fruit" />
+            <Target className="w-4 h-4 text-[#38C6BA]" />
             <span>Featured Title</span>
           </h3>
           <div className="bg-pv-surface-soft p-3 rounded-lg border border-pv-border flex items-center gap-3">
-            <div className="p-2.5 bg-pv-surface-elevated text-pv-dragon-fruit rounded border border-pv-border">
+            <div className="p-2.5 bg-pv-surface-elevated text-[#38C6BA] rounded border border-pv-border">
               <Award className="w-5 h-5" />
             </div>
             <div>

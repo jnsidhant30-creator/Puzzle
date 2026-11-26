@@ -167,15 +167,15 @@ export const MemoryPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint,
       />
 
       {/* Cards Grid */}
-      <div className={`grid ${gridCols} gap-2.5 w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5`}>
+      <div className={`grid ${gridCols} gap-2.5 w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5`}>
         {cards.map((card, idx) => {
           const isRevealed = card.isFlipped || card.isMatched;
 
-          let cardStyle = 'bg-[#24202C] border-[#342D3D] hover:border-[#494052] text-[#9F97AB] pv-keycap';
+          let cardStyle = 'bg-[#233D4A] border-[#36515F] hover:border-[#4A6A7B] text-[#98AAB8] pv-keycap';
           if (card.isMatched) {
             cardStyle = 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300';
           } else if (card.isFlipped) {
-            cardStyle = 'bg-[#1E1033] border-[#FF4696] text-[#FF82B8]';
+            cardStyle = 'bg-[#1C2D3B] border-[#38C6BA] text-[#A8E5D5]';
           }
 
           return (

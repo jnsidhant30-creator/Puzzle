@@ -67,17 +67,17 @@ export const GoalsPage: React.FC = () => {
   const getCategoryIcon = (category: GoalCategory) => {
     switch (category) {
       case 'games':
-        return <Flame className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+        return <Flame className="w-3.5 h-3.5 text-[#38C6BA]" />;
       case 'score':
-        return <Trophy className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+        return <Trophy className="w-3.5 h-3.5 text-[#38C6BA]" />;
       case 'speed':
-        return <Zap className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+        return <Zap className="w-3.5 h-3.5 text-[#38C6BA]" />;
       case 'challenges':
-        return <Sparkles className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+        return <Sparkles className="w-3.5 h-3.5 text-[#38C6BA]" />;
       case 'variety':
-        return <Compass className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+        return <Compass className="w-3.5 h-3.5 text-[#38C6BA]" />;
       default:
-        return <Target className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+        return <Target className="w-3.5 h-3.5 text-[#38C6BA]" />;
     }
   };
 
@@ -89,7 +89,7 @@ export const GoalsPage: React.FC = () => {
         description="Track gameplay targets across daily, weekly, and personal milestone tracks."
         action={
           claimableCount > 0 ? (
-            <span className="px-3 py-1 rounded-md bg-pv-surface-soft border border-pv-border-strong text-pv-dragon-fruit text-xs font-medium shrink-0">
+            <span className="px-3 py-1 rounded-md bg-pv-surface-soft border border-pv-border-strong text-[#38C6BA] text-xs font-medium shrink-0">
               {claimableCount} reward{claimableCount > 1 ? 's' : ''} ready to claim
             </span>
           ) : undefined
@@ -108,7 +108,7 @@ export const GoalsPage: React.FC = () => {
         </Card>
         <Card className="p-3.5">
           <p className="text-[11px] text-pv-text-muted font-medium uppercase tracking-wider">Claimable</p>
-          <p className="text-xl font-semibold text-pv-dragon-fruit font-tabular mt-1">{claimableCount}</p>
+          <p className="text-xl font-semibold text-[#38C6BA] font-tabular mt-1">{claimableCount}</p>
         </Card>
         <Card className="p-3.5">
           <p className="text-[11px] text-pv-text-muted font-medium uppercase tracking-wider">Completion</p>
@@ -146,7 +146,7 @@ export const GoalsPage: React.FC = () => {
       {/* Goals Grid */}
       {loading ? (
         <Card className="py-16 text-center">
-          <div className="w-6 h-6 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-6 h-6 border-2 border-[#38C6BA] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-xs text-pv-text-secondary font-medium">Loading goals...</p>
         </Card>
       ) : filteredGoals.length === 0 ? (
@@ -171,7 +171,7 @@ export const GoalsPage: React.FC = () => {
               <Card
                 key={g.id}
                 className={`p-4 space-y-3 transition-colors ${
-                  g.claimed ? 'opacity-60' : isDone ? 'border-pv-dragon-fruit/40' : ''
+                  g.claimed ? 'opacity-60' : isDone ? 'border-[#38C6BA]/40' : ''
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -199,7 +199,7 @@ export const GoalsPage: React.FC = () => {
                   <div className="w-full bg-pv-surface-secondary h-1.5 rounded-full overflow-hidden border border-pv-border">
                     <div
                       className={`h-full transition-all duration-300 rounded-full ${
-                        isDone ? 'bg-emerald-500' : 'bg-pv-dragon-fruit'
+                        isDone ? 'bg-emerald-500' : 'bg-[#38C6BA]'
                       }`}
                       style={{ width: `${percent}%` }}
                     />
@@ -209,10 +209,10 @@ export const GoalsPage: React.FC = () => {
                 <div className="flex items-center justify-between border-t border-pv-border pt-3 text-xs">
                   <div className="flex items-center gap-3 text-pv-text-secondary font-mono text-[11px]">
                     <span className="flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-pv-dragon-fruit" /> +{g.rewardXP} XP
+                      <Zap className="w-3 h-3 text-[#38C6BA]" /> +{g.rewardXP} XP
                     </span>
                     <span className="flex items-center gap-1">
-                      <Coins className="w-3 h-3 text-pv-dragon-fruit" /> +{g.rewardCoins} coins
+                      <Coins className="w-3 h-3 text-[#38C6BA]" /> +{g.rewardCoins} coins
                     </span>
                   </div>
 
@@ -224,7 +224,7 @@ export const GoalsPage: React.FC = () => {
                     <button
                       onClick={() => handleClaim(g)}
                       disabled={claimingId === g.id}
-                      className="h-8 px-3.5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg transition-colors disabled:opacity-40"
+                      className="h-8 px-3.5 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg transition-colors disabled:opacity-40"
                     >
                       {claimingId === g.id ? 'Claiming...' : 'Claim Reward'}
                     </button>

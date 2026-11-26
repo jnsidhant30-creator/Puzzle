@@ -6,19 +6,22 @@ import {
   sendPasswordResetEmail,
   signInWithPopup,
   signInWithRedirect,
+  GoogleAuthProvider,
+  signInWithCredential,
 } from 'firebase/auth';
 import { auth, syncUserProfile, googleProvider } from '../services/firebase';
-import { Mail, Lock, EyeOff, Eye } from 'lucide-react';
+import { Mail, Lock, EyeOff, Eye, WifiOff, RefreshCw, Compass, Download } from 'lucide-react';
 import { Button } from './ui/Button';
 
 interface Props {
   onClose?: () => void;
   hideClose?: boolean;
   isLayout?: boolean;
+  onOpenDownload?: () => void;
 }
 
-export const AuthModal: React.FC<Props> = () => {
-  const { setUser } = useStore();
+export const AuthModal: React.FC<Props> = ({ onOpenDownload }) => {
+  const { setUser, isOnline, retryConnection, enterOfflineGuestMode } = useStore();
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -76,12 +79,30 @@ export const AuthModal: React.FC<Props> = () => {
 
   const handleGoogleAuth = async () => {
     if (loading) return;
+    if (!isOnline) {
+      setError('Internet connection required for Google sign-in. You can still Play Offline in Guest Practice mode below.');
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
-      // Use popup-first within the direct click gesture across desktop & mobile:
-      // 1) Avoids cross-origin third-party storage partitioning on mobile browsers
-      // 2) Routes through authorized firebaseapp.com/__/auth/handler cleanly
+      if (window.puzzleverseDesktop?.isDesktop) {
+        const authRes = await window.puzzleverseDesktop.startGoogleAuth();
+        if (!authRes.ok || (!authRes.idToken && !authRes.accessToken)) {
+          throw new Error(authRes.error || 'Google sign-in in browser did not complete.');
+        }
+        const credential = GoogleAuthProvider.credential(
+          authRes.idToken || null,
+          authRes.accessToken || null
+        );
+        const res = await signInWithCredential(auth, credential);
+        const profile = await syncUserProfile(res.user);
+        setUser(profile, false);
+        setLoading(false);
+        return;
+      }
+
+      // Popup-first within click gesture across desktop & mobile web browsers
       const res = await signInWithPopup(auth, googleProvider);
       const profile = await syncUserProfile(res.user);
       setUser(profile, false);
@@ -116,27 +137,44 @@ export const AuthModal: React.FC<Props> = () => {
   };
 
   return (
-    <div className="w-full bg-[#1C1823] border border-[#342D3D] rounded-xl p-6 sm:p-8">
+    <div className="w-full bg-[#F5F2E9] border border-[#D5DEDB] rounded-xl p-6 sm:p-8 text-[#142331]">
       <div className="space-y-1.5 mb-6">
-        <h2 className="text-2xl font-semibold tracking-tight text-[#F5F3F7]">
+        <h2 className="text-2xl font-extrabold tracking-tight text-[#142331]">
           {mode === 'register'
             ? 'Create account'
             : mode === 'forgot'
             ? 'Reset password'
             : 'Sign in'}
         </h2>
-        <p className="text-sm text-[#B9B3C2]">
+        <p className="text-sm text-[#526575]">
           {mode === 'register'
-            ? 'Create your PuzzleVerse account.'
+            ? 'Create your PuzzleVerse player account.'
             : mode === 'forgot'
-            ? 'Enter your email address to receive a password reset link.'
-            : 'Sign in to save your scores, XP, and daily streaks.'}
+            ? 'Enter your email address to receive a reset link.'
+            : 'Sign in to save your puzzles, XP, and best scores.'}
         </p>
       </div>
 
+      {!isOnline && (
+        <div className="mb-5 p-3 text-xs font-semibold bg-[#FEF3C7] border border-[#F59E0B]/60 text-[#78350F] rounded-lg flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <WifiOff className="w-4 h-4 shrink-0" />
+            <span>Offline detected. Account sign-in is paused, or play locally below.</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => retryConnection()}
+            className="px-2 py-1 rounded bg-white/80 hover:bg-white text-[#142331] inline-flex items-center gap-1 shrink-0"
+          >
+            <RefreshCw className="w-3 h-3" />
+            <span>Retry</span>
+          </button>
+        </div>
+      )}
+
       {error && (
         <div
-          className="mb-5 p-3 text-sm font-medium bg-[#F87171]/10 border border-[#F87171]/30 text-[#F87171] rounded-lg"
+          className="mb-5 p-3 text-sm font-semibold bg-[#FEE2E2] border border-[#FCA5A5] text-[#991B1B] rounded-lg"
           role="alert"
         >
           {error}
@@ -145,7 +183,7 @@ export const AuthModal: React.FC<Props> = () => {
 
       {resetSent && mode === 'forgot' && (
         <div
-          className="mb-5 p-3 text-sm font-medium bg-[#34D399]/10 border border-[#34D399]/30 text-[#34D399] rounded-lg"
+          className="mb-5 p-3 text-sm font-semibold bg-[#D1FAE5] border border-[#6EE7B7] text-[#065F46] rounded-lg"
           role="alert"
         >
           Password reset link sent. Check your inbox.
@@ -154,11 +192,11 @@ export const AuthModal: React.FC<Props> = () => {
 
       <form className="space-y-4" onSubmit={handleAuth}>
         <div className="space-y-1.5">
-          <label htmlFor="email" className="block text-xs font-medium text-[#B9B3C2]">
+          <label htmlFor="email" className="block text-xs font-bold text-[#142331]">
             Email address
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#9F97AB]">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#526575]">
               <Mail className="w-4 h-4" />
             </div>
             <input
@@ -168,7 +206,7 @@ export const AuthModal: React.FC<Props> = () => {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="block w-full h-11 pl-10 pr-3.5 bg-[#110F15] border border-[#342D3D] rounded-lg text-sm text-[#F5F3F7] placeholder:text-[#9F97AB] focus:outline-none focus:border-[#FF4696] focus:ring-2 focus:ring-[#FF4696]/25 transition-colors"
+              className="block w-full h-11 pl-10 pr-3.5 bg-[#FFFFFF] border border-[#C3D0CB] rounded-lg text-sm text-[#142331] placeholder:text-[#526575] focus:outline-none focus:border-[#087F8C] focus:ring-2 focus:ring-[#38C6BA]/35 transition-colors"
               placeholder="name@example.com"
             />
           </div>
@@ -177,7 +215,7 @@ export const AuthModal: React.FC<Props> = () => {
         {mode !== 'forgot' && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block text-xs font-medium text-[#B9B3C2]">
+              <label htmlFor="password" className="block text-xs font-bold text-[#142331]">
                 Password
               </label>
               {mode === 'login' && (
@@ -188,14 +226,14 @@ export const AuthModal: React.FC<Props> = () => {
                     setError(null);
                     setResetSent(false);
                   }}
-                  className="text-xs text-[#B9B3C2] hover:text-[#F5F3F7] transition-colors"
+                  className="text-xs font-semibold text-[#066B75] hover:text-[#142331] transition-colors"
                 >
                   Forgot password?
                 </button>
               )}
             </div>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#9F97AB]">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#526575]">
                 <Lock className="w-4 h-4" />
               </div>
               <input
@@ -205,13 +243,13 @@ export const AuthModal: React.FC<Props> = () => {
                 autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full h-11 pl-10 pr-11 bg-[#110F15] border border-[#342D3D] rounded-lg text-sm text-[#F5F3F7] placeholder:text-[#9F97AB] focus:outline-none focus:border-[#FF4696] focus:ring-2 focus:ring-[#FF4696]/25 transition-colors"
+                className="block w-full h-11 pl-10 pr-11 bg-[#FFFFFF] border border-[#C3D0CB] rounded-lg text-sm text-[#142331] placeholder:text-[#526575] focus:outline-none focus:border-[#087F8C] focus:ring-2 focus:ring-[#38C6BA]/35 transition-colors"
                 placeholder="Enter your password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 px-3 flex items-center text-[#9F97AB] hover:text-[#F5F3F7] focus:outline-none transition-colors"
+                className="absolute inset-y-0 right-0 px-3 flex items-center text-[#526575] hover:text-[#142331] focus:outline-none transition-colors"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
@@ -232,16 +270,16 @@ export const AuthModal: React.FC<Props> = () => {
           <>
             <div className="relative my-5">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#342D3D]" />
+                <div className="w-full border-t border-[#D5DEDB]" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="px-2.5 bg-[#1C1823] text-[#9F97AB]">Or continue with</span>
+                <span className="px-2.5 bg-[#F5F2E9] text-[#526575] font-semibold">Or continue with</span>
               </div>
             </div>
 
             <Button
               type="button"
-              variant="secondary"
+              variant="secondaryLight"
               size="lg"
               onClick={handleGoogleAuth}
               disabled={loading}
@@ -267,39 +305,71 @@ export const AuthModal: React.FC<Props> = () => {
               </svg>
               <span>Continue with Google</span>
             </Button>
+
+            <div className="pt-2 space-y-1.5">
+              <Button
+                type="button"
+                variant="outlineLight"
+                size="md"
+                onClick={enterOfflineGuestMode}
+                disabled={loading}
+                className="w-full"
+              >
+                <Compass className="w-4 h-4 text-[#087F8C]" />
+                <span>Play Offline (Guest Practice)</span>
+              </Button>
+              <p className="text-[11px] text-center text-[#526575]">
+                Offline guest scores are stored locally and excluded from global leaderboards.
+              </p>
+            </div>
           </>
         )}
       </form>
 
-      <div className="mt-6 pt-5 border-t border-[#342D3D] text-center text-xs text-[#9F97AB]">
+      {!window.puzzleverseDesktop?.isDesktop && onOpenDownload && (
+        <div className="mt-4 pt-3 border-t border-[#D5DEDB] flex items-center justify-between text-xs">
+          <span className="text-[#526575] font-medium">Windows 10/11 PC?</span>
+          <button
+            type="button"
+            onClick={onOpenDownload}
+            className="font-bold text-[#066B75] hover:text-[#142331] inline-flex items-center gap-1"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download Desktop App</span>
+          </button>
+        </div>
+      )}
+
+      <div className="mt-5 pt-4 border-t border-[#D5DEDB] text-center text-xs text-[#526575]">
         {mode === 'login' ? (
-          <>
-            Need an account?{' '}
+          <p>
+            Don&apos;t have an account?{' '}
             <button
               type="button"
               onClick={() => {
                 setMode('register');
                 setError(null);
               }}
-              className="text-[#FF82B8] hover:text-[#FF4696] font-medium transition-colors"
+              className="text-[#066B75] hover:text-[#142331] font-bold transition-colors"
             >
-              Sign up
+              Create account
             </button>
-          </>
+          </p>
         ) : (
-          <>
+          <p>
             Already have an account?{' '}
             <button
               type="button"
               onClick={() => {
                 setMode('login');
                 setError(null);
+                setResetSent(false);
               }}
-              className="text-[#FF82B8] hover:text-[#FF4696] font-medium transition-colors"
+              className="text-[#066B75] hover:text-[#142331] font-bold transition-colors"
             >
               Sign in
             </button>
-          </>
+          </p>
         )}
       </div>
     </div>

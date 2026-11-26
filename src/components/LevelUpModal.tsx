@@ -1,19 +1,29 @@
 import React, { useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { Award, Coins } from 'lucide-react';
+import { Button } from './ui/Button';
 
 export const LevelUpModal: React.FC = () => {
-  const { levelUpModal, closeLevelUpModal } = useStore();
+  const { levelUpModal, closeLevelUpModal, user } = useStore();
 
   useEffect(() => {
-    if (levelUpModal?.show) {
-      import('canvas-confetti')
-        .then((mod) => {
-          mod.default({ particleCount: 60, spread: 55, origin: { y: 0.6 } });
-        })
-        .catch(() => {});
-    }
-  }, [levelUpModal]);
+    if (!levelUpModal?.show) return;
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(prefers-reduced-motion: reduce)').matches || Boolean(user?.preferences?.reduceAnimations));
+    if (prefersReducedMotion) return;
+
+    import('canvas-confetti')
+      .then((mod) => {
+        mod.default({
+          particleCount: 40,
+          spread: 50,
+          origin: { y: 0.6 },
+          colors: ['#38C6BA', '#A8E5D5', '#93D1F2', '#F5F2E9'],
+        });
+      })
+      .catch(() => {});
+  }, [levelUpModal, user?.preferences?.reduceAnimations]);
 
   useEffect(() => {
     if (!levelUpModal?.show) return;
@@ -33,32 +43,29 @@ export const LevelUpModal: React.FC = () => {
       aria-labelledby="level-up-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
     >
-      <div className="bg-pv-surface-primary border border-pv-border rounded-xl p-6 max-w-sm w-full text-center shadow-lg relative">
-        <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-pv-surface-secondary border border-pv-border flex items-center justify-center">
-          <Award className="w-7 h-7 text-pv-dragon-fruit" />
+      <div className="bg-[#233D4A] border border-[#4A6A7B] rounded-xl p-6 max-w-sm w-full text-center relative">
+        <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-[#1C2D3B] border border-[#36515F] flex items-center justify-center">
+          <Award className="w-7 h-7 text-[#38C6BA]" />
         </div>
 
-        <p className="text-xs uppercase tracking-wider text-pv-text-muted font-medium mb-1">
-          Account Progression
+        <p className="text-xs font-semibold text-[#A8E5D5] mb-1">
+          New level unlocked
         </p>
-        <h2 id="level-up-title" className="text-2xl font-semibold text-pv-text-primary mb-1">
+        <h2 id="level-up-title" className="text-2xl font-bold text-[#F5F7F8] mb-1">
           Level {levelUpModal.newLevel} Reached
         </h2>
-        <p className="text-xs text-pv-text-secondary mb-5">
-          You have achieved a new account tier. Bonus coins have been deposited into your balance.
+        <p className="text-sm text-[#B4C3CE] mb-5">
+          Bonus coins have been added to your account.
         </p>
 
-        <div className="bg-pv-surface-secondary border border-pv-border rounded-lg p-3 mb-5 flex items-center justify-center gap-2 text-pv-text-primary text-xs font-medium">
-          <Coins className="w-4 h-4 text-pv-dragon-fruit" />
-          <span>+100 bonus coins awarded</span>
+        <div className="bg-[#1C2D3B] border border-[#36515F] rounded-lg p-3 mb-5 flex items-center justify-center gap-2 text-[#F5F7F8] text-sm font-semibold">
+          <Coins className="w-4 h-4 text-[#38C6BA]" />
+          <span>+{levelUpModal.coinsAwarded} bonus coins</span>
         </div>
 
-        <button
-          onClick={closeLevelUpModal}
-          className="w-full h-10 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] text-sm font-semibold rounded-lg transition-colors"
-        >
+        <Button onClick={closeLevelUpModal} variant="primary" size="md" className="w-full">
           Continue
-        </button>
+        </Button>
       </div>
     </div>
   );

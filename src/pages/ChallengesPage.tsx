@@ -19,11 +19,12 @@ import {
   Trophy,
   Search,
   X,
+  WifiOff,
 } from 'lucide-react';
 import { PageHeader, Card } from '../components/ui/Card';
 
 export const ChallengesPage: React.FC = () => {
-  const { user, playChallengeMatch } = useStore();
+  const { user, isOnline, isGuest, retryConnection, playChallengeMatch } = useStore();
   const [challenges, setChallenges] = useState<ChallengeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterTab, setFilterTab] = useState<'ALL' | 'INCOMING' | 'SENT' | 'ACTIVE' | 'COMPLETED' | 'EXPIRED'>('ALL');
@@ -141,11 +142,12 @@ export const ChallengesPage: React.FC = () => {
         description="Compete in deterministic head-to-head puzzle rooms with identical board seeds."
         action={
           <button
+            disabled={!isOnline || isGuest}
             onClick={() => {
               setShowCreateModal(true);
               setCreatedChallengeId(null);
             }}
-            className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors shrink-0"
+            className="h-9 px-4 bg-[#087F8C] hover:bg-[#066B75] disabled:opacity-50 text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Create Challenge Room</span>
@@ -153,10 +155,31 @@ export const ChallengesPage: React.FC = () => {
         }
       />
 
+      {(!isOnline || isGuest) && (
+        <Card className="p-4 border-[#F59E0B]/40 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 text-xs text-[#B4C3CE]">
+            <WifiOff className="w-4 h-4 text-[#FBBF24] shrink-0" />
+            <span>
+              {!isOnline
+                ? 'Live 1v1 challenge rooms require an active internet connection. Solo Challenge Run remains playable offline!'
+                : 'Sign in with a PuzzleVerse account online to send or accept 1v1 duel rooms.'}
+            </span>
+          </div>
+          {!isOnline && (
+            <button
+              onClick={() => retryConnection()}
+              className="px-3 py-1.5 rounded-lg bg-[#233D4A] border border-[#36515F] text-xs font-bold text-[#F5F7F8]"
+            >
+              Retry Connection
+            </button>
+          )}
+        </Card>
+      )}
+
       {/* Code Join Bar */}
       <Card className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs font-medium text-pv-text-secondary">
-          <Search className="w-4 h-4 text-pv-dragon-fruit" />
+          <Search className="w-4 h-4 text-[#38C6BA]" />
           <span>Have a challenge room ID?</span>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -165,7 +188,7 @@ export const ChallengesPage: React.FC = () => {
             value={joinCodeInput}
             onChange={(e) => setJoinCodeInput(e.target.value)}
             placeholder="Paste room ID..."
-            className="bg-pv-surface-secondary border border-pv-border rounded-lg px-3 h-8 text-xs text-pv-text-primary placeholder-pv-text-muted focus:outline-none focus:border-pv-dragon-fruit w-full sm:w-64 font-mono"
+            className="bg-pv-surface-secondary border border-pv-border rounded-lg px-3 h-8 text-xs text-pv-text-primary placeholder-pv-text-muted focus:outline-none focus:border-[#38C6BA] w-full sm:w-64 font-mono"
           />
           <button
             onClick={handleJoinByCode}
@@ -197,7 +220,7 @@ export const ChallengesPage: React.FC = () => {
       {/* Challenges Grid */}
       {loading ? (
         <Card className="py-16 text-center">
-          <div className="w-6 h-6 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-6 h-6 border-2 border-[#38C6BA] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-xs text-pv-text-secondary font-medium">Loading challenge rooms...</p>
         </Card>
       ) : filteredChallenges.length === 0 ? (
@@ -214,7 +237,7 @@ export const ChallengesPage: React.FC = () => {
           <div className="pt-2">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg inline-flex items-center gap-1.5 transition-colors"
+              className="h-9 px-4 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg inline-flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create Challenge Room</span>
@@ -260,7 +283,7 @@ export const ChallengesPage: React.FC = () => {
                     <p className="text-[10px] text-pv-text-muted font-medium uppercase truncate">
                       {ch.opponentName ? ch.opponentName : 'Open opponent'}
                     </p>
-                    <p className="font-semibold text-pv-dragon-fruit font-tabular mt-0.5">
+                    <p className="font-semibold text-[#38C6BA] font-tabular mt-0.5">
                       {ch.opponentScore !== undefined ? `${ch.opponentScore} pts` : 'Pending'}
                     </p>
                     <p className="text-[10px] text-pv-text-muted font-tabular">
@@ -272,7 +295,7 @@ export const ChallengesPage: React.FC = () => {
                 {ch.status === 'COMPLETED' && ch.winnerName && (
                   <div className="bg-pv-surface-secondary border border-pv-border p-2.5 rounded-lg flex items-center justify-between text-xs">
                     <span className="text-pv-text-primary font-medium flex items-center gap-1.5">
-                      <Trophy className="w-3.5 h-3.5 text-pv-dragon-fruit" /> Winner: {ch.winnerName}
+                      <Trophy className="w-3.5 h-3.5 text-[#38C6BA]" /> Winner: {ch.winnerName}
                     </span>
                     <span className="text-[11px] text-emerald-400 font-medium font-tabular">
                       +150 XP • +75 Coins
@@ -284,7 +307,7 @@ export const ChallengesPage: React.FC = () => {
                   {ch.status !== 'COMPLETED' ? (
                     <button
                       onClick={() => playChallengeMatch(ch.id, ch.puzzleType, ch.difficulty, ch.seed)}
-                      className="flex-1 h-8 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                      className="flex-1 h-8 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-colors"
                     >
                       <Play className="w-3.5 h-3.5 fill-current" /> Play Match
                     </button>
@@ -316,7 +339,7 @@ export const ChallengesPage: React.FC = () => {
           <div className="bg-pv-surface-primary border border-pv-border rounded-xl p-6 max-w-md w-full space-y-4 shadow-lg relative">
             <div className="flex items-center justify-between border-b border-pv-border pb-3">
               <h3 className="text-base font-semibold text-pv-text-primary flex items-center gap-2">
-                <Swords className="w-4 h-4 text-pv-dragon-fruit" /> Create Challenge Room
+                <Swords className="w-4 h-4 text-[#38C6BA]" /> Create Challenge Room
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
@@ -335,14 +358,14 @@ export const ChallengesPage: React.FC = () => {
                 <div>
                   <h4 className="text-sm font-semibold text-pv-text-primary">Challenge Room Created</h4>
                   <p className="text-xs text-pv-text-secondary mt-0.5">
-                    Room ID: <span className="font-mono text-pv-dragon-fruit font-semibold">{createdChallengeId}</span>
+                    Room ID: <span className="font-mono text-[#38C6BA] font-semibold">{createdChallengeId}</span>
                   </p>
                 </div>
                 <div className="bg-pv-surface-secondary p-3 rounded-lg border border-pv-border flex items-center justify-between gap-2 text-xs font-mono text-pv-text-secondary">
                   <span className="truncate">{`${window.location.origin}/challenges?id=${createdChallengeId}`}</span>
                   <button
                     onClick={() => handleCopyLink(createdChallengeId)}
-                    className="h-7 px-2.5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded transition-colors shrink-0"
+                    className="h-7 px-2.5 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded transition-colors shrink-0"
                   >
                     {copiedId === createdChallengeId ? 'Copied' : 'Copy'}
                   </button>
@@ -355,7 +378,7 @@ export const ChallengesPage: React.FC = () => {
                       playChallengeMatch(ch.id, ch.puzzleType, ch.difficulty, ch.seed);
                     }
                   }}
-                  className="w-full h-10 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg transition-colors"
+                  className="w-full h-10 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg transition-colors"
                 >
                   Start Your Match
                 </button>
@@ -367,7 +390,7 @@ export const ChallengesPage: React.FC = () => {
                   <select
                     value={selectedPuzzle}
                     onChange={(e) => setSelectedPuzzle(e.target.value as PuzzleType)}
-                    className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2.5 text-xs text-pv-text-primary focus:outline-none focus:border-pv-dragon-fruit"
+                    className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2.5 text-xs text-pv-text-primary focus:outline-none focus:border-[#38C6BA]"
                   >
                     {PUZZLE_MODES.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -404,7 +427,7 @@ export const ChallengesPage: React.FC = () => {
                       type="number"
                       value={targetScore}
                       onChange={(e) => setTargetScore(Number(e.target.value))}
-                      className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2 text-xs text-pv-text-primary font-mono focus:outline-none focus:border-pv-dragon-fruit"
+                      className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2 text-xs text-pv-text-primary font-mono focus:outline-none focus:border-[#38C6BA]"
                     />
                   </div>
                   <div>
@@ -413,7 +436,7 @@ export const ChallengesPage: React.FC = () => {
                       type="number"
                       value={targetTime}
                       onChange={(e) => setTargetTime(Number(e.target.value))}
-                      className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2 text-xs text-pv-text-primary font-mono focus:outline-none focus:border-pv-dragon-fruit"
+                      className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2 text-xs text-pv-text-primary font-mono focus:outline-none focus:border-[#38C6BA]"
                     />
                   </div>
                 </div>
@@ -425,7 +448,7 @@ export const ChallengesPage: React.FC = () => {
                     value={opponentName}
                     onChange={(e) => setOpponentName(e.target.value)}
                     placeholder="Leave empty for public share link"
-                    className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2 text-xs text-pv-text-primary placeholder-pv-text-muted focus:outline-none focus:border-pv-dragon-fruit"
+                    className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2 text-xs text-pv-text-primary placeholder-pv-text-muted focus:outline-none focus:border-[#38C6BA]"
                   />
                 </div>
 
@@ -438,7 +461,7 @@ export const ChallengesPage: React.FC = () => {
                   </button>
                   <button
                     onClick={handleCreateChallenge}
-                    className="flex-1 h-9 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold font-medium rounded-lg text-xs transition-colors"
+                    className="flex-1 h-9 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold font-medium rounded-lg text-xs transition-colors"
                   >
                     Create Room
                   </button>

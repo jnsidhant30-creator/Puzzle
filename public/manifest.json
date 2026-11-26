@@ -1,11 +1,11 @@
 {
   "name": "PuzzleVerse",
   "short_name": "PuzzleVerse",
-  "description": "Play logic, memory, word, and strategy puzzles. Complete daily challenges, track your progress, and compete with other players on PuzzleVerse.",
+  "description": "Play logic, memory, word, and spatial puzzles on PuzzleVerse.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#110F15",
-  "theme_color": "#110F15",
+  "background_color": "#142331",
+  "theme_color": "#142331",
   "icons": [
     {
       "src": "/favicon.svg",

@@ -62,7 +62,7 @@ export const AchievementsPage: React.FC = () => {
         action={
           <div className="bg-pv-surface-primary border border-pv-border px-3.5 py-1.5 rounded-lg flex items-center gap-2 text-xs font-mono shrink-0">
             <span className="text-pv-text-muted uppercase font-medium">Unlocked:</span>
-            <span className="text-pv-dragon-fruit font-semibold text-sm font-tabular">
+            <span className="text-[#38C6BA] font-semibold text-sm font-tabular">
               {unlockedCount} / {DEFAULT_ACHIEVEMENTS.length}
             </span>
           </div>
@@ -90,7 +90,7 @@ export const AchievementsPage: React.FC = () => {
             <Card
               key={ach.id}
               className={`p-4 flex flex-col justify-between transition-colors ${
-                isUnlocked && !isClaimed ? 'border-pv-dragon-fruit/40' : ''
+                isUnlocked && !isClaimed ? 'border-[#38C6BA]/40' : ''
               }`}
             >
               <div>
@@ -98,7 +98,7 @@ export const AchievementsPage: React.FC = () => {
                   <div
                     className={`p-2 rounded-lg border ${
                       isUnlocked
-                        ? 'bg-pv-surface-soft text-pv-dragon-fruit border-pv-border-strong'
+                        ? 'bg-pv-surface-soft text-[#38C6BA] border-pv-border-strong'
                         : 'bg-pv-surface-secondary text-pv-text-muted border-pv-border'
                     }`}
                   >
@@ -109,7 +109,7 @@ export const AchievementsPage: React.FC = () => {
                       <CheckCircle2 className="w-3 h-3" /> Claimed
                     </span>
                   ) : isUnlocked ? (
-                    <span className="text-[10px] font-medium text-pv-dragon-fruit bg-pv-surface-soft border border-pv-border-strong px-2 py-0.5 rounded flex items-center gap-1">
+                    <span className="text-[10px] font-medium text-[#38C6BA] bg-pv-surface-soft border border-pv-border-strong px-2 py-0.5 rounded flex items-center gap-1">
                       <Gift className="w-3 h-3" /> Unlocked
                     </span>
                   ) : (
@@ -135,7 +135,7 @@ export const AchievementsPage: React.FC = () => {
                   <div className="w-full bg-pv-surface-secondary h-1.5 rounded-full overflow-hidden border border-pv-border">
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
-                        isUnlocked ? 'bg-emerald-500' : 'bg-pv-dragon-fruit'
+                        isUnlocked ? 'bg-emerald-500' : 'bg-[#38C6BA]'
                       }`}
                       style={{ width: `${progressPct}%` }}
                     />
@@ -144,7 +144,7 @@ export const AchievementsPage: React.FC = () => {
 
                 <div className="flex items-center justify-between text-xs pt-2 border-t border-pv-border">
                   <div className="flex items-center gap-1 text-pv-text-secondary font-mono text-[11px]">
-                    <Zap className="w-3 h-3 text-pv-dragon-fruit" />
+                    <Zap className="w-3 h-3 text-[#38C6BA]" />
                     <span>+{ach.xpReward} XP • +{ach.coinsReward} coins</span>
                   </div>
 
@@ -152,7 +152,7 @@ export const AchievementsPage: React.FC = () => {
                     <button
                       onClick={() => handleClaim(ach)}
                       disabled={claimingId === ach.id}
-                      className="h-7 px-3 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-md transition-colors disabled:opacity-40"
+                      className="h-7 px-3 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-md transition-colors disabled:opacity-40"
                     >
                       {claimingId === ach.id ? 'Claiming...' : 'Claim'}
                     </button>

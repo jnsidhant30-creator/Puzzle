@@ -244,8 +244,8 @@ export const ClubDiscussionsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="space-y-6 max-w-5xl mx-auto py-12">
-        <div className="h-32 bg-pv-surface-soft border border-pv-border rounded-lg animate-pulse" />
-        <div className="h-64 bg-pv-surface-soft border border-pv-border rounded-lg animate-pulse" />
+        <div className="h-32 bg-pv-surface-soft border border-pv-border rounded-lg" />
+        <div className="h-64 bg-pv-surface-soft border border-pv-border rounded-lg" />
       </div>
     );
   }
@@ -307,7 +307,7 @@ export const ClubDiscussionsPage: React.FC = () => {
               onClick={() => setTabFilter('recent')}
               className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                 tabFilter === 'recent'
-                  ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                  ? 'bg-[#38C6BA] text-[#142331] font-semibold'
                   : 'text-pv-text-muted hover:text-pv-text-primary'
               }`}
             >
@@ -317,7 +317,7 @@ export const ClubDiscussionsPage: React.FC = () => {
               onClick={() => setTabFilter('pinned')}
               className={`px-3 py-1 text-xs font-medium rounded transition-colors flex items-center gap-1 ${
                 tabFilter === 'pinned'
-                  ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                  ? 'bg-[#38C6BA] text-[#142331] font-semibold'
                   : 'text-pv-text-muted hover:text-pv-text-primary'
               }`}
             >
@@ -327,7 +327,7 @@ export const ClubDiscussionsPage: React.FC = () => {
               onClick={() => setTabFilter('my')}
               className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                 tabFilter === 'my'
-                  ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                  ? 'bg-[#38C6BA] text-[#142331] font-semibold'
                   : 'text-pv-text-muted hover:text-pv-text-primary'
               }`}
             >
@@ -352,7 +352,7 @@ export const ClubDiscussionsPage: React.FC = () => {
               onClick={() => setSelectedCategory(cat.id as any)}
               className={`px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors border ${
                 selectedCategory === cat.id
-                  ? 'bg-pv-dragon-fruit/10 border-pv-dragon-fruit/30 text-pv-dragon-fruit'
+                  ? 'bg-[#38C6BA]/10 border-[#38C6BA]/30 text-[#38C6BA]'
                   : 'bg-pv-surface-soft border-pv-border text-pv-text-muted hover:text-pv-text-primary'
               }`}
             >
@@ -380,13 +380,13 @@ export const ClubDiscussionsPage: React.FC = () => {
                 key={disc.id}
                 onClick={() => handleOpenDiscussion(disc)}
                 className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:border-pv-border-hover transition-colors ${
-                  disc.isPinned ? 'border-pv-dragon-fruit/30' : ''
+                  disc.isPinned ? 'border-[#38C6BA]/30' : ''
                 }`}
               >
                 <div className="space-y-2 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     {disc.isPinned && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-pv-dragon-fruit/10 text-pv-dragon-fruit border border-pv-dragon-fruit/20">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#38C6BA]/10 text-[#38C6BA] border border-[#38C6BA]/20">
                         <Pin className="w-2.5 h-2.5" /> PINNED
                       </span>
                     )}
@@ -405,7 +405,7 @@ export const ClubDiscussionsPage: React.FC = () => {
                     )}
                   </div>
 
-                  <h3 className="text-sm font-semibold text-pv-text-primary hover:text-pv-dragon-fruit transition-colors">
+                  <h3 className="text-sm font-semibold text-pv-text-primary hover:text-[#38C6BA] transition-colors">
                     {disc.title}
                   </h3>
                   <p className="text-xs text-pv-text-secondary line-clamp-2 leading-relaxed">
@@ -415,7 +415,7 @@ export const ClubDiscussionsPage: React.FC = () => {
                   <div className="flex items-center gap-2 pt-1 text-[11px] text-pv-text-muted">
                     <span className="font-medium text-pv-text-secondary">{disc.authorName}</span>
                     {disc.authorRole && disc.authorRole !== 'MEMBER' && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] bg-pv-surface-soft text-pv-dragon-fruit border border-pv-border font-semibold">
+                      <span className="px-1.5 py-0.5 rounded text-[9px] bg-pv-surface-soft text-[#38C6BA] border border-pv-border font-semibold">
                         {disc.authorRole}
                       </span>
                     )}
@@ -429,7 +429,7 @@ export const ClubDiscussionsPage: React.FC = () => {
                     onClick={(e) => handleUpvoteDiscussion(disc.id, e)}
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
                       hasUpvoted
-                        ? 'bg-pv-dragon-fruit/10 border-pv-dragon-fruit/30 text-pv-dragon-fruit'
+                        ? 'bg-[#38C6BA]/10 border-[#38C6BA]/30 text-[#38C6BA]'
                         : 'bg-pv-surface-soft border-pv-border text-pv-text-muted hover:text-pv-text-primary'
                     }`}
                   >
@@ -453,7 +453,7 @@ export const ClubDiscussionsPage: React.FC = () => {
           <Card className="max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-pv-border pb-3">
               <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-pv-dragon-fruit" />
+                <MessageSquare className="w-4 h-4 text-[#38C6BA]" />
                 <span>Start a Club Discussion</span>
               </h3>
               <button
@@ -544,7 +544,7 @@ export const ClubDiscussionsPage: React.FC = () => {
                       type="checkbox"
                       checked={newIsPinned}
                       onChange={(e) => setNewIsPinned(e.target.checked)}
-                      className="rounded border-pv-border bg-pv-surface-soft text-pv-dragon-fruit"
+                      className="rounded border-pv-border bg-pv-surface-soft text-[#38C6BA]"
                     />
                     Pin thread
                   </label>
@@ -553,7 +553,7 @@ export const ClubDiscussionsPage: React.FC = () => {
                       type="checkbox"
                       checked={newIsAnnouncement}
                       onChange={(e) => setNewIsAnnouncement(e.target.checked)}
-                      className="rounded border-pv-border bg-pv-surface-soft text-pv-dragon-fruit"
+                      className="rounded border-pv-border bg-pv-surface-soft text-[#38C6BA]"
                     />
                     Official Announcement
                   </label>
@@ -586,7 +586,7 @@ export const ClubDiscussionsPage: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   {selectedDiscussion.isPinned && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-pv-dragon-fruit/10 text-pv-dragon-fruit border border-pv-dragon-fruit/20">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-[#38C6BA]/10 text-[#38C6BA] border border-[#38C6BA]/20">
                       <Pin className="w-2.5 h-2.5" /> PINNED
                     </span>
                   )}
@@ -603,7 +603,7 @@ export const ClubDiscussionsPage: React.FC = () => {
                 <div className="flex items-center gap-2 text-xs text-pv-text-muted pt-0.5">
                   <span className="font-medium text-pv-text-secondary">{selectedDiscussion.authorName}</span>
                   {selectedDiscussion.authorRole && selectedDiscussion.authorRole !== 'MEMBER' && (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] bg-pv-surface-soft text-pv-dragon-fruit border border-pv-border font-semibold">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] bg-pv-surface-soft text-[#38C6BA] border border-pv-border font-semibold">
                       {selectedDiscussion.authorRole}
                     </span>
                   )}
@@ -653,7 +653,7 @@ export const ClubDiscussionsPage: React.FC = () => {
                   onClick={() => handleUpvoteDiscussion(selectedDiscussion.id)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
                     user && selectedDiscussion.upvotedBy.includes(user.uid)
-                      ? 'bg-pv-dragon-fruit/10 border-pv-dragon-fruit/30 text-pv-dragon-fruit'
+                      ? 'bg-[#38C6BA]/10 border-[#38C6BA]/30 text-[#38C6BA]'
                       : 'bg-pv-surface-soft border-pv-border text-pv-text-muted hover:text-pv-text-primary'
                   }`}
                 >
@@ -690,7 +690,7 @@ export const ClubDiscussionsPage: React.FC = () => {
                 </h4>
                 {loadingReplies ? (
                   <div className="space-y-2">
-                    <div className="h-12 bg-pv-surface-soft border border-pv-border rounded-lg animate-pulse" />
+                    <div className="h-12 bg-pv-surface-soft border border-pv-border rounded-lg" />
                   </div>
                 ) : replies.length === 0 ? (
                   <p className="text-xs text-pv-text-muted py-2">No replies yet.</p>
@@ -704,7 +704,7 @@ export const ClubDiscussionsPage: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-pv-text-primary">{rep.authorName}</span>
                           {rep.authorRole && rep.authorRole !== 'MEMBER' && (
-                            <span className="px-1.5 py-0.5 rounded text-[9px] bg-pv-surface-elevated text-pv-dragon-fruit border border-pv-border font-semibold">
+                            <span className="px-1.5 py-0.5 rounded text-[9px] bg-pv-surface-elevated text-[#38C6BA] border border-pv-border font-semibold">
                               {rep.authorRole}
                             </span>
                           )}

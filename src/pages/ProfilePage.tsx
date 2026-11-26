@@ -41,6 +41,7 @@ export const ProfilePage: React.FC = () => {
     updateProfile,
     setUser,
     isGuest,
+    isOnline,
     startReplaySession,
     resetAdaptiveProfiles,
     soundMuted,
@@ -93,6 +94,17 @@ export const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
+    if (isGuest || !isOnline || user.uid.startsWith('guest_')) {
+      try {
+        const offlineRaw = JSON.parse(localStorage.getItem('puzzleverse_offline_practice_v1') || '[]');
+        setRecentSessions(Array.isArray(offlineRaw) ? offlineRaw.slice(0, 10) : []);
+      } catch {
+        setRecentSessions([]);
+      }
+      setPbHistory([]);
+      setLoadingHistory(false);
+      return;
+    }
     setLoadingHistory(true);
     Promise.all([
       fetchUserRecentGameSessions(user.uid, 10),
@@ -104,7 +116,7 @@ export const ProfilePage: React.FC = () => {
         setLoadingHistory(false);
       })
       .catch(() => setLoadingHistory(false));
-  }, [user?.uid]);
+  }, [user?.uid, isGuest, isOnline]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -159,42 +171,42 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-fade-in">
       {/* Player Identity Banner */}
-      <Card surface="featured" padding="lg" className="border-[#494052]">
+      <Card surface="featured" padding="lg" className="border-[#4A6A7B]">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <img
             src={selectedAvatar}
             alt={displayName}
-            className="w-20 h-20 rounded-xl object-cover border-2 border-[#494052] shrink-0 bg-[#16131C]"
+            className="w-20 h-20 rounded-xl object-cover border-2 border-[#4A6A7B] shrink-0 bg-[#1C2D3B]"
           />
           <div className="space-y-2.5 text-center sm:text-left flex-1 min-w-0">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <h2 className="text-2xl font-semibold text-[#F5F3F7] tracking-tight">{displayName}</h2>
-              <span className="bg-[#16131C] text-[#C5BFD0] text-[10px] font-medium px-2.5 py-0.5 rounded-md border border-[#342D3D] uppercase tracking-wider">
+              <h2 className="text-2xl font-semibold text-[#F5F7F8] tracking-tight">{displayName}</h2>
+              <span className="bg-[#1C2D3B] text-[#B4C3CE] text-[10px] font-medium px-2.5 py-0.5 rounded-md border border-[#36515F] uppercase tracking-wider">
                 {selectedTitle}
               </span>
               {user?.role === 'ADMIN' && (
-                <span className="bg-[#FF4696]/15 text-[#FF82B8] border border-[#FF4696]/40 text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase">
+                <span className="bg-[#38C6BA]/15 text-[#A8E5D5] border border-[#38C6BA]/40 text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase">
                   Admin
                 </span>
               )}
             </div>
-            <p className="text-xs text-[#9F97AB] font-mono">@{user?.username || 'player'}</p>
+            <p className="text-xs text-[#98AAB8] font-mono">@{user?.username || 'player'}</p>
             {bio && (
-              <p className="text-xs text-[#C5BFD0] max-w-lg leading-relaxed">
+              <p className="text-xs text-[#B4C3CE] max-w-lg leading-relaxed">
                 "{bio}"
               </p>
             )}
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1 text-xs">
-              <span className="bg-[#16131C] border border-[#342D3D] px-2.5 py-1 rounded-md text-[#F5F3F7] font-semibold font-tabular">
+              <span className="bg-[#1C2D3B] border border-[#36515F] px-2.5 py-1 rounded-md text-[#F5F7F8] font-semibold font-tabular">
                 Level {user?.level || 1}
               </span>
-              <span className="bg-[#16131C] border border-[#342D3D] px-2.5 py-1 rounded-md text-[#C5BFD0] font-tabular">
+              <span className="bg-[#1C2D3B] border border-[#36515F] px-2.5 py-1 rounded-md text-[#B4C3CE] font-tabular">
                 {user?.xp || 0} XP
               </span>
-              <span className="bg-[#16131C] border border-[#342D3D] px-2.5 py-1 rounded-md text-[#C5BFD0] flex items-center gap-1.5 font-tabular">
-                <Coins className="w-3.5 h-3.5 text-[#FF4696]" /> {formatCount(user?.coins || 0, 'coin')}
+              <span className="bg-[#1C2D3B] border border-[#36515F] px-2.5 py-1 rounded-md text-[#B4C3CE] flex items-center gap-1.5 font-tabular">
+                <Coins className="w-3.5 h-3.5 text-[#38C6BA]" /> {formatCount(user?.coins || 0, 'coin')}
               </span>
-              <span className="bg-[#16131C] border border-[#342D3D] px-2.5 py-1 rounded-md text-[#C5BFD0] flex items-center gap-1.5 font-tabular">
+              <span className="bg-[#1C2D3B] border border-[#36515F] px-2.5 py-1 rounded-md text-[#B4C3CE] flex items-center gap-1.5 font-tabular">
                 <HelpCircle className="w-3.5 h-3.5 text-[#38BDF8]" /> {formatCount(user?.hints || 0, 'hint')}
               </span>
             </div>
@@ -231,7 +243,7 @@ export const ProfilePage: React.FC = () => {
         <Card className="p-6 space-y-6">
           <div className="flex items-center justify-between border-b border-pv-border pb-3">
             <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-              <User className="w-4 h-4 text-pv-dragon-fruit" /> Profile Identity
+              <User className="w-4 h-4 text-[#38C6BA]" /> Profile Identity
             </h3>
           </div>
 
@@ -249,7 +261,7 @@ export const ProfilePage: React.FC = () => {
               maxLength={50}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 h-9 rounded-lg text-xs focus:outline-none focus:border-pv-dragon-fruit"
+              className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 h-9 rounded-lg text-xs focus:outline-none focus:border-[#38C6BA]"
             />
           </div>
 
@@ -271,7 +283,7 @@ export const ProfilePage: React.FC = () => {
                     onClick={() => isUnlocked && setSelectedTitle(def.title)}
                     className={`p-2.5 rounded-md border text-left transition-colors flex items-center justify-between ${
                       isSelected
-                        ? 'border-pv-dragon-fruit bg-pv-surface-soft text-pv-text-primary font-medium'
+                        ? 'border-[#38C6BA] bg-pv-surface-soft text-pv-text-primary font-medium'
                         : isUnlocked
                         ? 'border-pv-border hover:border-pv-border-strong text-pv-text-secondary'
                         : 'border-pv-border/40 bg-pv-surface-primary text-pv-text-muted opacity-40 cursor-not-allowed'
@@ -284,7 +296,7 @@ export const ProfilePage: React.FC = () => {
                       </div>
                       <p className="text-[10px] text-pv-text-muted line-clamp-1">{def.description}</p>
                     </div>
-                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-pv-dragon-fruit shrink-0" />}
+                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#38C6BA] shrink-0" />}
                   </button>
                 );
               })}
@@ -302,7 +314,7 @@ export const ProfilePage: React.FC = () => {
                   onClick={() => setSelectedAvatar(url)}
                   className={`p-1 rounded-lg border transition-colors ${
                     selectedAvatar === url
-                      ? 'border-pv-dragon-fruit bg-pv-surface-soft'
+                      ? 'border-[#38C6BA] bg-pv-surface-soft'
                       : 'border-pv-border hover:border-pv-border-strong'
                   }`}
                 >
@@ -324,7 +336,7 @@ export const ProfilePage: React.FC = () => {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Describe your puzzle style or favorite challenge types..."
-              className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 py-2 rounded-lg text-xs focus:outline-none focus:border-pv-dragon-fruit resize-none placeholder-pv-text-muted"
+              className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 py-2 rounded-lg text-xs focus:outline-none focus:border-[#38C6BA] resize-none placeholder-pv-text-muted"
             />
           </div>
 
@@ -348,14 +360,14 @@ export const ProfilePage: React.FC = () => {
                     onClick={() => toggleFavorite(p.id)}
                     className={`p-2.5 rounded-lg border text-xs font-medium flex items-center justify-between transition-colors ${
                       isFav
-                        ? 'border-pv-dragon-fruit bg-pv-surface-soft text-pv-text-primary'
+                        ? 'border-[#38C6BA] bg-pv-surface-soft text-pv-text-primary'
                         : 'border-pv-border hover:border-pv-border-strong text-pv-text-secondary'
                     }`}
                   >
                     <span className="truncate">{p.name}</span>
                     <Heart
                       className={`w-3.5 h-3.5 shrink-0 ${
-                        isFav ? 'fill-pv-dragon-fruit text-pv-dragon-fruit' : 'text-pv-text-muted'
+                        isFav ? 'fill-[#38C6BA] text-[#38C6BA]' : 'text-pv-text-muted'
                       }`}
                     />
                   </button>
@@ -368,7 +380,7 @@ export const ProfilePage: React.FC = () => {
           <div className="flex items-center gap-3 pt-2">
             <button
               onClick={handleSave}
-              className="h-9 px-5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+              className="h-9 px-5 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
             >
               <Save className="w-3.5 h-3.5" /> Save Changes
             </button>
@@ -389,8 +401,15 @@ export const ProfilePage: React.FC = () => {
         <Card className="p-6 space-y-6">
           <div className="flex items-center justify-between border-b border-pv-border pb-3">
             <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-pv-dragon-fruit" /> Gameplay Settings
+              <Sliders className="w-4 h-4 text-[#38C6BA]" /> Gameplay Settings
             </h3>
+            <button
+              type="button"
+              onClick={() => setActiveTabGlobal('settings')}
+              className="text-xs font-semibold text-[#A8E5D5] hover:text-[#38C6BA]"
+            >
+              Open Full Application Settings →
+            </button>
           </div>
 
           <div className="space-y-4 divide-y divide-pv-border">
@@ -426,7 +445,7 @@ export const ProfilePage: React.FC = () => {
                 onClick={toggleSound}
                 className="h-8 px-3 rounded-lg border border-pv-border bg-pv-surface-secondary text-pv-text-primary text-xs font-medium flex items-center gap-1.5 hover:bg-pv-surface-soft transition-colors"
               >
-                {soundMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-pv-dragon-fruit" />}
+                {soundMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-[#38C6BA]" />}
                 <span>{soundMuted ? 'Muted' : 'Enabled'}</span>
               </button>
             </div>
@@ -521,7 +540,7 @@ export const ProfilePage: React.FC = () => {
 
           <button
             onClick={handleSave}
-            className="h-9 px-5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg transition-colors"
+            className="h-9 px-5 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg transition-colors"
           >
             Save Preferences
           </button>
@@ -533,7 +552,7 @@ export const ProfilePage: React.FC = () => {
         <Card className="p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-pv-border pb-3">
             <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-              <Eye className="w-4 h-4 text-pv-dragon-fruit" /> Public Profile View
+              <Eye className="w-4 h-4 text-[#38C6BA]" /> Public Profile View
             </h3>
             <span className="text-xs text-pv-text-muted capitalize">
               Visibility: {profileVis.replace('_', ' ')}
@@ -549,7 +568,7 @@ export const ProfilePage: React.FC = () => {
               />
               <div>
                 <h4 className="text-base font-semibold text-pv-text-primary">{displayName}</h4>
-                <p className="text-xs text-pv-dragon-fruit font-medium">{selectedTitle}</p>
+                <p className="text-xs text-[#38C6BA] font-medium">{selectedTitle}</p>
                 <p className="text-[11px] text-pv-text-muted font-mono">@{user?.username || 'player'}</p>
               </div>
             </div>
@@ -576,7 +595,7 @@ export const ProfilePage: React.FC = () => {
                   </div>
                   <div className="bg-pv-surface-primary p-2.5 rounded-lg border border-pv-border">
                     <span className="text-[10px] text-pv-text-muted block">Streak</span>
-                    <span className="font-semibold text-pv-dragon-fruit font-tabular">
+                    <span className="font-semibold text-[#38C6BA] font-tabular">
                       {user?.currentStreak || 1}d
                     </span>
                   </div>
@@ -614,7 +633,7 @@ export const ProfilePage: React.FC = () => {
           <Card className="p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-pv-border pb-3">
               <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-                <Award className="w-4 h-4 text-pv-dragon-fruit" /> Verified Personal Bests
+                <Award className="w-4 h-4 text-[#38C6BA]" /> Verified Personal Bests
               </h3>
             </div>
 
@@ -666,7 +685,7 @@ export const ProfilePage: React.FC = () => {
         <Card className="p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-pv-border pb-3">
             <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-              <RotateCcw className="w-4 h-4 text-pv-dragon-fruit" /> Recent Game Sessions & Replays
+              <RotateCcw className="w-4 h-4 text-[#38C6BA]" /> Recent Game Sessions & Replays
             </h3>
           </div>
 

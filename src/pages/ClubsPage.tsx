@@ -17,6 +17,7 @@ import {
   Compass,
   Clock,
   X,
+  WifiOff,
 } from 'lucide-react';
 import { Club, PuzzleType, ClubPrivacy } from '../types';
 import {
@@ -31,7 +32,7 @@ import { Card, PageHeader } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 
 export const ClubsPage: React.FC = () => {
-  const { user, viewClubDetail, userClub, setUserClub } = useStore();
+  const { user, isOnline, isGuest, retryConnection, viewClubDetail, userClub, setUserClub } = useStore();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -168,16 +169,37 @@ export const ClubsPage: React.FC = () => {
         }
       />
 
+      {(!isOnline || isGuest) && (
+        <Card className="p-4 border-[#F59E0B]/40 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 text-xs text-[#B4C3CE]">
+            <WifiOff className="w-4 h-4 text-[#FBBF24] shrink-0" />
+            <span>
+              {!isOnline
+                ? 'Clubs, team competitions, and discussions require an active internet connection.'
+                : 'Sign in with a PuzzleVerse account online to join or create a Club.'}
+            </span>
+          </div>
+          {!isOnline && (
+            <button
+              onClick={() => retryConnection()}
+              className="px-3 py-1.5 rounded-lg bg-[#233D4A] border border-[#36515F] text-xs font-bold text-[#F5F7F8]"
+            >
+              Retry Connection
+            </button>
+          )}
+        </Card>
+      )}
+
       {/* User Club Quick Bar (If in a club) */}
       {userClub && (
         <Card className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded bg-pv-surface-soft border border-pv-border flex items-center justify-center text-pv-dragon-fruit font-bold text-base font-tabular">
+            <div className="w-11 h-11 rounded bg-pv-surface-soft border border-pv-border flex items-center justify-center text-[#38C6BA] font-bold text-base font-tabular">
               {userClub.tag}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] uppercase font-semibold text-pv-dragon-fruit tracking-wider">
+                <span className="text-[11px] uppercase font-semibold text-[#38C6BA] tracking-wider">
                   Active Club
                 </span>
                 <span className="text-xs bg-pv-surface-soft text-pv-text-muted px-2 py-0.5 rounded border border-pv-border font-tabular">
@@ -217,11 +239,11 @@ export const ClubsPage: React.FC = () => {
         <Card className="p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pv-border pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded bg-pv-dragon-fruit/10 border border-pv-dragon-fruit/20 flex items-center justify-center text-pv-dragon-fruit">
+              <div className="w-9 h-9 rounded bg-[#38C6BA]/10 border border-[#38C6BA]/20 flex items-center justify-center text-[#38C6BA]">
                 <Trophy className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[11px] uppercase font-semibold text-pv-dragon-fruit tracking-wider">
+                <span className="text-[11px] uppercase font-semibold text-[#38C6BA] tracking-wider">
                   Active Team Event
                 </span>
                 <h2 className="text-lg font-bold text-pv-text-primary">{activeComp.title}</h2>
@@ -256,7 +278,7 @@ export const ClubsPage: React.FC = () => {
                     {idx + 1}
                   </span>
                   <div>
-                    <div className="text-[11px] font-semibold text-pv-dragon-fruit">[{score.clubTag}]</div>
+                    <div className="text-[11px] font-semibold text-[#38C6BA]">[{score.clubTag}]</div>
                     <div className="text-xs font-semibold text-pv-text-primary line-clamp-1">{score.clubName}</div>
                   </div>
                 </div>
@@ -300,7 +322,7 @@ export const ClubsPage: React.FC = () => {
               onClick={() => setFocusFilter(f.id)}
               className={`px-2.5 py-1 rounded text-xs font-medium transition-colors whitespace-nowrap ${
                 focusFilter === f.id
-                  ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                  ? 'bg-[#38C6BA] text-[#142331] font-semibold'
                   : 'bg-pv-surface-soft text-pv-text-secondary hover:text-pv-text-primary border border-pv-border'
               }`}
             >
@@ -314,18 +336,17 @@ export const ClubsPage: React.FC = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
-            <Users className="w-4 h-4 text-pv-dragon-fruit" />
+            <Users className="w-4 h-4 text-[#38C6BA]" />
             <span>Discover Clubs ({clubs.length})</span>
           </h2>
           <span className="text-xs text-pv-text-muted">Sorted by weekly activity</span>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-44 bg-pv-surface-soft border border-pv-border rounded-lg animate-pulse" />
-            ))}
-          </div>
+          <Card className="py-14 text-center space-y-2">
+            <div className="w-6 h-6 border-2 border-[#38C6BA] border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-[#B4C3CE] font-semibold">Loading clubs...</p>
+          </Card>
         ) : clubs.length === 0 ? (
           <Card className="p-12 text-center space-y-3">
             <Shield className="w-10 h-10 text-pv-text-muted mx-auto" />
@@ -348,19 +369,19 @@ export const ClubsPage: React.FC = () => {
                 <Card
                   key={c.id}
                   className={`p-5 flex flex-col justify-between transition-colors ${
-                    isMyClub ? 'border-pv-dragon-fruit/40' : ''
+                    isMyClub ? 'border-[#38C6BA]/40' : ''
                   }`}
                 >
                   <div className="space-y-3">
                     {/* Card Top */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded bg-pv-surface-soft border border-pv-border flex items-center justify-center text-pv-dragon-fruit font-bold text-xs shrink-0 font-tabular">
+                        <div className="w-10 h-10 rounded bg-pv-surface-soft border border-pv-border flex items-center justify-center text-[#38C6BA] font-bold text-xs shrink-0 font-tabular">
                           {c.tag}
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] font-semibold text-pv-dragon-fruit">[{c.tag}]</span>
+                            <span className="text-[11px] font-semibold text-[#38C6BA]">[{c.tag}]</span>
                             {c.privacy === 'private' ? (
                               <Lock className="w-3 h-3 text-pv-text-muted" />
                             ) : (
@@ -412,7 +433,7 @@ export const ClubsPage: React.FC = () => {
                         View
                       </Button>
                       {isMyClub ? (
-                        <span className="px-2.5 py-1 rounded bg-pv-dragon-fruit/10 text-pv-dragon-fruit border border-pv-dragon-fruit/20 font-medium text-xs">
+                        <span className="px-2.5 py-1 rounded bg-[#38C6BA]/10 text-[#38C6BA] border border-[#38C6BA]/20 font-medium text-xs">
                           Joined
                         </span>
                       ) : !userClub && !isFull ? (
@@ -439,7 +460,7 @@ export const ClubsPage: React.FC = () => {
           <Card className="max-w-lg w-full p-6 space-y-5">
             <div className="flex items-center justify-between border-b border-pv-border pb-3">
               <div className="flex items-center gap-2.5">
-                <Shield className="w-4 h-4 text-pv-dragon-fruit" />
+                <Shield className="w-4 h-4 text-[#38C6BA]" />
                 <h3 className="text-base font-semibold text-pv-text-primary">Create Club</h3>
               </div>
               <button
@@ -476,7 +497,7 @@ export const ClubsPage: React.FC = () => {
                     placeholder="e.g. LOGIC"
                     value={newClubTag}
                     onChange={(e) => setNewClubTag(e.target.value.toUpperCase())}
-                    className="w-full bg-pv-surface-soft border border-pv-border rounded-lg px-3 py-2 text-xs font-tabular font-bold text-pv-dragon-fruit focus:outline-none focus:border-pv-border-hover uppercase"
+                    className="w-full bg-pv-surface-soft border border-pv-border rounded-lg px-3 py-2 text-xs font-tabular font-bold text-[#38C6BA] focus:outline-none focus:border-pv-border-hover uppercase"
                   />
                 </div>
 

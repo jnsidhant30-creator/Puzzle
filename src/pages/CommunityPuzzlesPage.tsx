@@ -61,7 +61,7 @@ export const CommunityPuzzlesPage: React.FC = () => {
         action={
           <button
             onClick={() => setShowCreator(!showCreator)}
-            className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors shrink-0"
+            className="h-9 px-4 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors shrink-0"
           >
             {showCreator ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
             <span>{showCreator ? 'Cancel' : 'Create Level'}</span>
@@ -71,7 +71,7 @@ export const CommunityPuzzlesPage: React.FC = () => {
 
       {/* Creator Form */}
       {showCreator && (
-        <Card className="p-6 space-y-4 border-pv-dragon-fruit/40">
+        <Card className="p-6 space-y-4 border-[#38C6BA]/40">
           <div className="flex items-center justify-between border-b border-pv-border pb-3">
             <h3 className="text-sm font-semibold text-pv-text-primary">Publish New Level</h3>
           </div>
@@ -86,7 +86,7 @@ export const CommunityPuzzlesPage: React.FC = () => {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Sequential Matrix Challenge"
                 required
-                className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 h-9 rounded-lg text-xs focus:outline-none focus:border-pv-dragon-fruit placeholder-pv-text-muted"
+                className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 h-9 rounded-lg text-xs focus:outline-none focus:border-[#38C6BA] placeholder-pv-text-muted"
               />
             </div>
             <div>
@@ -98,7 +98,7 @@ export const CommunityPuzzlesPage: React.FC = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Brief summary of puzzle rules or layout..."
-                className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 h-9 rounded-lg text-xs focus:outline-none focus:border-pv-dragon-fruit placeholder-pv-text-muted"
+                className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 h-9 rounded-lg text-xs focus:outline-none focus:border-[#38C6BA] placeholder-pv-text-muted"
               />
             </div>
             <div>
@@ -108,7 +108,7 @@ export const CommunityPuzzlesPage: React.FC = () => {
               <select
                 value={puzzleType}
                 onChange={(e) => setPuzzleType(e.target.value as PuzzleType)}
-                className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 h-9 rounded-lg text-xs focus:outline-none focus:border-pv-dragon-fruit"
+                className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 h-9 rounded-lg text-xs focus:outline-none focus:border-[#38C6BA]"
               >
                 <option value="number">Number Puzzle</option>
                 <option value="word">Word Puzzle</option>
@@ -120,7 +120,7 @@ export const CommunityPuzzlesPage: React.FC = () => {
             <div className="pt-1">
               <button
                 type="submit"
-                className="h-9 px-5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg transition-colors"
+                className="h-9 px-5 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg transition-colors"
               >
                 Publish Level
               </button>
@@ -132,7 +132,7 @@ export const CommunityPuzzlesPage: React.FC = () => {
       {/* Level Cards Grid */}
       {loading ? (
         <Card className="py-16 text-center">
-          <div className="w-6 h-6 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-6 h-6 border-2 border-[#38C6BA] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-xs text-pv-text-secondary font-medium">Loading community levels...</p>
         </Card>
       ) : puzzles.length === 0 ? (
@@ -147,7 +147,7 @@ export const CommunityPuzzlesPage: React.FC = () => {
           <div className="pt-2">
             <button
               onClick={() => setShowCreator(true)}
-              className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg inline-flex items-center gap-1.5 transition-colors"
+              className="h-9 px-4 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg inline-flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create First Level</span>
@@ -160,11 +160,11 @@ export const CommunityPuzzlesPage: React.FC = () => {
             <Card key={p.id} className="p-4 flex flex-col justify-between space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-medium text-pv-dragon-fruit font-mono">
+                  <span className="text-[11px] font-medium text-[#38C6BA] font-mono">
                     By {p.creatorName}
                   </span>
                   <div className="flex items-center gap-1 text-pv-text-muted text-xs">
-                    <Heart className="w-3.5 h-3.5 text-pv-dragon-fruit" />
+                    <Heart className="w-3.5 h-3.5 text-[#38C6BA]" />
                     <span className="font-tabular text-[11px]">{p.likes || 0}</span>
                   </div>
                 </div>

@@ -72,8 +72,8 @@ export const CollectionsPage: React.FC = () => {
 
       {/* Recommended Spotlight */}
       {recommendedCols.length > 0 && !searchQuery && selectedCategory === 'All' && (
-        <Card className="p-5 space-y-3 border-pv-dragon-fruit/40">
-          <h3 className="text-xs font-semibold text-pv-dragon-fruit uppercase tracking-wider">
+        <Card className="p-5 space-y-3 border-[#38C6BA]/40">
+          <h3 className="text-xs font-semibold text-[#38C6BA] uppercase tracking-wider">
             Recommended Playlists
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -88,7 +88,7 @@ export const CollectionsPage: React.FC = () => {
                     <span className="px-2 py-0.5 rounded text-[10px] font-medium uppercase bg-pv-surface-primary text-pv-text-muted border border-pv-border">
                       {col.category}
                     </span>
-                    <span className="text-[11px] text-pv-dragon-fruit font-mono font-medium flex items-center gap-1">
+                    <span className="text-[11px] text-[#38C6BA] font-mono font-medium flex items-center gap-1">
                       <Award className="w-3.5 h-3.5" /> +{col.rewardXP} XP
                     </span>
                   </div>
@@ -100,7 +100,7 @@ export const CollectionsPage: React.FC = () => {
                     <span className="flex items-center gap-1 font-tabular">
                       <Clock className="w-3 h-3" /> ~{col.estimatedMinutes || 5} min • {formatCount(col.items.length, 'puzzle')}
                     </span>
-                    <span className="font-medium text-pv-dragon-fruit flex items-center gap-0.5">
+                    <span className="font-medium text-[#38C6BA] flex items-center gap-0.5">
                       Open <ChevronRight className="w-3 h-3" />
                     </span>
                   </div>
@@ -120,7 +120,7 @@ export const CollectionsPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search playlists..."
-            className="w-full bg-pv-surface-primary border border-pv-border text-pv-text-primary pl-9 pr-3 h-8 rounded-lg text-xs focus:outline-none focus:border-pv-dragon-fruit placeholder-pv-text-muted"
+            className="w-full bg-pv-surface-primary border border-pv-border text-pv-text-primary pl-9 pr-3 h-8 rounded-lg text-xs focus:outline-none focus:border-[#38C6BA] placeholder-pv-text-muted"
           />
         </div>
 
@@ -144,7 +144,7 @@ export const CollectionsPage: React.FC = () => {
       {/* Grid */}
       {loading ? (
         <Card className="py-16 text-center">
-          <div className="w-6 h-6 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-6 h-6 border-2 border-[#38C6BA] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-xs text-pv-text-secondary font-medium">Loading collections...</p>
         </Card>
       ) : filteredCollections.length === 0 ? (
@@ -204,7 +204,7 @@ export const CollectionsPage: React.FC = () => {
                     <div className="w-full bg-pv-surface-secondary h-1.5 rounded-full overflow-hidden border border-pv-border">
                       <div
                         className={`h-full transition-all duration-300 rounded-full ${
-                          isCompleted ? 'bg-emerald-500' : 'bg-pv-dragon-fruit'
+                          isCompleted ? 'bg-emerald-500' : 'bg-[#38C6BA]'
                         }`}
                         style={{ width: `${pct}%` }}
                       />

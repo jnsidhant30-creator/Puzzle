@@ -4,12 +4,14 @@ import { sound } from '../services/sound';
 import { Lightbulb, RefreshCw } from 'lucide-react';
 import { GameHudBar } from '../components/ui/GameHudBar';
 import { useGameTimer } from '../hooks/useGameTimer';
+import { createRng } from '../utils/prng';
 
 interface Props {
   difficulty: Difficulty;
   onComplete: (score: number, timeSeconds: number, won: boolean) => void;
   useHint: () => boolean;
   hintsLeft: number;
+  seed?: number;
   isPaused?: boolean;
 }
 
@@ -21,7 +23,14 @@ interface Question {
   options: number[];
 }
 
-export const NumberPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft, isPaused = false }) => {
+export const NumberPuzzle: React.FC<Props> = ({
+  difficulty,
+  onComplete,
+  useHint,
+  hintsLeft,
+  seed,
+  isPaused = false,
+}) => {
   const [currentRound, setCurrentRound] = useState(1);
   const totalRounds = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 5 : 7;
   const [score, setScore] = useState(0);
@@ -33,9 +42,37 @@ export const NumberPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint,
 
   useEffect(() => {
     generateQuestion();
-  }, [currentRound, difficulty]);
+  }, [currentRound, difficulty, seed]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        !target ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+        target.isContentEditable ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey ||
+        document.querySelector('[role="dialog"][aria-modal="true"]') ||
+        isAnswered ||
+        isPaused ||
+        !question
+      ) {
+        return;
+      }
+      const idx = ['1', '2', '3', '4'].indexOf(e.key);
+      if (idx !== -1 && question.options[idx] !== undefined) {
+        e.preventDefault();
+        handleSelectOption(question.options[idx]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [question, isAnswered, isPaused]);
 
   const generateQuestion = () => {
+    const rng = createRng(typeof seed === 'number' ? seed + currentRound * 97 : undefined);
     setSelectedOption(null);
     setIsAnswered(false);
     setHintMessage(null);
@@ -46,38 +83,38 @@ export const NumberPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint,
         : difficulty === 'medium'
         ? ['+', '-', '*']
         : ['+', '-', '*', '/'];
-    const operator = ops[Math.floor(Math.random() * ops.length)];
+    const operator = ops[Math.floor(rng() * ops.length)];
     let num1 = 1;
     let num2 = 1;
     let answer = 0;
     const max = difficulty === 'easy' ? 20 : difficulty === 'medium' ? 50 : 100;
 
     if (operator === '+') {
-      num1 = Math.floor(Math.random() * max) + 1;
-      num2 = Math.floor(Math.random() * max) + 1;
+      num1 = Math.floor(rng() * max) + 1;
+      num2 = Math.floor(rng() * max) + 1;
       answer = num1 + num2;
     } else if (operator === '-') {
-      num1 = Math.floor(Math.random() * max) + 10;
-      num2 = Math.floor(Math.random() * num1);
+      num1 = Math.floor(rng() * max) + 10;
+      num2 = Math.floor(rng() * num1);
       answer = num1 - num2;
     } else if (operator === '*') {
-      num1 = Math.floor(Math.random() * (difficulty === 'hard' ? 15 : 10)) + 2;
-      num2 = Math.floor(Math.random() * 10) + 2;
+      num1 = Math.floor(rng() * (difficulty === 'hard' ? 15 : 10)) + 2;
+      num2 = Math.floor(rng() * 10) + 2;
       answer = num1 * num2;
     } else {
-      num2 = Math.floor(Math.random() * 10) + 2;
-      answer = Math.floor(Math.random() * 12) + 1;
+      num2 = Math.floor(rng() * 10) + 2;
+      answer = Math.floor(rng() * 12) + 1;
       num1 = num2 * answer;
     }
 
     const optsSet = new Set<number>();
     optsSet.add(answer);
     while (optsSet.size < 4) {
-      const delta = (Math.floor(Math.random() * 10) + 1) * (Math.random() > 0.5 ? 1 : -1);
+      const delta = (Math.floor(rng() * 10) + 1) * (rng() > 0.5 ? 1 : -1);
       const wrong = Math.max(0, answer + delta);
       if (wrong !== answer) optsSet.add(wrong);
     }
-    const options = Array.from(optsSet).sort(() => Math.random() - 0.5);
+    const options = Array.from(optsSet).sort(() => rng() - 0.5);
     setQuestion({ num1, num2, operator, answer, options });
   };
 
@@ -131,7 +168,7 @@ export const NumberPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint,
 
       {/* Main Equation Box */}
       {question && (
-        <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-6 mb-5 flex flex-col items-center">
+        <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-6 mb-5 flex flex-col items-center">
           <p className="text-[11px] font-semibold text-pv-text-muted uppercase tracking-wider mb-4">
             Arithmetic Evaluation
           </p>
@@ -142,12 +179,12 @@ export const NumberPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint,
             </span>
             <span>{question.num2}</span>
             <span className="text-pv-text-muted">=</span>
-            <span className="text-pv-dragon-fruit font-bold">?</span>
+            <span className="text-[#38C6BA] font-bold">?</span>
           </div>
 
           {hintMessage && (
-            <div className="mt-4 p-2.5 bg-pv-surface-secondary border border-pv-dragon-fruit/40 text-pv-dragon-fruit-light rounded-md text-xs flex items-center gap-2">
-              <Lightbulb className="w-3.5 h-3.5 text-pv-dragon-fruit shrink-0" />
+            <div className="mt-4 p-2.5 bg-pv-surface-secondary border border-[#38C6BA]/40 text-[#A8E5D5] rounded-md text-xs flex items-center gap-2">
+              <Lightbulb className="w-3.5 h-3.5 text-[#38C6BA] shrink-0" />
               <span>{hintMessage}</span>
             </div>
           )}

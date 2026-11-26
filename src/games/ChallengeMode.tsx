@@ -22,6 +22,31 @@ export const ChallengeMode: React.FC<Props> = ({ onComplete }) => {
   const [currentMath, setCurrentMath] = useState({ n1: 0, n2: 0, op: '+', ans: 0, opts: [0] });
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        !target ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+        target.isContentEditable ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey ||
+        document.querySelector('[role="dialog"][aria-modal="true"]') ||
+        finishedRef.current
+      ) {
+        return;
+      }
+      const idx = ['1', '2', '3', '4'].indexOf(e.key);
+      if (idx !== -1 && currentMath.opts[idx] !== undefined) {
+        e.preventDefault();
+        handlePickAnswer(currentMath.opts[idx]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentMath, streak]);
+
+  useEffect(() => {
     generateMiniTask();
     deadlineRef.current = Date.now() + 30000;
 
@@ -100,11 +125,11 @@ export const ChallengeMode: React.FC<Props> = ({ onComplete }) => {
       />
 
       {/* Equation Card */}
-      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-6 sm:p-8 mb-5 flex flex-col items-center">
-        <p className="text-xs uppercase tracking-wider text-[#9F97AB] font-medium mb-4">
-          Solve Rapid Equation
+      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-6 sm:p-8 mb-5 flex flex-col items-center">
+        <p className="text-xs font-semibold text-[#A8E5D5] mb-4">
+          Solve Equation
         </p>
-        <div className="text-4xl sm:text-5xl font-semibold text-[#F5F3F7] font-tabular tracking-tight my-2">
+        <div className="text-4xl sm:text-5xl font-semibold text-[#F5F7F8] font-tabular tracking-tight my-2">
           {currentMath.n1} {currentMath.op} {currentMath.n2} = ?
         </div>
       </div>
@@ -116,7 +141,7 @@ export const ChallengeMode: React.FC<Props> = ({ onComplete }) => {
             key={idx}
             disabled={isFinished}
             onClick={() => handlePickAnswer(opt)}
-            className="h-16 bg-[#24202C] hover:bg-[#2B2533] text-[#F5F3F7] font-semibold text-2xl font-tabular rounded-xl border border-[#342D3D] hover:border-[#FF4696] transition-colors pv-keycap select-none disabled:opacity-50 cursor-pointer"
+            className="h-16 bg-[#233D4A] hover:bg-[#2C4654] text-[#F5F7F8] font-semibold text-2xl font-tabular rounded-xl border border-[#36515F] hover:border-[#38C6BA] transition-colors pv-keycap select-none disabled:opacity-50 cursor-pointer"
           >
             {opt}
           </button>

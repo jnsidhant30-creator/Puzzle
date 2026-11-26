@@ -101,7 +101,7 @@ export const LearnPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search rules, modes..."
-            className="w-full bg-pv-surface-primary border border-pv-border rounded-lg pl-9 pr-3 h-8 text-xs text-pv-text-primary placeholder-pv-text-muted focus:outline-none focus:border-pv-dragon-fruit"
+            className="w-full bg-pv-surface-primary border border-pv-border rounded-lg pl-9 pr-3 h-8 text-xs text-pv-text-primary placeholder-pv-text-muted focus:outline-none focus:border-[#38C6BA]"
           />
         </div>
 
@@ -135,7 +135,7 @@ export const LearnPage: React.FC = () => {
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-lg bg-pv-surface-secondary border border-pv-border flex items-center justify-center text-pv-dragon-fruit">
+                <div className="w-10 h-10 rounded-lg bg-pv-surface-secondary border border-pv-border flex items-center justify-center text-[#38C6BA]">
                   {renderIcon(guide.iconName)}
                 </div>
                 <span className="text-[10px] font-medium uppercase px-2 py-0.5 rounded bg-pv-surface-secondary border border-pv-border text-pv-text-muted">
@@ -148,7 +148,7 @@ export const LearnPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="pt-3 border-t border-pv-border flex items-center justify-between text-xs text-pv-dragon-fruit font-medium">
+            <div className="pt-3 border-t border-pv-border flex items-center justify-between text-xs text-[#38C6BA] font-medium">
               <span>View Guide & Rules</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </div>
@@ -162,7 +162,7 @@ export const LearnPage: React.FC = () => {
           <div className="bg-pv-surface-primary border border-pv-border rounded-xl p-6 max-w-2xl w-full space-y-5 shadow-lg relative max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between gap-4 border-b border-pv-border pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-pv-surface-secondary border border-pv-border flex items-center justify-center text-pv-dragon-fruit shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-pv-surface-secondary border border-pv-border flex items-center justify-center text-[#38C6BA] shrink-0">
                   {renderIcon(activeGuide.iconName)}
                 </div>
                 <div>
@@ -201,7 +201,7 @@ export const LearnPage: React.FC = () => {
                   onClick={() => setGuideTab(tab.id as any)}
                   className={`pb-2 text-xs font-medium border-b-2 transition-colors ${
                     guideTab === tab.id
-                      ? 'border-pv-dragon-fruit text-pv-text-primary'
+                      ? 'border-[#38C6BA] text-pv-text-primary'
                       : 'border-transparent text-pv-text-secondary hover:text-pv-text-primary'
                   }`}
                 >
@@ -215,7 +215,7 @@ export const LearnPage: React.FC = () => {
               <div className="space-y-4 text-xs">
                 <div className="space-y-2">
                   <h4 className="font-semibold text-pv-text-primary flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-pv-dragon-fruit" /> Core Game Rules
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#38C6BA]" /> Core Game Rules
                   </h4>
                   <ul className="space-y-1.5 text-pv-text-secondary">
                     {activeGuide.rules.map((rule, idx) => (
@@ -228,7 +228,7 @@ export const LearnPage: React.FC = () => {
 
                 <div className="space-y-2">
                   <h4 className="font-semibold text-pv-text-primary flex items-center gap-1.5">
-                    <Gamepad2 className="w-3.5 h-3.5 text-pv-dragon-fruit" /> Controls & Inputs
+                    <Gamepad2 className="w-3.5 h-3.5 text-[#38C6BA]" /> Controls & Inputs
                   </h4>
                   <ul className="space-y-1.5 text-pv-text-secondary">
                     {activeGuide.controls.map((ctrl, idx) => (
@@ -246,7 +246,7 @@ export const LearnPage: React.FC = () => {
               <div className="space-y-4 text-xs">
                 <div className="space-y-2">
                   <h4 className="font-semibold text-pv-text-primary flex items-center gap-1.5">
-                    <Lightbulb className="w-3.5 h-3.5 text-pv-dragon-fruit" /> Fundamental Strategies
+                    <Lightbulb className="w-3.5 h-3.5 text-[#38C6BA]" /> Fundamental Strategies
                   </h4>
                   <ul className="space-y-1.5 text-pv-text-secondary">
                     {activeGuide.basicStrategy.map((strat, idx) => (
@@ -259,7 +259,7 @@ export const LearnPage: React.FC = () => {
 
                 <div className="space-y-2">
                   <h4 className="font-semibold text-pv-text-primary flex items-center gap-1.5">
-                    <Zap className="w-3.5 h-3.5 text-pv-dragon-fruit" /> Advanced Solving Tactics
+                    <Zap className="w-3.5 h-3.5 text-[#38C6BA]" /> Advanced Solving Tactics
                   </h4>
                   <ul className="space-y-1.5 text-pv-text-secondary">
                     {activeGuide.advancedStrategy.map((strat, idx) => (
@@ -311,7 +311,7 @@ export const LearnPage: React.FC = () => {
                   setActiveGuide(null);
                   playGame(puzzleType);
                 }}
-                className="flex-1 h-9 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold font-medium rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors"
+                className="flex-1 h-9 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold font-medium rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Play className="w-3.5 h-3.5 fill-current" /> Play Mode
               </button>

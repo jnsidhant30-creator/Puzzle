@@ -126,7 +126,7 @@ export const LogicPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, 
 
       {/* Question Card */}
       {currentRiddle && (
-        <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-5 sm:p-6 mb-5 flex flex-col">
+        <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-5 sm:p-6 mb-5 flex flex-col">
           <p className="text-[11px] font-semibold text-pv-text-muted uppercase tracking-wider mb-2">
             Logic & Deduction
           </p>
@@ -141,8 +141,8 @@ export const LogicPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, 
           )}
 
           {hintMsg && !isAnswered && (
-            <div className="mt-4 p-2.5 bg-pv-surface-secondary border border-pv-dragon-fruit/40 text-pv-dragon-fruit-light rounded-md text-xs flex items-center gap-2">
-              <Lightbulb className="w-3.5 h-3.5 text-pv-dragon-fruit shrink-0" />
+            <div className="mt-4 p-2.5 bg-pv-surface-secondary border border-[#38C6BA]/40 text-[#A8E5D5] rounded-md text-xs flex items-center gap-2">
+              <Lightbulb className="w-3.5 h-3.5 text-[#38C6BA] shrink-0" />
               <span>{hintMsg}</span>
             </div>
           )}

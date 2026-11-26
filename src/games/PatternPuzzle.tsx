@@ -146,8 +146,8 @@ export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint
 
       {/* Pattern Matrix 3x3 */}
       {pattern && (
-        <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
-          <p className="text-xs text-[#C5BFD0] mb-4 text-center">
+        <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+          <p className="text-xs text-[#B4C3CE] mb-4 text-center">
             Determine the missing shape to complete the 3 × 3 matrix pattern.
           </p>
 
@@ -160,7 +160,7 @@ export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint
                   key={idx}
                   className={`aspect-square rounded-lg flex items-center justify-center border transition-colors select-none ${
                     isMissing
-                      ? 'bg-pv-surface-soft border-pv-dragon-fruit text-pv-dragon-fruit font-bold text-xl'
+                      ? 'bg-pv-surface-soft border-[#38C6BA] text-[#38C6BA] font-bold text-xl'
                       : 'bg-pv-surface-secondary border-pv-border text-pv-text-primary'
                   }`}
                 >
@@ -171,8 +171,8 @@ export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint
           </div>
 
           {hintMsg && (
-            <div className="mt-4 p-2.5 bg-pv-surface-secondary border border-pv-dragon-fruit/40 text-pv-dragon-fruit-light rounded-md text-xs flex items-center gap-2">
-              <Lightbulb className="w-3.5 h-3.5 text-pv-dragon-fruit shrink-0" />
+            <div className="mt-4 p-2.5 bg-pv-surface-secondary border border-[#38C6BA]/40 text-[#A8E5D5] rounded-md text-xs flex items-center gap-2">
+              <Lightbulb className="w-3.5 h-3.5 text-[#38C6BA] shrink-0" />
               <span>{hintMsg}</span>
             </div>
           )}

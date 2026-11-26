@@ -164,7 +164,7 @@ export const WordPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, h
       />
 
       {/* Target Word Slots */}
-      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-5 sm:p-6 mb-5 flex flex-col items-center">
+      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-5 sm:p-6 mb-5 flex flex-col items-center">
         <p className="text-xs text-pv-text-secondary mb-4 text-center">
           Unscramble the letters to form the target word.
         </p>
@@ -177,7 +177,7 @@ export const WordPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, h
                 key={idx}
                 className={`w-10 h-12 sm:w-11 sm:h-13 rounded-md border flex items-center justify-center text-xl font-mono font-semibold uppercase select-none transition-colors ${
                   char
-                    ? 'bg-pv-surface-secondary border-pv-dragon-fruit text-pv-text-primary'
+                    ? 'bg-pv-surface-secondary border-[#38C6BA] text-pv-text-primary'
                     : 'bg-pv-surface-secondary/40 border-pv-border text-transparent'
                 }`}
               >
@@ -188,8 +188,8 @@ export const WordPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, h
         </div>
 
         {hintMsg && (
-          <div className="mt-3 p-2 bg-pv-surface-secondary border border-pv-dragon-fruit/40 text-pv-dragon-fruit-light rounded-md text-xs flex items-center gap-1.5">
-            <Lightbulb className="w-3.5 h-3.5 text-pv-dragon-fruit" />
+          <div className="mt-3 p-2 bg-pv-surface-secondary border border-[#38C6BA]/40 text-[#A8E5D5] rounded-md text-xs flex items-center gap-1.5">
+            <Lightbulb className="w-3.5 h-3.5 text-[#38C6BA]" />
             <span>{hintMsg}</span>
           </div>
         )}
@@ -242,7 +242,7 @@ export const WordPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, h
         <button
           onClick={handleSubmit}
           disabled={userGuess.length !== targetWord.length || isRoundLocked}
-          className="h-9 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs rounded-lg flex items-center justify-center gap-1 transition-colors disabled:opacity-40"
+          className="h-9 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs rounded-lg flex items-center justify-center gap-1 transition-colors disabled:opacity-40"
         >
           <Check className="w-3.5 h-3.5" /> Submit
         </button>

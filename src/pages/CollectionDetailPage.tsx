@@ -31,7 +31,7 @@ export const CollectionDetailPage: React.FC = () => {
   if (loading) {
     return (
       <Card className="py-20 text-center max-w-lg mx-auto">
-        <div className="w-6 h-6 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <div className="w-6 h-6 border-2 border-[#38C6BA] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
         <p className="text-xs text-pv-text-secondary font-medium">Loading playlist...</p>
       </Card>
     );
@@ -40,11 +40,11 @@ export const CollectionDetailPage: React.FC = () => {
   if (!collection) {
     return (
       <Card className="p-8 text-center space-y-3 max-w-md mx-auto">
-        <Layers className="w-8 h-8 text-pv-dragon-fruit mx-auto" />
+        <Layers className="w-8 h-8 text-[#38C6BA] mx-auto" />
         <h2 className="text-base font-semibold text-pv-text-primary">Collection Not Found</h2>
         <button
           onClick={() => setActiveTab('collections')}
-          className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg"
+          className="h-9 px-4 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg"
         >
           Return to Collections
         </button>
@@ -102,7 +102,7 @@ export const CollectionDetailPage: React.FC = () => {
 
           <button
             onClick={handlePrimaryClick}
-            className="h-10 px-5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg flex items-center gap-2 transition-colors shrink-0"
+            className="h-10 px-5 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-xs font-medium rounded-lg flex items-center gap-2 transition-colors shrink-0"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>
@@ -115,16 +115,16 @@ export const CollectionDetailPage: React.FC = () => {
         <div className="bg-pv-surface-secondary border border-pv-border p-3.5 rounded-lg space-y-2">
           <div className="flex items-center justify-between text-xs font-medium">
             <span className="text-pv-text-secondary flex items-center gap-1.5 font-tabular">
-              <Clock className="w-3.5 h-3.5 text-pv-dragon-fruit" /> ~{collection.estimatedMinutes || 5} min • {completedCount} / {totalCount} steps
+              <Clock className="w-3.5 h-3.5 text-[#38C6BA]" /> ~{collection.estimatedMinutes || 5} min • {completedCount} / {totalCount} steps
             </span>
-            <span className="text-pv-dragon-fruit font-mono text-[11px] font-medium">
+            <span className="text-[#38C6BA] font-mono text-[11px] font-medium">
               +{collection.rewardXP} XP • +{collection.rewardCoins} coins
             </span>
           </div>
           <div className="w-full bg-pv-surface-primary h-1.5 rounded-full overflow-hidden border border-pv-border">
             <div
               className={`h-full transition-all duration-300 rounded-full ${
-                isCompleted ? 'bg-emerald-500' : 'bg-pv-dragon-fruit'
+                isCompleted ? 'bg-emerald-500' : 'bg-[#38C6BA]'
               }`}
               style={{ width: `${pct}%` }}
             />
@@ -151,7 +151,7 @@ export const CollectionDetailPage: React.FC = () => {
                   isSolved
                     ? 'bg-pv-surface-secondary border-emerald-500/30'
                     : isNext
-                    ? 'bg-pv-surface-soft border-pv-dragon-fruit'
+                    ? 'bg-pv-surface-soft border-[#38C6BA]'
                     : 'bg-pv-surface-secondary border-pv-border'
                 }`}
               >
@@ -161,7 +161,7 @@ export const CollectionDetailPage: React.FC = () => {
                       isSolved
                         ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/40'
                         : isNext
-                        ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                        ? 'bg-[#38C6BA] text-[#142331] font-semibold'
                         : 'bg-pv-surface-primary text-pv-text-muted border border-pv-border'
                     }`}
                   >
@@ -192,7 +192,7 @@ export const CollectionDetailPage: React.FC = () => {
                   }
                   className={`h-7 px-3 rounded text-xs font-medium flex items-center gap-1 transition-colors ${
                     isNext
-                      ? 'bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold'
+                      ? 'bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold'
                       : 'bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-secondary hover:text-pv-text-primary border border-pv-border'
                   }`}
                 >

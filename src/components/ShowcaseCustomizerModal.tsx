@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { ShowcaseConfig, UserProfile, UserAchievement } from '../types';
-import { TITLE_DEFINITIONS, getUnlockedTitles } from '../services/recommendation';
+import { getUnlockedTitles } from '../services/recommendation';
 import { DEFAULT_ACHIEVEMENTS, PUZZLE_MODES } from '../data/puzzles';
 import { X, Trophy, Award, Medal, Check, Save } from 'lucide-react';
 import { saveShowcaseConfig } from '../services/firebase';
+import { Button } from './ui/Button';
 
 interface ShowcaseCustomizerModalProps {
   user: UserProfile;
@@ -30,7 +31,7 @@ export const ShowcaseCustomizerModal: React.FC<ShowcaseCustomizerModalProps> = (
   const [selectedAchIds, setSelectedAchIds] = useState<string[]>(
     (initialConfig?.featuredAchievementIds || []).filter((id) => unlockedAchIds.has(id))
   );
-  const [featuredBadge, setFeaturedBadge] = useState<string>(
+  const [featuredBadge] = useState<string>(
     initialConfig?.featuredBadge || 'Puzzle Specialist'
   );
   const [selectedPuzzles, setSelectedPuzzles] = useState<string[]>(
@@ -73,30 +74,27 @@ export const ShowcaseCustomizerModal: React.FC<ShowcaseCustomizerModalProps> = (
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-      <div className="bg-pv-surface-primary border border-pv-border rounded-xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-lg overflow-hidden">
-        {/* Header */}
-        <div className="p-5 border-b border-pv-border flex items-center justify-between">
+      <div className="bg-[#233D4A] border border-[#4A6A7B] rounded-xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="p-5 border-b border-[#36515F] flex items-center justify-between bg-[#1C2D3B]">
           <div>
-            <h2 className="text-lg font-semibold text-pv-text-primary">Customize Showcase</h2>
-            <p className="text-xs text-pv-text-secondary mt-0.5">
-              Select verified accomplishments to highlight on your public profile.
+            <h2 className="text-lg font-bold text-[#F5F7F8]">Customize Showcase</h2>
+            <p className="text-xs text-[#B4C3CE] mt-0.5">
+              Choose titles, badges, and records for your public player card.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-pv-text-muted hover:text-pv-text-primary hover:bg-pv-surface-secondary transition-colors"
+            className="p-1.5 rounded-md text-[#B4C3CE] hover:text-[#F5F7F8] hover:bg-[#233D4A] transition-colors"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Body */}
         <div className="p-5 space-y-6 overflow-y-auto flex-1 text-xs">
-          {/* Title Picker */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-pv-text-primary uppercase tracking-wider flex items-center gap-1.5">
-              <Award className="w-3.5 h-3.5 text-pv-dragon-fruit" /> Featured Title
+            <label className="text-xs font-bold text-[#F5F7F8] flex items-center gap-1.5">
+              <Award className="w-3.5 h-3.5 text-[#38C6BA]" /> Featured Title
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {unlockedTitles.map((title) => {
@@ -108,22 +106,21 @@ export const ShowcaseCustomizerModal: React.FC<ShowcaseCustomizerModalProps> = (
                     onClick={() => setFeaturedTitle(title)}
                     className={`p-3 rounded-lg border text-left flex items-center justify-between transition-colors ${
                       isSelected
-                        ? 'bg-pv-surface-soft border-pv-dragon-fruit text-pv-text-primary font-medium'
-                        : 'bg-pv-surface-secondary border-pv-border text-pv-text-secondary hover:border-pv-border-strong hover:text-pv-text-primary'
+                        ? 'bg-[#2C4654] border-[#38C6BA] text-[#F5F7F8] font-semibold'
+                        : 'bg-[#1C2D3B] border-[#36515F] text-[#B4C3CE] hover:border-[#4A6A7B] hover:text-[#F5F7F8]'
                     }`}
                   >
                     <span>{title}</span>
-                    {isSelected && <Check className="w-4 h-4 text-pv-dragon-fruit" />}
+                    {isSelected && <Check className="w-4 h-4 text-[#38C6BA]" />}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Achievement Picker */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-pv-text-primary uppercase tracking-wider flex items-center gap-1.5">
-              <Trophy className="w-3.5 h-3.5 text-pv-dragon-fruit" /> Featured Achievements (up to 4)
+            <label className="text-xs font-bold text-[#F5F7F8] flex items-center gap-1.5">
+              <Trophy className="w-3.5 h-3.5 text-[#38C6BA]" /> Featured Achievements (up to 4)
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {DEFAULT_ACHIEVEMENTS.map((ach) => {
@@ -137,27 +134,26 @@ export const ShowcaseCustomizerModal: React.FC<ShowcaseCustomizerModalProps> = (
                     onClick={() => handleToggleAchievement(ach.id)}
                     className={`p-3 rounded-lg border text-left flex items-center justify-between transition-colors ${
                       !isUnlocked
-                        ? 'opacity-35 bg-pv-surface-secondary border-pv-border text-pv-text-muted cursor-not-allowed'
+                        ? 'opacity-40 bg-[#1C2D3B] border-[#36515F] text-[#98AAB8] cursor-not-allowed'
                         : isSelected
-                        ? 'bg-pv-surface-soft border-pv-dragon-fruit text-pv-text-primary font-medium'
-                        : 'bg-pv-surface-secondary border-pv-border text-pv-text-secondary hover:border-pv-border-strong hover:text-pv-text-primary'
+                        ? 'bg-[#2C4654] border-[#38C6BA] text-[#F5F7F8] font-semibold'
+                        : 'bg-[#1C2D3B] border-[#36515F] text-[#B4C3CE] hover:border-[#4A6A7B] hover:text-[#F5F7F8]'
                     }`}
                   >
                     <div>
-                      <p className="font-medium text-xs">{ach.title}</p>
-                      <p className="text-[11px] text-pv-text-muted mt-0.5">{ach.description}</p>
+                      <p className="font-semibold text-xs">{ach.title}</p>
+                      <p className="text-[11px] text-[#98AAB8] mt-0.5">{ach.description}</p>
                     </div>
-                    {isSelected && <Check className="w-4 h-4 text-pv-dragon-fruit shrink-0 ml-2" />}
+                    {isSelected && <Check className="w-4 h-4 text-[#38C6BA] shrink-0 ml-2" />}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Personal Bests Picker */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-pv-text-primary uppercase tracking-wider flex items-center gap-1.5">
-              <Medal className="w-3.5 h-3.5 text-pv-dragon-fruit" /> Featured Personal Bests (up to 4)
+            <label className="text-xs font-bold text-[#F5F7F8] flex items-center gap-1.5">
+              <Medal className="w-3.5 h-3.5 text-[#38C6BA]" /> Featured Personal Bests (up to 4)
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {PUZZLE_MODES.slice(0, 8).map((pz) => {
@@ -170,12 +166,12 @@ export const ShowcaseCustomizerModal: React.FC<ShowcaseCustomizerModalProps> = (
                     onClick={() => handleTogglePuzzle(pz.id)}
                     className={`p-2.5 rounded-lg border text-center transition-colors ${
                       isSelected
-                        ? 'bg-pv-surface-soft border-pv-dragon-fruit text-pv-text-primary font-medium'
-                        : 'bg-pv-surface-secondary border-pv-border text-pv-text-secondary hover:border-pv-border-strong hover:text-pv-text-primary'
+                        ? 'bg-[#2C4654] border-[#38C6BA] text-[#F5F7F8] font-semibold'
+                        : 'bg-[#1C2D3B] border-[#36515F] text-[#B4C3CE] hover:border-[#4A6A7B] hover:text-[#F5F7F8]'
                     }`}
                   >
-                    <p className="font-medium text-xs truncate">{pz.name}</p>
-                    <p className="text-[11px] text-pv-text-muted mt-1 font-tabular">
+                    <p className="font-semibold text-xs truncate">{pz.name}</p>
+                    <p className="text-[11px] text-[#98AAB8] mt-1 font-tabular">
                       {pb ? `${pb.bestScore} pts` : 'No Record'}
                     </p>
                   </button>
@@ -185,22 +181,14 @@ export const ShowcaseCustomizerModal: React.FC<ShowcaseCustomizerModalProps> = (
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-pv-border flex items-center justify-between">
-          <button
-            onClick={onClose}
-            className="px-4 h-9 rounded-lg text-pv-text-secondary hover:text-pv-text-primary text-xs font-medium transition-colors"
-          >
+        <div className="p-4 border-t border-[#36515F] bg-[#1C2D3B] flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
-          >
+          </Button>
+          <Button variant="primary" size="sm" onClick={handleSave} loading={isSaving}>
             <Save className="w-3.5 h-3.5" />
             <span>{isSaving ? 'Saving...' : 'Save Showcase'}</span>
-          </button>
+          </Button>
         </div>
       </div>
     </div>

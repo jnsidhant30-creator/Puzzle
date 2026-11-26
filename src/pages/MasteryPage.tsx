@@ -65,7 +65,7 @@ export const MasteryPage: React.FC = () => {
                 Level {masteryProfile.overallMasteryLevel} • {masteryProfile.overallMasteryPercent}%
               </p>
             </div>
-            <div className="w-8 h-8 rounded-md bg-pv-surface-secondary border border-pv-border flex items-center justify-center text-pv-dragon-fruit shrink-0">
+            <div className="w-8 h-8 rounded-md bg-pv-surface-secondary border border-pv-border flex items-center justify-center text-[#38C6BA] shrink-0">
               <Trophy className="w-4 h-4" />
             </div>
           </div>
@@ -120,11 +120,11 @@ export const MasteryPage: React.FC = () => {
             </Card>
 
             <Card className="p-3.5 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-pv-surface-secondary border border-pv-border text-pv-dragon-fruit flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-pv-surface-secondary border border-pv-border text-[#38C6BA] flex items-center justify-center shrink-0">
                 <Target className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <span className="text-[10px] font-medium text-pv-dragon-fruit uppercase tracking-wider block">
+                <span className="text-[10px] font-medium text-[#38C6BA] uppercase tracking-wider block">
                   Developing Focus
                 </span>
                 <h4 className="text-xs font-semibold text-pv-text-primary truncate">
@@ -138,7 +138,7 @@ export const MasteryPage: React.FC = () => {
 
             <Card className="p-3.5 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-pv-surface-secondary border border-pv-border text-pv-dragon-fruit flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-pv-surface-secondary border border-pv-border text-[#38C6BA] flex items-center justify-center shrink-0">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
@@ -195,14 +195,14 @@ export const MasteryPage: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2.5">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-md bg-[#24202C] border border-[#342D3D] flex items-center justify-center">
+                        <div className="w-7 h-7 rounded-md bg-[#233D4A] border border-[#36515F] flex items-center justify-center">
                           <PuzzleArt type={mode.id} size={16} />
                         </div>
-                        <span className="text-[10px] uppercase font-medium text-[#9F97AB]">
+                        <span className="text-[10px] uppercase font-medium text-[#98AAB8]">
                           {mode.category}
                         </span>
                       </div>
-                      <span className="text-[11px] font-semibold text-[#FF82B8] font-tabular">
+                      <span className="text-[11px] font-semibold text-[#A8E5D5] font-tabular">
                         Lv.{level}
                       </span>
                     </div>
@@ -216,20 +216,20 @@ export const MasteryPage: React.FC = () => {
                     <div className="space-y-1 mb-3">
                       <div className="w-full bg-pv-surface-secondary h-1.5 rounded-full overflow-hidden border border-pv-border">
                         <div
-                          className="bg-pv-dragon-fruit h-full transition-all duration-300 rounded-full"
+                          className="bg-[#38C6BA] h-full transition-all duration-300 rounded-full"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 bg-[#16131C] border border-[#342D3D] p-2 rounded-lg text-[11px] mb-3">
+                    <div className="grid grid-cols-2 gap-2 bg-[#1C2D3B] border border-[#36515F] p-2 rounded-lg text-[11px] mb-3">
                       <div>
-                        <span className="text-[#9F97AB] block text-[9px] uppercase">Best Score</span>
-                        <span className="text-[#F5F3F7] font-semibold font-tabular">{rec?.bestScore || 0}</span>
+                        <span className="text-[#98AAB8] block text-[9px] uppercase">Best Score</span>
+                        <span className="text-[#F5F7F8] font-semibold font-tabular">{rec?.bestScore || 0}</span>
                       </div>
                       <div>
-                        <span className="text-[#9F97AB] block text-[9px] uppercase">Max Tier</span>
-                        <span className="text-[#C5BFD0] font-semibold uppercase">{rec?.highestDifficultyCompleted || 'Easy'}</span>
+                        <span className="text-[#98AAB8] block text-[9px] uppercase">Max Tier</span>
+                        <span className="text-[#B4C3CE] font-semibold uppercase">{rec?.highestDifficultyCompleted || 'Easy'}</span>
                       </div>
                     </div>
                   </div>
@@ -237,14 +237,14 @@ export const MasteryPage: React.FC = () => {
                   <div className="flex items-center gap-2 pt-2 border-t border-pv-border">
                     <button
                       onClick={() => setActiveDetailGame(mode.id)}
-                      className="flex-1 h-8 bg-[#24202C] hover:bg-[#2B2533] text-[#C5BFD0] hover:text-[#F5F3F7] border border-[#342D3D] font-medium rounded-md text-xs transition-colors flex items-center justify-center gap-1"
+                      className="flex-1 h-8 bg-[#233D4A] hover:bg-[#2C4654] text-[#B4C3CE] hover:text-[#F5F7F8] border border-[#36515F] font-medium rounded-md text-xs transition-colors flex items-center justify-center gap-1"
                     >
                       <span>Details</span>
                       <ChevronRight className="w-3 h-3" />
                     </button>
                     <button
                       onClick={() => playGame(mode.id)}
-                      className="h-8 px-3 bg-[#24202C] hover:bg-[#FF4696] text-[#F5F3F7] hover:text-[#110F15] border border-[#342D3D] hover:border-[#FF4696] font-semibold text-xs rounded-md transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
+                      className="h-8 px-3 bg-[#233D4A] hover:bg-[#087F8C] text-[#F5F7F8] hover:text-[#FFFFFF] border border-[#36515F] hover:border-[#38C6BA] font-semibold text-xs rounded-md transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
                     >
                       <Play className="w-3 h-3 fill-current" />
                       <span>Play</span>
@@ -297,7 +297,7 @@ export const MasteryPage: React.FC = () => {
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-[10px] font-medium uppercase tracking-wider text-pv-dragon-fruit bg-pv-surface-secondary border border-pv-border px-1.5 py-0.2 rounded">
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-[#38C6BA] bg-pv-surface-secondary border border-pv-border px-1.5 py-0.2 rounded">
                         {ch.type}
                       </span>
                       {isCompleted ? (
@@ -329,7 +329,7 @@ export const MasteryPage: React.FC = () => {
                       className={`h-7 px-3 rounded text-xs font-medium flex items-center gap-1 transition-colors ${
                         isCompleted
                           ? 'bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-secondary border border-pv-border'
-                          : 'bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold'
+                          : 'bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold'
                       }`}
                     >
                       <Play className="w-3 h-3 fill-current" />
@@ -356,7 +356,7 @@ export const MasteryPage: React.FC = () => {
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-pv-surface-secondary border border-pv-border text-pv-dragon-fruit flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-pv-surface-secondary border border-pv-border text-[#38C6BA] flex items-center justify-center shrink-0">
                 <Award className="w-5 h-5" />
               </div>
               <div>
@@ -378,7 +378,7 @@ export const MasteryPage: React.FC = () => {
               </div>
               <div className="w-full bg-pv-surface-primary h-1.5 rounded-full overflow-hidden border border-pv-border">
                 <div
-                  className="bg-pv-dragon-fruit h-full transition-all duration-300 rounded-full"
+                  className="bg-[#38C6BA] h-full transition-all duration-300 rounded-full"
                   style={{ width: `${detailRecord.progressPercent}%` }}
                 />
               </div>
@@ -427,7 +427,7 @@ export const MasteryPage: React.FC = () => {
                   setActiveDetailGame(null);
                   playGame(detailMeta.id);
                 }}
-                className="flex-1 h-9 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+                className="flex-1 h-9 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Play className="w-3.5 h-3.5 fill-current" /> Play
               </button>

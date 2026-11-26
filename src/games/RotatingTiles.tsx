@@ -113,8 +113,8 @@ export const RotatingTiles: React.FC<Props> = ({ difficulty, onComplete, useHint
       />
 
       {/* Board */}
-      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
-        <p className="text-xs text-[#C5BFD0] mb-4 text-center">
+      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+        <p className="text-xs text-[#B4C3CE] mb-4 text-center">
           Rotate tile glyphs to re-align their orientations correctly.
         </p>
 
@@ -129,7 +129,7 @@ export const RotatingTiles: React.FC<Props> = ({ difficulty, onComplete, useHint
                 onClick={() => handleTileClick(idx)}
                 className={`aspect-square rounded-lg text-3xl font-semibold flex items-center justify-center border transition-all duration-150 select-none ${
                   isHint
-                    ? 'bg-pv-dragon-fruit/20 border-pv-dragon-fruit text-pv-dragon-fruit-light'
+                    ? 'bg-[#38C6BA]/20 border-[#38C6BA] text-[#A8E5D5]'
                     : isAligned
                     ? 'bg-pv-surface-secondary border-pv-border-strong text-pv-text-primary'
                     : 'bg-pv-surface-secondary border-pv-border text-pv-text-muted hover:border-pv-border-strong hover:text-pv-text-secondary'

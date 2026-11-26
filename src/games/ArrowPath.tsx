@@ -4,12 +4,14 @@ import { sound } from '../services/sound';
 import { RefreshCw, Navigation, Lightbulb, CheckCircle2 } from 'lucide-react';
 import { GameHudBar } from '../components/ui/GameHudBar';
 import { useGameTimer } from '../hooks/useGameTimer';
+import { createRng } from '../utils/prng';
 
 interface Props {
   difficulty: Difficulty;
   onComplete: (score: number, timeSeconds: number, won: boolean) => void;
   useHint: () => boolean;
   hintsLeft: number;
+  seed?: number;
   isPaused?: boolean;
 }
 
@@ -27,7 +29,14 @@ const DIRS: { dir: Direction; arrow: string; dr: number; dc: number }[] = [
   { dir: 'RIGHT', arrow: '→', dr: 0, dc: 1 }
 ];
 
-export const ArrowPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft, isPaused = false }) => {
+export const ArrowPath: React.FC<Props> = ({
+  difficulty,
+  onComplete,
+  useHint,
+  hintsLeft,
+  seed,
+  isPaused = false,
+}) => {
   const size = difficulty === 'easy' ? 4 : 5;
   const gridColsClass = size === 4 ? 'grid-cols-4' : 'grid-cols-5';
 
@@ -40,10 +49,11 @@ export const ArrowPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hi
   const [timer, setTimer] = useGameTimer(isPaused, isWon);
 
   useEffect(() => {
-    initGrid();
-  }, [difficulty]);
+    initGrid(true);
+  }, [difficulty, seed]);
 
-  const initGrid = () => {
+  const initGrid = (usePropSeed = false) => {
+    const rng = createRng(usePropSeed && typeof seed === 'number' ? seed : undefined);
     const path: { r: number; c: number; dir: Direction }[] = [];
     let cr = 0;
     let cc = 0;
@@ -68,7 +78,7 @@ export const ArrowPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hi
         else possible.push({ dir: 'RIGHT', dr: 0, dc: 1 });
       }
 
-      const chosen = possible[Math.floor(Math.random() * possible.length)];
+      const chosen = possible[Math.floor(rng() * possible.length)];
       path.push({ r: cr, c: cc, dir: chosen.dir });
       cr += chosen.dr;
       cc += chosen.dc;
@@ -77,7 +87,7 @@ export const ArrowPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hi
 
     const matrix: ArrowCell[][] = Array.from({ length: size }, () =>
       Array.from({ length: size }, () => {
-        const dObj = DIRS[Math.floor(Math.random() * DIRS.length)];
+        const dObj = DIRS[Math.floor(rng() * DIRS.length)];
         return { dir: dObj.dir, arrowChar: dObj.arrow };
       })
     );
@@ -97,6 +107,37 @@ export const ArrowPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hi
     setTimer(0);
     setIsWon(false);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        !target ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+        target.isContentEditable ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey ||
+        document.querySelector('[role="dialog"][aria-modal="true"]') ||
+        isWon ||
+        isPaused
+      ) {
+        return;
+      }
+      const curDir = grid[currentPos.r]?.[currentPos.c]?.dir;
+      const matchesArrow =
+        (e.key === 'ArrowUp' && curDir === 'UP') ||
+        (e.key === 'ArrowDown' && curDir === 'DOWN') ||
+        (e.key === 'ArrowLeft' && curDir === 'LEFT') ||
+        (e.key === 'ArrowRight' && curDir === 'RIGHT');
+      if (e.key === ' ' || (e.key === 'Enter' && target.tagName !== 'BUTTON') || matchesArrow) {
+        e.preventDefault();
+        handleStep();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [grid, currentPos, isWon, isPaused]);
 
   const handleStep = () => {
     if (isWon) return;
@@ -145,8 +186,8 @@ export const ArrowPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hi
       />
 
       {/* Board */}
-      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
-        <p className="text-xs text-[#C5BFD0] mb-4 text-center">
+      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+        <p className="text-xs text-[#B4C3CE] mb-4 text-center">
           Follow arrow directions from top-left (0, 0) to reach the exit at bottom-right.
         </p>
         <div className={`grid ${gridColsClass} gap-2 w-full max-w-[340px] aspect-square`}>
@@ -159,11 +200,11 @@ export const ArrowPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hi
 
               let cellStyle = 'bg-pv-surface-secondary border-pv-border text-pv-text-secondary';
               if (isCurrent) {
-                cellStyle = 'bg-pv-dragon-fruit text-[#110F15] border-pv-dragon-fruit font-bold shadow-sm';
+                cellStyle = 'bg-[#38C6BA] text-[#142331] border-[#38C6BA] font-bold shadow-sm';
               } else if (isTarget) {
                 cellStyle = 'bg-emerald-950/40 text-emerald-300 border-emerald-600/60 font-semibold';
               } else if (isOnSolution) {
-                cellStyle = 'bg-pv-dragon-fruit/20 border-pv-dragon-fruit text-pv-dragon-fruit-light font-bold';
+                cellStyle = 'bg-[#38C6BA]/20 border-[#38C6BA] text-[#A8E5D5] font-bold';
               } else if (isVisited) {
                 cellStyle = 'bg-pv-surface-soft border-pv-border-strong text-pv-text-muted';
               }
@@ -195,7 +236,7 @@ export const ArrowPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hi
         <button
           onClick={handleStep}
           disabled={isWon}
-          className="w-full h-11 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-sm rounded-lg flex items-center justify-center gap-2 transition-colors active:translate-y-px disabled:opacity-50"
+          className="w-full h-11 bg-[#087F8C] hover:bg-[#066B75] text-[#FFFFFF] font-semibold text-sm rounded-lg flex items-center justify-center gap-2 transition-colors active:translate-y-px disabled:opacity-50"
         >
           <Navigation className="w-4 h-4" /> Follow Arrow Step
         </button>
@@ -209,7 +250,7 @@ export const ArrowPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hi
             <Lightbulb className="w-3.5 h-3.5" /> Hint ({hintsLeft})
           </button>
           <button
-            onClick={initGrid}
+            onClick={() => initGrid(false)}
             className="h-9 px-3 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
             title="Reset Grid"
           >

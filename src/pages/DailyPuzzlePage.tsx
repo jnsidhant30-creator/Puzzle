@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Calendar, Play, Flame, Star, Award } from 'lucide-react';
+import { Calendar, Play, Flame, Star, Award, WifiOff } from 'lucide-react';
 import { PUZZLE_MODES } from '../data/puzzles';
 import { Difficulty } from '../types';
 import { PageHeader, Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 import { PuzzleCoverArt } from '../components/PuzzleArt';
 import { formatCount } from '../utils/format';
 
 export const DailyPuzzlePage: React.FC = () => {
-  const { playGame, user } = useStore();
+  const { playGame, user, isOnline, isGuest } = useStore();
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('medium');
 
   const now = new Date();
@@ -27,62 +28,70 @@ export const DailyPuzzlePage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-fade-in">
-      {/* Header */}
       <PageHeader
-        title="Daily Challenge"
-        description="Curated daily puzzle selection with bonus XP and streak progression."
+        title="Daily Puzzle"
+        description="A fresh puzzle chosen every day with bonus XP and coins."
         action={
-          <div className="bg-[#1C1823] border border-[#342D3D] rounded-lg px-3.5 py-2 flex items-center gap-2 shrink-0">
-            <Calendar className="w-4 h-4 text-[#FF4696]" />
-            <span className="text-xs font-medium text-[#F5F3F7]">{todayStr}</span>
+          <div className="bg-[#1C2D3B] border border-[#36515F] rounded-lg px-3.5 py-2 flex items-center gap-2 shrink-0">
+            <Calendar className="w-4 h-4 text-[#38C6BA]" />
+            <span className="text-xs font-semibold text-[#F5F7F8]">{todayStr}</span>
           </div>
         }
       />
 
-      {/* Featured Night Violet Architectural Daily Card */}
-      <Card surface="featured" padding="none" className="border-[#494052] overflow-hidden">
+      {(!isOnline || isGuest) && (
+        <Card surface="primary" padding="md" className="border-[#F59E0B]/40 flex items-center gap-3">
+          <WifiOff className="w-5 h-5 text-[#FBBF24] shrink-0" />
+          <p className="text-xs sm:text-sm text-[#B4C3CE]">
+            {!isOnline
+              ? 'Offline Mode: you can practice today’s puzzle locally, but cloud streak sync and global rankings require an internet connection.'
+              : 'Guest Practice Mode: sign in with a PuzzleVerse account online to record verified Daily Puzzle streaks.'}
+          </p>
+        </Card>
+      )}
+
+      <Card surface="ivory" padding="none" className="overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 items-stretch">
           <div className="lg:col-span-7 p-6 sm:p-8 space-y-5 flex flex-col justify-between">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-[#FF4696]/15 border border-[#FF4696]/35 text-[#FF82B8] uppercase tracking-wider">
-                  Daily Selection
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-[#D7F1EC] border border-[#087F8C] text-[#142331]">
+                  Today&apos;s Pick
                 </span>
-                <span className="text-[11px] font-medium text-[#C5BFD0] uppercase tracking-wider bg-[#16131C] px-2.5 py-0.5 rounded-md border border-[#342D3D]">
-                  {todayPuzzle.category}
+                <span className="text-xs font-semibold text-[#526575] bg-[#E9EEE8] px-2.5 py-0.5 rounded-md border border-[#D5DEDB]">
+                  {todayPuzzle.category === 'Spatial & Grid' ? 'Spatial' : todayPuzzle.category}
                 </span>
               </div>
 
               <div>
-                <h2 className="text-2xl sm:text-3xl font-semibold text-[#F5F3F7] tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#142331] tracking-tight">
                   {todayPuzzle.name}
                 </h2>
-                <p className="text-xs sm:text-sm text-[#C5BFD0] mt-1.5 leading-relaxed">
+                <p className="text-sm text-[#526575] mt-1.5 leading-relaxed">
                   {todayPuzzle.description}
                 </p>
               </div>
 
-              <div className="bg-[#16131C]/90 border border-[#342D3D] p-3.5 rounded-lg text-xs text-[#C5BFD0]">
-                <span className="font-semibold text-[#F5F3F7] block mb-0.5">Objective</span>
-                {todayPuzzle.instructions}
+              <div className="bg-[#E9EEE8] border border-[#D5DEDB] p-3.5 rounded-lg text-xs sm:text-sm text-[#142331]">
+                <span className="font-bold block mb-0.5">How to solve</span>
+                <span className="text-[#526575]">{todayPuzzle.instructions}</span>
               </div>
             </div>
 
             <div className="space-y-4 pt-2">
-              {/* Difficulty Tier Selector */}
               <div className="space-y-1.5">
-                <span className="text-[11px] font-medium text-[#9F97AB] uppercase tracking-wider block">
-                  Difficulty Tier
+                <span className="text-xs font-bold text-[#142331] block">
+                  Choose Difficulty
                 </span>
-                <div className="inline-flex p-1 rounded-lg bg-[#16131C] border border-[#342D3D] gap-1">
+                <div className="inline-flex p-1 rounded-lg bg-[#E9EEE8] border border-[#D5DEDB] gap-1">
                   {(['easy', 'medium', 'hard'] as const).map((diff) => (
                     <button
                       key={diff}
                       onClick={() => setSelectedDifficulty(diff)}
-                      className={`px-3.5 h-8 rounded-md text-xs font-medium uppercase tracking-wider transition-colors ${
+                      className={`px-3.5 h-8 rounded-md text-xs font-bold capitalize transition-colors ${
                         selectedDifficulty === diff
-                          ? 'bg-[#FF4696] text-[#110F15] font-semibold'
-                          : 'text-[#C5BFD0] hover:text-[#F5F3F7]'
+                          ? 'bg-[#087F8C] text-[#FFFFFF]'
+                          : 'text-[#526575] hover:text-[#142331]'
                       }`}
                     >
                       {diff}
@@ -91,13 +100,12 @@ export const DailyPuzzlePage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Reward Callouts */}
-              <div className="flex flex-wrap items-center gap-5 text-xs">
-                <span className="flex items-center gap-1.5 text-[#FF82B8] font-medium">
+              <div className="flex flex-wrap items-center gap-5 text-xs font-bold">
+                <span className="flex items-center gap-1.5 text-[#066B75]">
                   <Star className="w-3.5 h-3.5 fill-current" />
-                  <span>2× XP multiplier</span>
+                  <span>2x XP multiplier</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-[#34D399] font-medium">
+                <span className="flex items-center gap-1.5 text-[#065F46]">
                   <Award className="w-3.5 h-3.5" />
                   <span>+50 bonus coins</span>
                 </span>
@@ -105,29 +113,30 @@ export const DailyPuzzlePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Live Schematic Board Preview & Launch Dock */}
-          <div className="lg:col-span-5 bg-[#16131C] border-t lg:border-t-0 lg:border-l border-[#342D3D] flex flex-col justify-between">
-            <div className="flex-1 min-h-[190px] bg-[#14111A] border-b border-[#342D3D] flex items-center justify-center overflow-hidden">
-              <PuzzleCoverArt type={todayPuzzle.id} className="w-full h-full object-cover" />
+          <div className="lg:col-span-5 bg-[#233D4A] border-t lg:border-t-0 lg:border-l border-[#36515F] flex flex-col justify-between text-[#F5F7F8]">
+            <div className="flex-1 min-h-[190px] bg-[#E9EEE8] border-b border-[#36515F] flex items-center justify-center overflow-hidden">
+              <PuzzleCoverArt type={todayPuzzle.id} variant="light" className="w-full h-full object-cover" />
             </div>
 
             <div className="p-5 sm:p-6 space-y-4">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#C5BFD0] flex items-center gap-1.5">
-                  <Flame className="w-4 h-4 text-[#FF4696]" /> Current Streak
+                <span className="text-[#B4C3CE] flex items-center gap-1.5 font-semibold">
+                  <Flame className="w-4 h-4 text-[#38C6BA]" /> Current Streak
                 </span>
-                <span className="font-semibold text-[#F5F3F7] font-tabular">
+                <span className="font-bold text-[#F5F7F8] font-tabular">
                   {formatCount(user?.currentStreak || 1, 'day')}
                 </span>
               </div>
 
-              <button
-                onClick={() => playGame(todayPuzzle.id, selectedDifficulty)}
-                className="w-full h-11 bg-[#FF4696] hover:bg-[#E83C86] text-[#110F15] text-sm font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors pv-keycap cursor-pointer"
+              <Button
+                onClick={() => playGame(todayPuzzle.id, selectedDifficulty, undefined, true)}
+                variant="accent"
+                size="lg"
+                className="w-full"
               >
                 <Play className="w-4 h-4 fill-current" />
-                <span>Start Daily Puzzle</span>
-              </button>
+                <span>Play Today</span>
+              </Button>
             </div>
           </div>
         </div>
