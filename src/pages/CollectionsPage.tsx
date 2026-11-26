@@ -3,7 +3,232 @@ import { useStore } from '../store/useStore';
 import { PuzzleCollection, CollectionCategory, UserCollectionProgress } from '../types';
 import { fetchPuzzleCollections, fetchUserCollectionProgress } from '../services/firebase';
 import { getRecommendedCollections } from '../services/recommendation';
-import { Layers, Sparkles, Search, Clock, Award, CheckCircle, Play, Zap, Flame, ShieldAlert, ChevronRight
-} from 'lucide-react'; const CATEGORIES: (CollectionCategory | 'All')[] = [ 'All', 'Beginner', 'Logic', 'Speed', 'Memory', 'Word', 'Spatial', 'Mixed', 'Challenge', 'Seasonal',
-]; export const CollectionsPage: React.FC = () => { const { user, viewCollectionDetail } = useStore(); const [collections, setCollections] = useState<PuzzleCollection[]>([]); const [progressMap, setProgressMap] = useState<Record<string, UserCollectionProgress>>({}); const [selectedCategory, setSelectedCategory] = useState<CollectionCategory | 'All'>('All'); const [searchQuery, setSearchQuery] = useState(''); const [loading, setLoading] = useState(true); useEffect(() => { async function loadCollectionsData() { setLoading(true); const cols = await fetchPuzzleCollections(); setCollections(cols); if (user?.uid) { const map: Record<string, UserCollectionProgress> = {}; for (const col of cols) { const p = await fetchUserCollectionProgress(user.uid, col.id); if (p) map[col.id] = p; } setProgressMap(map); } setLoading(false); } loadCollectionsData(); }, [user?.uid]); const recommendedCols = getRecommendedCollections(user, collections, 2); const filteredCollections = collections.filter((col) => { const matchesCategory = selectedCategory === 'All' || col.category === selectedCategory; const matchesSearch = col.title.toLowerCase().includes(searchQuery.toLowerCase()) || col.description.toLowerCase().includes(searchQuery.toLowerCase()) || col.category.toLowerCase().includes(searchQuery.toLowerCase()); return matchesCategory && matchesSearch; }); return ( <div className="space-y-6 animate-fade-in max-w-6xl mx-auto"> {/* Header Banner */} <div className="bg-pv-surface-secondary p-6 rounded-3xl border border-pv-border-violet flex flex-col sm:flex-row items-center justify-between gap-4"> <div> <h1 className="text-3xl font-black text-white tracking-wide flex items-center gap-2"> <Layers className="w-8 h-8 text-pv-dragon-fruit-light" /> Puzzle Collections & Playlists </h1> <p className="text-xs text-pv-text-secondary mt-1"> Hand-curated multi-step puzzle journeys and themed playlists designed for progressive skill mastery. </p> </div> <div className="bg-pv-surface-soft border border-pv-border-violet p-3 rounded-2xl flex items-center gap-3 shrink-0"> <Sparkles className="w-6 h-6 text-pv-dragon-fruit-light" /> <div className="text-xs"> <p className="font-bold text-white">Curated Playlists</p> <p className="text-[11px] text-pv-text-secondary">{collections.length} Playlists Available</p> </div> </div> </div> {/* Recommended Playlists Spotlight */} {recommendedCols.length > 0 && !searchQuery && selectedCategory === 'All' && ( <div className="bg-pv-surface-primary border border-pv-border-strong p-6 rounded-3xl space-y-4"> <h3 className="text-sm font-black text-pv-dragon-fruit-light uppercase tracking-wider flex items-center gap-2"> <Sparkles className="w-4 h-4" /> Recommended Playlists For You </h3> <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"> {recommendedCols.map((col) => { const prog = progressMap[col.id]; const completedCount = prog?.completedPuzzleIndices?.length || 0; const totalCount = col.items.length; const pct = Math.round((completedCount / totalCount) * 100); return ( <div key={col.id} onClick={() => viewCollectionDetail(col.id)} className="bg-pv-bg-primary p-5 rounded-2xl border border-pv-border-violet hover:border-pv-dragon-fruit/50 transition cursor-pointer group space-y-3" > <div className="flex items-center justify-between"> <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-pv-surface-soft text-pv-dragon-fruit-light border border-pv-border-violet"> {col.category} </span> <span className="text-[10px] text-pv-dragon-fruit-light font-bold flex items-center gap-1"> <Award className="w-3.5 h-3.5" /> +{col.rewardXP} XP </span> </div> <div> <h4 className="text-lg font-black text-white group-hover:text-pv-dragon-fruit-light transition"> {col.title} </h4> <p className="text-xs text-pv-text-secondary mt-1 line-clamp-2">{col.description}</p> </div> <div className="flex items-center justify-between text-xs text-pv-text-secondary pt-2 border-t border-pv-border-strong"> <span className="flex items-center gap-1"> <Clock className="w-3.5 h-3.5 text-pv-text-muted" /> ~{col.estimatedMinutes || 5} mins • {col.items.length} Puzzles </span> <span className="font-bold text-pv-dragon-fruit-light group-hover:translate-x-1 transition flex items-center gap-1"> Start <ChevronRight className="w-4 h-4" /> </span> </div> </div> ); })} </div> </div> )} {/* Filter and Search Bar */} <div className="flex flex-col sm:flex-row items-center justify-between gap-4"> {/* Categories Tabs */} <div className="flex items-center gap-2 overflow-x-auto w-full pb-2 sm:pb-0 scrollbar-none"> {CATEGORIES.map((cat) => ( <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${ selectedCategory === cat ? 'bg-gradient-primary-btn text-pv-bg-primary shadow-md font-black' : 'bg-pv-surface-primary border border-pv-border-violet text-pv-text-secondary hover:text-white' }`} > {cat} </button> ))} </div> {/* Search Input */} <div className="relative w-full sm:w-64"> <Search className="w-4 h-4 text-pv-text-muted absolute left-3 top-3" /> <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search playlists..." className="w-full bg-pv-bg-secondary border border-pv-border-violet text-white pl-9 pr-4 py-2 rounded-xl text-xs focus:outline-none focus:border-pv-dragon-fruit" /> </div> </div> {/* Collection Cards Grid */} {loading ? ( <div className="flex justify-center py-12"> <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div> </div> ) : filteredCollections.length === 0 ? ( <div className="bg-pv-surface-primary border border-pv-border-violet p-8 rounded-3xl text-center space-y-2"> <ShieldAlert className="w-10 h-10 text-pv-text-muted mx-auto" /> <h3 className="text-base font-bold text-white">No Collections Found</h3> <p className="text-xs text-pv-text-secondary">Try adjusting your category filter or search terms.</p> </div> ) : ( <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"> {filteredCollections.map((col) => { const prog = progressMap[col.id]; const completedCount = prog?.completedPuzzleIndices?.length || 0; const totalCount = col.items.length; const pct = Math.round((completedCount / totalCount) * 100); const isCompleted = prog?.status === 'COMPLETED'; return ( <div key={col.id} onClick={() => viewCollectionDetail(col.id)} className="bg-pv-surface-primary border border-pv-border-violet hover:border-indigo-500/50 p-5 rounded-3xl space-y-4 flex flex-col justify-between transition cursor-pointer group shadow-sm" > <div className="space-y-3"> <div className="flex items-center justify-between"> <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-pv-surface-soft text-pv-dragon-fruit-light border border-pv-border-violet"> {col.category} </span> <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${ col.difficulty === 'easy' ? 'bg-emerald-500/20 text-emerald-300' : col.difficulty === 'medium' ? 'bg-gradient-primary-btn/20 text-pv-dragon-fruit-light' : 'bg-rose-500/20 text-rose-300' }`}> {col.difficulty} </span> </div> <div> <h3 className="text-lg font-black text-white group-hover:text-pv-dragon-fruit-light transition flex items-center gap-2"> {col.title} {isCompleted && <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />} </h3> <p className="text-xs text-pv-text-secondary mt-1 line-clamp-2">{col.description}</p> </div> </div> {/* Progress & Actions */} <div className="space-y-3 pt-3 border-t border-pv-border-violet"> <div className="space-y-1"> <div className="flex items-center justify-between text-[11px] text-pv-text-secondary font-bold"> <span>Progress ({completedCount}/{totalCount})</span> <span className={isCompleted ? 'text-emerald-400' : 'text-pv-dragon-fruit-light'}>{pct}%</span> </div> <div className="w-full bg-pv-bg-primary h-2 rounded-full overflow-hidden border border-pv-border-violet"> <div className={`h-full transition-all duration-300 ${ isCompleted ? 'bg-emerald-500' : 'bg-pv-surface-secondary' }`} style={{ width: `${pct}%` }} ></div> </div> </div> <div className="flex items-center justify-between pt-1"> <span className="text-[10px] text-pv-dragon-fruit-light font-bold"> +{col.rewardXP} XP • +{col.rewardCoins} Coins </span> <button type="button" className="bg-pv-dragon-fruit hover:bg-indigo-500 text-white font-black px-4 py-1.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1 group-hover:bg-gradient-primary-btn group-hover:text-pv-bg-primary transition" > <Play className="w-3.5 h-3.5 fill-current" /> <span>{completedCount === 0 ? 'Start' : isCompleted ? 'Replay' : 'Continue'}</span> </button> </div> </div> </div> ); })} </div> )} </div> );
+import { Layers, Search, Clock, Award, CheckCircle, Play, ChevronRight } from 'lucide-react';
+import { PageHeader, Card } from '../components/ui/Card';
+import { formatCount } from '../utils/format';
+
+const CATEGORIES: (CollectionCategory | 'All')[] = [
+  'All',
+  'Beginner',
+  'Logic',
+  'Speed',
+  'Memory',
+  'Word',
+  'Spatial',
+  'Mixed',
+  'Challenge',
+  'Seasonal',
+];
+
+export const CollectionsPage: React.FC = () => {
+  const { user, viewCollectionDetail } = useStore();
+  const [collections, setCollections] = useState<PuzzleCollection[]>([]);
+  const [progressMap, setProgressMap] = useState<Record<string, UserCollectionProgress>>({});
+  const [selectedCategory, setSelectedCategory] = useState<CollectionCategory | 'All'>('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCollectionsData() {
+      setLoading(true);
+      const cols = await fetchPuzzleCollections();
+      setCollections(cols);
+      if (user?.uid) {
+        const map: Record<string, UserCollectionProgress> = {};
+        for (const col of cols) {
+          const p = await fetchUserCollectionProgress(user.uid, col.id);
+          if (p) map[col.id] = p;
+        }
+        setProgressMap(map);
+      }
+      setLoading(false);
+    }
+    loadCollectionsData();
+  }, [user?.uid]);
+
+  const recommendedCols = getRecommendedCollections(user, collections, 2);
+
+  const filteredCollections = collections.filter((col) => {
+    const matchesCategory = selectedCategory === 'All' || col.category === selectedCategory;
+    const matchesSearch =
+      col.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      col.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      col.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto pb-12 animate-fade-in">
+      {/* Header */}
+      <PageHeader
+        title="Playlists & Collections"
+        description="Themed puzzle playlists organized for progressive skill mastery."
+        action={
+          <span className="text-xs text-pv-text-secondary bg-pv-surface-primary border border-pv-border px-3 py-1.5 rounded-lg font-tabular shrink-0">
+            {collections.length} playlists available
+          </span>
+        }
+      />
+
+      {/* Recommended Spotlight */}
+      {recommendedCols.length > 0 && !searchQuery && selectedCategory === 'All' && (
+        <Card className="p-5 space-y-3 border-pv-dragon-fruit/40">
+          <h3 className="text-xs font-semibold text-pv-dragon-fruit uppercase tracking-wider">
+            Recommended Playlists
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {recommendedCols.map((col) => {
+              return (
+                <div
+                  key={col.id}
+                  onClick={() => viewCollectionDetail(col.id)}
+                  className="bg-pv-surface-secondary p-4 rounded-lg border border-pv-border hover:border-pv-border-strong transition-colors cursor-pointer space-y-2.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-medium uppercase bg-pv-surface-primary text-pv-text-muted border border-pv-border">
+                      {col.category}
+                    </span>
+                    <span className="text-[11px] text-pv-dragon-fruit font-mono font-medium flex items-center gap-1">
+                      <Award className="w-3.5 h-3.5" /> +{col.rewardXP} XP
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-pv-text-primary">{col.title}</h4>
+                    <p className="text-xs text-pv-text-secondary mt-0.5 line-clamp-2">{col.description}</p>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-pv-text-muted pt-2 border-t border-pv-border/60">
+                    <span className="flex items-center gap-1 font-tabular">
+                      <Clock className="w-3 h-3" /> ~{col.estimatedMinutes || 5} min • {formatCount(col.items.length, 'puzzle')}
+                    </span>
+                    <span className="font-medium text-pv-dragon-fruit flex items-center gap-0.5">
+                      Open <ChevronRight className="w-3 h-3" />
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="relative w-full sm:w-72">
+          <Search className="w-3.5 h-3.5 text-pv-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search playlists..."
+            className="w-full bg-pv-surface-primary border border-pv-border text-pv-text-primary pl-9 pr-3 h-8 rounded-lg text-xs focus:outline-none focus:border-pv-dragon-fruit placeholder-pv-text-muted"
+          />
+        </div>
+
+        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 border-b sm:border-0 border-pv-border">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3 h-7 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
+                selectedCategory === cat
+                  ? 'bg-pv-surface-soft text-pv-text-primary border border-pv-border-strong'
+                  : 'text-pv-text-secondary hover:text-pv-text-primary hover:bg-pv-surface-primary'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Grid */}
+      {loading ? (
+        <Card className="py-16 text-center">
+          <div className="w-6 h-6 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs text-pv-text-secondary font-medium">Loading collections...</p>
+        </Card>
+      ) : filteredCollections.length === 0 ? (
+        <Card className="p-12 text-center space-y-3">
+          <div className="w-12 h-12 bg-pv-surface-secondary rounded-lg flex items-center justify-center text-pv-text-muted mx-auto border border-pv-border">
+            <Layers className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-semibold text-pv-text-primary">No playlists found</h3>
+          <p className="text-xs text-pv-text-secondary max-w-sm mx-auto">
+            Try adjusting your search query or category filter.
+          </p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredCollections.map((col) => {
+            const prog = progressMap[col.id];
+            const completedCount = prog?.completedPuzzleIndices?.length || 0;
+            const totalCount = col.items.length;
+            const pct = Math.round((completedCount / totalCount) * 100);
+            const isCompleted = prog?.status === 'COMPLETED';
+
+            return (
+              <Card
+                key={col.id}
+                onClick={() => viewCollectionDetail(col.id)}
+                className="p-4 space-y-3 flex flex-col justify-between hover:border-pv-border-strong transition-colors cursor-pointer"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-medium uppercase bg-pv-surface-secondary border border-pv-border text-pv-text-muted">
+                      {col.category}
+                    </span>
+                    <span className="text-[10px] font-medium capitalize text-pv-text-secondary">
+                      {col.difficulty}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-1.5">
+                      {col.title}
+                      {isCompleted && <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
+                    </h3>
+                    <p className="text-xs text-pv-text-secondary mt-0.5 line-clamp-2">
+                      {col.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5 pt-2.5 border-t border-pv-border">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px] text-pv-text-muted font-tabular">
+                      <span>{completedCount} / {totalCount} completed</span>
+                      <span className={isCompleted ? 'text-emerald-400' : 'text-pv-text-primary'}>
+                        {pct}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-pv-surface-secondary h-1.5 rounded-full overflow-hidden border border-pv-border">
+                      <div
+                        className={`h-full transition-all duration-300 rounded-full ${
+                          isCompleted ? 'bg-emerald-500' : 'bg-pv-dragon-fruit'
+                        }`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-0.5">
+                    <span className="text-[11px] text-pv-text-muted font-mono font-tabular">
+                      +{col.rewardXP} XP • +{col.rewardCoins} coins
+                    </span>
+                    <button
+                      type="button"
+                      className="h-7 px-3 bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-primary border border-pv-border rounded text-xs font-medium flex items-center gap-1 transition-colors"
+                    >
+                      <Play className="w-3 h-3 fill-current" />
+                      <span>{completedCount === 0 ? 'Start' : isCompleted ? 'Replay' : 'Continue'}</span>
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 };

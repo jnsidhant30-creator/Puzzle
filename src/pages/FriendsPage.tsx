@@ -1,7 +1,294 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { createFriendChallenge, fetchSocialFeed, sendKudosGift, fetchHeadToHeadStats } from '../services/firebase';
+import {
+  createFriendChallenge,
+  fetchSocialFeed,
+  sendKudosGift,
+  fetchHeadToHeadStats,
+} from '../services/firebase';
 import { SocialFeedItem, HeadToHeadStats } from '../types';
 import { toast } from '../services/toast';
-import { Users, Send, Copy, Swords, Play, Heart, Award, Flame, Activity, Trophy } from 'lucide-react'; export const FriendsPage: React.FC = () => { const { user, playGame } = useStore(); const [activeTab, setActiveTab] = useState<'friends' | 'feed' | 'rivalry'>('feed'); const [copied, setCopied] = useState(false); const [challengeCode, setChallengeCode] = useState<string | null>(null); const [socialFeed, setSocialFeed] = useState<SocialFeedItem[]>([]); const [h2hStats, setH2hStats] = useState<HeadToHeadStats | null>(null); const [selectedOpponent, setSelectedOpponent] = useState({ name: 'Alex_Master', id: 'user_alex' }); useEffect(() => { fetchSocialFeed().then((feed) => setSocialFeed(feed)); }, []); useEffect(() => { if (user) { fetchHeadToHeadStats(user.uid, selectedOpponent.id).then((stats) => setH2hStats(stats)); } }, [user, selectedOpponent]); const handleSendKudos = async (friendName: string, friendId: string) => { if (!user) return; try { await sendKudosGift({ senderId: user.uid, senderName: user.displayName, receiverId: friendId, giftType: 'kudos', xpValue: 15, createdAt: new Date().toISOString() }); toast.kudos(`Kudos sent to ${friendName}!`, 'You sent +15 XP energy.'); } catch (e) { toast.error('Failed to send Kudos'); } }; const handleGenerateChallenge = async () => { if (!user) return; const challengeId = await createFriendChallenge({ creatorUid: user.uid, creatorName: user.displayName, puzzleType: 'number', difficulty: 'medium', targetScore: 500, targetTime: 60, seed: Math.floor(Math.random() * 100000), createdAt: new Date().toISOString() }); if (challengeId) { setChallengeCode(challengeId); } }; const handleCopy = () => { if (!challengeCode) return; navigator.clipboard.writeText(`https://puzzleverse.app/challenge?id=${challengeCode}`); setCopied(true); setTimeout(() => setCopied(false), 2000); }; return ( <div className="space-y-6 animate-fade-in max-w-5xl mx-auto"> {/* Header */} <div className="bg-pv-surface-primary p-6 rounded-3xl border border-pv-border-violet flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"> <div> <h1 className="text-3xl font-black text-white tracking-wide flex items-center gap-2"> <Users className="w-8 h-8 text-pv-dragon-fruit-light" /> Friends &amp; Social Pulse </h1> <p className="text-xs text-pv-text-secondary">Activity feed, Head-to-Head rivalries, and friend challenges</p> </div> <button onClick={handleGenerateChallenge} className="bg-pv-surface-secondary hover:from-indigo-400 hover:to-purple-500 text-white font-black px-5 py-3 rounded-2xl shadow-sm shadow-indigo-500/20 text-xs flex items-center gap-2 uppercase tracking-wider transition" > <Swords className="w-4 h-4" /> Create Battle Room </button> </div> {/* Sub Tabs */} <div className="flex gap-2 bg-pv-bg-primary p-1.5 rounded-2xl border border-pv-border-violet"> <button onClick={() => setActiveTab('feed')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 ${ activeTab === 'feed' ? 'bg-pv-dragon-fruit text-white font-black shadow-md' : 'text-pv-text-secondary hover:text-white' }`} > <Activity className="w-4 h-4" /> Social Pulse Feed </button> <button onClick={() => setActiveTab('friends')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 ${ activeTab === 'friends' ? 'bg-pv-dragon-fruit text-white font-black shadow-md' : 'text-pv-text-secondary hover:text-white' }`} > <Users className="w-4 h-4" /> Friends List </button> <button onClick={() => setActiveTab('rivalry')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 ${ activeTab === 'rivalry' ? 'bg-pv-dragon-fruit text-white font-black shadow-md' : 'text-pv-text-secondary hover:text-white' }`} > <Swords className="w-4 h-4" /> Head-to-Head Rivalries </button> </div> {/* Battle Room Banner if Code active */} {challengeCode && ( <div className="bg-indigo-950/60 border-2 border-pv-border-strong rounded-3xl p-6 shadow-sm flex flex-col items-center text-center"> <p className="text-xs font-bold text-pv-dragon-fruit-light uppercase tracking-widest mb-2">Battle Link Generated!</p> <p className="text-2xl font-mono font-black text-white mb-4 bg-pv-bg-primary px-6 py-3 rounded-2xl border border-pv-border-violet"> ROOM: {challengeCode.substring(0, 8)} </p> <div className="flex gap-3"> <button onClick={handleCopy} className="bg-pv-surface-primary hover:bg-pv-surface-soft text-white px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition border border-pv-border-strong" > <Copy className="w-4 h-4" /> {copied ? 'Copied Link!' : 'Copy Link'} </button> <button onClick={() => playGame('challenge_mode', 'medium')} className="bg-pv-dragon-fruit hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition" > <Play className="w-4 h-4 fill-white" /> Start Match </button> </div> </div> )} {/* TAB 1: Social Pulse Feed */} {activeTab === 'feed' && ( <div className="bg-pv-surface-primary border border-pv-border-violet rounded-3xl p-6 shadow-sm space-y-4"> <h3 className="text-lg font-bold text-white flex items-center gap-2"> <Activity className="w-5 h-5 text-pv-dragon-fruit-light" /> Friend &amp; Community Activity Feed </h3> <div className="space-y-3"> {socialFeed.map((item) => ( <div key={item.id} className="p-4 bg-pv-surface-primary rounded-2xl border border-pv-border-violet flex items-start justify-between gap-4" > <div className="flex items-start gap-3"> <img src={item.userAvatar} alt={item.userName} className="w-10 h-10 rounded-full border border-pv-border-strong shrink-0" /> <div> <div className="flex items-center gap-2"> <span className="font-bold text-white text-sm">{item.userName}</span> {item.titleFlair && ( <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-950 text-pv-dragon-fruit-light border border-pv-border-violet rounded-md"> {item.titleFlair} </span> )} </div> <p className="text-xs text-pv-text-secondary mt-1">{item.details}</p> <span className="text-[10px] text-pv-text-muted block mt-1"> {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} </span> </div> </div> <button onClick={() => handleSendKudos(item.userName, item.userId)} className="px-3 py-1.5 rounded-xl bg-pink-950/60 hover:bg-pink-900/80 text-pink-300 border border-pink-500/30 text-xs font-bold flex items-center gap-1.5 transition shrink-0" > <Heart className="w-3.5 h-3.5 fill-pink-400" /> Kudos </button> </div> ))} </div> </div> )} {/* TAB 2: Friends List */} {activeTab === 'friends' && ( <div className="bg-pv-surface-primary border border-pv-border-violet rounded-3xl p-6 shadow-sm space-y-4"> <h3 className="text-lg font-bold text-white">Your Friends</h3> <div className="space-y-3"> {[ { id: 'user_alex', name: 'Alex_Master', level: 12, status: 'Online', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Alex' }, { id: 'user_elena', name: 'Elena_Cipher', level: 8, status: 'In Game', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Elena' }, { id: 'user_quantum', name: 'Quantum_King', level: 15, status: 'Offline', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Quantum' } ].map((f) => ( <div key={f.id} className="flex items-center justify-between p-4 bg-pv-bg-primary border border-pv-border-violet rounded-2xl"> <div className="flex items-center gap-3"> <img src={f.avatar} alt={f.name} className="w-10 h-10 rounded-full border border-pv-border-strong" /> <div> <h4 className="font-bold text-white text-sm">{f.name}</h4> <p className="text-[10px] text-pv-text-secondary">Level {f.level} • {f.status}</p> </div> </div> <div className="flex items-center gap-2"> <button onClick={() => handleSendKudos(f.name, f.id)} className="p-2 rounded-xl bg-pink-950/60 hover:bg-pink-900/80 text-pink-300 border border-pink-500/30 text-xs font-bold transition" title="Send Kudos" > <Heart className="w-4 h-4 fill-pink-400" /> </button> <button onClick={() => { setSelectedOpponent({ name: f.name, id: f.id }); setActiveTab('rivalry'); }} className="bg-pv-surface-primary hover:bg-pv-dragon-fruit text-slate-200 hover:text-white px-3.5 py-2 rounded-xl text-xs font-bold transition border border-pv-border-strong" > View Rivalry </button> </div> </div> ))} </div> </div> )} {/* TAB 3: Head-to-Head Rivalries */} {activeTab === 'rivalry' && ( <div className="bg-pv-surface-primary border border-pv-border-violet rounded-3xl p-6 shadow-sm space-y-6"> <div className="flex items-center justify-between border-b border-pv-border-violet pb-4"> <h3 className="text-lg font-bold text-white flex items-center gap-2"> <Swords className="w-5 h-5 text-pv-dragon-fruit-light" /> Head-to-Head Rivalry: vs {selectedOpponent.name} </h3> <span className="text-xs text-pv-dragon-fruit-light font-bold">Lifetime Stats</span> </div> <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center"> <div className="bg-pv-bg-primary p-5 rounded-2xl border border-pv-border-violet"> <span className="text-xs text-pv-text-secondary uppercase font-bold block mb-1">Total Matches</span> <span className="text-3xl font-black text-white">{h2hStats?.totalMatches || 8}</span> </div> <div className="bg-pv-bg-primary p-5 rounded-2xl border border-pv-border-violet"> <span className="text-xs text-pv-text-secondary uppercase font-bold block mb-1">Your Wins</span> <span className="text-3xl font-black text-emerald-400">{h2hStats?.wins || 5}</span> </div> <div className="bg-pv-bg-primary p-5 rounded-2xl border border-pv-border-violet"> <span className="text-xs text-pv-text-secondary uppercase font-bold block mb-1">Opponent Wins</span> <span className="text-3xl font-black text-rose-400">{h2hStats?.losses || 3}</span> </div> </div> <div className="p-4 bg-pv-bg-primary rounded-2xl border border-pv-border-violet flex items-center justify-between text-xs font-bold text-pv-text-secondary"> <span>Best Score Differential: <strong className="text-pv-dragon-fruit-light">+{h2hStats?.bestScoreDiff || 150} pts</strong></span> <span>Speed Lead: <strong className="text-cyan-400">{h2hStats?.bestTimeDiff || 12}s faster</strong></span> </div> <div className="pt-2 text-center"> <button onClick={() => playGame('challenge_mode', 'medium')} className="bg-pv-dragon-fruit hover:bg-indigo-500 text-white font-black px-6 py-3 rounded-xl text-xs uppercase tracking-wider transition" > Launch Direct Rematch </button> </div> </div> )} </div> );
-}; 
+import { Users, Copy, Swords, Play, Heart, Activity } from 'lucide-react';
+import { PageHeader, Card } from '../components/ui/Card';
+
+export const FriendsPage: React.FC = () => {
+  const { user, playGame } = useStore();
+  const [activeTab, setActiveTab] = useState<'feed' | 'friends' | 'rivalry'>('feed');
+  const [copied, setCopied] = useState(false);
+  const [challengeCode, setChallengeCode] = useState<string | null>(null);
+  const [socialFeed, setSocialFeed] = useState<SocialFeedItem[]>([]);
+  const [h2hStats, setH2hStats] = useState<HeadToHeadStats | null>(null);
+  const [selectedOpponent, setSelectedOpponent] = useState<{ name: string; id: string } | null>(null);
+
+  useEffect(() => {
+    fetchSocialFeed().then((feed) => setSocialFeed(feed));
+  }, []);
+
+  useEffect(() => {
+    if (user && selectedOpponent) {
+      fetchHeadToHeadStats(user.uid, selectedOpponent.id).then((stats) => setH2hStats(stats));
+    }
+  }, [user, selectedOpponent]);
+
+  const handleSendKudos = async (friendName: string, friendId: string) => {
+    if (!user) return;
+    try {
+      await sendKudosGift({
+        senderId: user.uid,
+        senderName: user.displayName,
+        receiverId: friendId,
+        giftType: 'kudos',
+        xpValue: 15,
+        createdAt: new Date().toISOString(),
+      });
+      toast.kudos(`Kudos sent to ${friendName}`, 'You granted +15 XP energy.');
+    } catch {
+      toast.error('Failed to send kudos');
+    }
+  };
+
+  const handleGenerateChallenge = async () => {
+    if (!user) return;
+    const challengeId = await createFriendChallenge({
+      creatorUid: user.uid,
+      creatorName: user.displayName,
+      puzzleType: 'number',
+      difficulty: 'medium',
+      targetScore: 500,
+      targetTime: 60,
+      seed: Math.floor(Math.random() * 100000),
+      createdAt: new Date().toISOString(),
+    });
+    if (challengeId) {
+      setChallengeCode(challengeId);
+    }
+  };
+
+  const handleCopy = () => {
+    if (!challengeCode) return;
+    navigator.clipboard.writeText(`${window.location.origin}/challenges?id=${challengeCode}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto animate-fade-in">
+      {/* Header */}
+      <PageHeader
+        title="Community & Friends"
+        description="Player activity updates, direct duel rooms, and head-to-head match records."
+        action={
+          <button
+            onClick={handleGenerateChallenge}
+            className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors shrink-0"
+          >
+            <Swords className="w-3.5 h-3.5" />
+            <span>Create Challenge Room</span>
+          </button>
+        }
+      />
+
+      {/* Tabs */}
+      <div className="flex items-center gap-1.5 border-b border-pv-border pb-2">
+        <button
+          onClick={() => setActiveTab('feed')}
+          className={`px-3.5 h-8 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+            activeTab === 'feed'
+              ? 'bg-pv-surface-soft text-pv-text-primary border border-pv-border-strong'
+              : 'text-pv-text-secondary hover:text-pv-text-primary hover:bg-pv-surface-primary'
+          }`}
+        >
+          <Activity className="w-3.5 h-3.5" /> Activity Feed
+        </button>
+        <button
+          onClick={() => setActiveTab('friends')}
+          className={`px-3.5 h-8 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+            activeTab === 'friends'
+              ? 'bg-pv-surface-soft text-pv-text-primary border border-pv-border-strong'
+              : 'text-pv-text-secondary hover:text-pv-text-primary hover:bg-pv-surface-primary'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" /> Friends
+        </button>
+        <button
+          onClick={() => setActiveTab('rivalry')}
+          className={`px-3.5 h-8 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+            activeTab === 'rivalry'
+              ? 'bg-pv-surface-soft text-pv-text-primary border border-pv-border-strong'
+              : 'text-pv-text-secondary hover:text-pv-text-primary hover:bg-pv-surface-primary'
+          }`}
+        >
+          <Swords className="w-3.5 h-3.5" /> Head-to-Head
+        </button>
+      </div>
+
+      {/* Challenge Room Banner */}
+      {challengeCode && (
+        <Card className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-pv-dragon-fruit/40">
+          <div>
+            <p className="text-[11px] font-semibold text-pv-dragon-fruit uppercase tracking-wider">
+              Challenge Room Ready
+            </p>
+            <p className="text-sm text-pv-text-primary mt-0.5">
+              Room ID: <span className="font-mono font-semibold">{challengeCode.substring(0, 8)}</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopy}
+              className="h-9 px-3 bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>{copied ? 'Copied' : 'Copy Link'}</span>
+            </button>
+            <button
+              onClick={() => playGame('challenge_mode', 'medium')}
+              className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>Start Match</span>
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {/* Tab 1: Activity Feed */}
+      {activeTab === 'feed' && (
+        <div className="space-y-3">
+          {socialFeed.length === 0 ? (
+            <Card className="p-10 text-center space-y-2">
+              <Activity className="w-8 h-8 text-pv-text-muted mx-auto" />
+              <h3 className="text-sm font-semibold text-pv-text-primary">No Recent Activities</h3>
+              <p className="text-xs text-pv-text-secondary max-w-sm mx-auto">
+                Game completions and milestone achievements from community members will appear here.
+              </p>
+            </Card>
+          ) : (
+            socialFeed.map((item) => (
+              <Card key={item.id} className="p-4 flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <img
+                    src={item.userAvatar}
+                    alt={item.userName}
+                    className="w-9 h-9 rounded-md border border-pv-border bg-pv-surface-secondary shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-pv-text-primary text-xs">{item.userName}</span>
+                      {item.titleFlair && (
+                        <span className="text-[10px] px-1.5 py-0.2 bg-pv-surface-secondary border border-pv-border rounded text-pv-text-muted font-mono">
+                          {item.titleFlair}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-pv-text-secondary mt-0.5">{item.details}</p>
+                    <span className="text-[10px] text-pv-text-muted block mt-1 font-tabular">
+                      {new Date(item.createdAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleSendKudos(item.userName, item.userId)}
+                  className="h-8 px-2.5 rounded-lg border border-pv-border hover:border-pv-dragon-fruit/50 text-pv-text-secondary hover:text-pv-dragon-fruit text-xs font-medium flex items-center gap-1.5 transition-colors shrink-0"
+                >
+                  <Heart className="w-3.5 h-3.5" /> Kudos
+                </button>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Tab 2: Friends List */}
+      {activeTab === 'friends' && (
+        <Card className="p-12 text-center space-y-3">
+          <div className="w-12 h-12 bg-pv-surface-secondary rounded-lg flex items-center justify-center text-pv-text-muted mx-auto border border-pv-border">
+            <Users className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-pv-text-primary mb-1">No friends added yet</h3>
+            <p className="text-xs text-pv-text-secondary max-w-sm mx-auto leading-relaxed">
+              Create a challenge room above and share the room link with a player to connect and establish rivalries.
+            </p>
+          </div>
+          <div className="pt-2">
+            <button
+              onClick={handleGenerateChallenge}
+              className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Swords className="w-3.5 h-3.5" />
+              <span>Create Challenge Room</span>
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {/* Tab 3: Head-to-Head */}
+      {activeTab === 'rivalry' && (
+        <div className="space-y-4">
+          {!selectedOpponent ? (
+            <Card className="p-12 text-center space-y-3">
+              <div className="w-12 h-12 bg-pv-surface-secondary rounded-lg flex items-center justify-center text-pv-text-muted mx-auto border border-pv-border">
+                <Swords className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-semibold text-pv-text-primary mb-1">
+                No active head-to-head match selected
+              </h3>
+              <p className="text-xs text-pv-text-secondary max-w-sm mx-auto leading-relaxed">
+                Invite an opponent through a challenge room to track lifetime statistics and head-to-head victory margins.
+              </p>
+            </Card>
+          ) : (
+            <Card className="p-6 space-y-6">
+              <div className="flex items-center justify-between border-b border-pv-border pb-4">
+                <h3 className="text-base font-semibold text-pv-text-primary flex items-center gap-2">
+                  <Swords className="w-4 h-4 text-pv-dragon-fruit" />
+                  Match history: vs {selectedOpponent.name}
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                <div className="bg-pv-surface-secondary p-4 rounded-lg border border-pv-border">
+                  <span className="text-[11px] text-pv-text-muted uppercase font-medium block mb-1">
+                    Total Matches
+                  </span>
+                  <span className="text-2xl font-semibold text-pv-text-primary font-tabular">
+                    {h2hStats?.totalMatches || 0}
+                  </span>
+                </div>
+                <div className="bg-pv-surface-secondary p-4 rounded-lg border border-pv-border">
+                  <span className="text-[11px] text-pv-text-muted uppercase font-medium block mb-1">
+                    Your Wins
+                  </span>
+                  <span className="text-2xl font-semibold text-emerald-400 font-tabular">
+                    {h2hStats?.wins || 0}
+                  </span>
+                </div>
+                <div className="bg-pv-surface-secondary p-4 rounded-lg border border-pv-border">
+                  <span className="text-[11px] text-pv-text-muted uppercase font-medium block mb-1">
+                    Opponent Wins
+                  </span>
+                  <span className="text-2xl font-semibold text-rose-400 font-tabular">
+                    {h2hStats?.losses || 0}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-2 text-center">
+                <button
+                  onClick={() => playGame('challenge_mode', 'medium')}
+                  className="h-10 px-5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg transition-colors"
+                >
+                  Direct Rematch
+                </button>
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};

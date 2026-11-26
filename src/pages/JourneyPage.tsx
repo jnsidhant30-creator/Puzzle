@@ -3,9 +3,293 @@ import { useStore } from '../store/useStore';
 import { DEFAULT_JOURNEY_CHAPTERS } from '../data/journeyData';
 import { fetchUserJourneyProgress } from '../services/firebase';
 import { JourneyChapter, JourneyStage, UserJourneyProgress } from '../types';
-import { Compass, CheckCircle2, Lock, Play, Sparkles, Trophy, Award, BookOpen, ArrowRight, ChevronRight, Zap, Star
-} from 'lucide-react'; export const JourneyPage: React.FC = () => { const { user, playJourneyStage, viewPuzzleGuide, setActiveTab } = useStore(); const [progress, setProgress] = useState<UserJourneyProgress | null>(null); const [loading, setLoading] = useState(true); const [selectedStage, setSelectedStage] = useState<JourneyStage | null>(null); useEffect(() => { if (user) { setLoading(true); fetchUserJourneyProgress(user.uid).then(prog => { setProgress(prog); setLoading(false); }); } }, [user]); const completedIds = new Set(progress?.completedStageIds || []); const allStages = DEFAULT_JOURNEY_CHAPTERS.flatMap(ch => ch.stages); const totalStages = allStages.length; const completedCount = completedIds.size; const progressPercent = Math.min(100, Math.round((completedCount / totalStages) * 100)); /* Find next unlocked stage to continue journey */
- const nextStageToPlay = allStages.find(s => !completedIds.has(s.id)) || allStages[allStages.length - 1]; const getStageStatus = (stage: JourneyStage, chapter: JourneyChapter) => { if (completedIds.has(stage.id)) return 'COMPLETED'; /* Check chapter reqs */
-if  (chapter.unlockReqChapterId) { const reqChapter = DEFAULT_JOURNEY_CHAPTERS.find(c => c.id === chapter.unlockReqChapterId); if (reqChapter) { const reqChapterAllCompleted = reqChapter.stages.every(s => completedIds.has(s.id)); if (!reqChapterAllCompleted) return 'LOCKED'; } } /* Check stage reqs */
-if  (stage.unlockReqStageId && !completedIds.has(stage.unlockReqStageId)) { return 'LOCKED'; } if (nextStageToPlay && nextStageToPlay.id === stage.id) { return 'CURRENT'; } return 'UNLOCKED'; }; return ( <div className="max-w-6xl mx-auto px-4 py-8 space-y-8"> {/* Header Banner */} <div className="relative overflow-hidden rounded-3xl bg-pv-bg-secondary border border-pv-border-violet p-6 md:p-8 shadow-sm"> <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-primary-btn/10 rounded-full -mr-20 -mt-20 pointer-events-none" /> <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6"> <div className="space-y-3 max-w-2xl"> <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-primary-btn/10 border border-pv-border-strong text-pv-dragon-fruit-light text-xs font-semibold tracking-wide uppercase"> <Compass className="w-3.5 h-3.5" /> Campaign Progression </div> <h1 className="text-3xl md:text-4xl font-extrabold text-slate-100 tracking-tight"> Puzzle Journey </h1> <p className="text-pv-text-secondary text-sm md:text-base leading-relaxed"> Embark on a structured multi-chapter campaign across all 16 puzzle disciplines. Clear stages, master cognitive categories, and claim stage rewards. </p> </div> {/* Progress Pill Widget */} <div className="bg-pv-bg-primary/70 rounded-2xl p-5 border border-pv-border-violet min-w-[240px] space-y-3"> <div className="flex items-center justify-between text-xs text-pv-text-secondary"> <span>Campaign Progress</span> <span className="font-bold text-pv-dragon-fruit-light">{progressPercent}%</span> </div> <div className="h-2.5 bg-pv-surface-primary rounded-full overflow-hidden"> <div className="h-full bg-pv-surface-secondary transition-all duration-500" style={{ width: `${progressPercent}%` }} /> </div> <div className="flex justify-between items-center text-xs text-pv-text-secondary pt-1"> <span>{completedCount} / {totalStages} Stages Cleared</span> <Trophy className="w-4 h-4 text-pv-dragon-fruit-light" /> </div> </div> </div> </div> {/* Featured "Continue Journey" Card */} {nextStageToPlay && ( <div className="bg-pv-surface-secondary border border-pv-border-strong rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-sm"> <div className="space-y-1"> <div className="flex items-center gap-2 text-xs font-semibold text-pv-dragon-fruit-light uppercase tracking-wider"> <Sparkles className="w-3.5 h-3.5" /> Next Active Stage </div> <h3 className="text-xl font-bold text-slate-100"> Chapter {nextStageToPlay.chapterNumber} · Stage {nextStageToPlay.stageNumber}: {nextStageToPlay.title} </h3> <p className="text-sm text-pv-text-secondary"> {nextStageToPlay.description} </p> <div className="flex items-center gap-3 pt-2 text-xs text-pv-text-secondary"> <span className="px-2.5 py-0.5 rounded-md bg-pv-surface-primary border border-pv-border-strong capitalize"> {nextStageToPlay.puzzleType.replace('_', ' ')} </span> <span className="px-2.5 py-0.5 rounded-md bg-pv-surface-primary border border-pv-border-strong capitalize"> {nextStageToPlay.difficulty} </span> <span className="text-pv-dragon-fruit-light font-medium"> +{nextStageToPlay.rewardXP} XP · +{nextStageToPlay.rewardCoins} Coins </span> </div> </div> <button onClick={() => playJourneyStage(nextStageToPlay)} className="w-full sm:w-auto px-6 py-3 bg-gradient-primary-btn hover:bg-pv-dragon-fruit-light text-pv-bg-primary font-bold rounded-xl shadow-sm shadow-sm flex items-center justify-center gap-2 transition-transform active:scale-95 shrink-0" > <Play className="w-4 h-4 fill-current" /> Continue Journey </button> </div> )} {/* Chapters Grid / Map */} <div className="space-y-10"> {DEFAULT_JOURNEY_CHAPTERS.map(chapter => { const chapterStages = chapter.stages; const chapterCompletedCount = chapterStages.filter(s => completedIds.has(s.id)).length; const isChapterComplete = chapterCompletedCount === chapterStages.length; return ( <div key={chapter.id} className="bg-pv-surface-primary border border-pv-border-violet rounded-3xl p-6 md:p-8 space-y-6"> {/* Chapter Header */} <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-pv-border-violet"> <div className="flex items-start gap-4"> <div className={`w-12 h-12 rounded-2xl ${chapter.themeColor} flex items-center justify-center shadow-md shrink-0`}> {isChapterComplete ? ( <CheckCircle2 className="w-6 h-6 text-white" /> ) : ( <span className="text-lg font-black text-white">{chapter.number}</span> )} </div> <div> <div className="flex items-center gap-2"> <span className="text-xs font-bold uppercase tracking-wider text-pv-dragon-fruit-light"> Chapter {chapter.number} </span> {isChapterComplete && ( <span className="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20"> MASTERED </span> )} </div> <h2 className="text-xl font-bold text-slate-100">{chapter.title}</h2> <p className="text-xs md:text-sm text-pv-text-secondary mt-0.5">{chapter.description}</p> </div> </div> <div className="text-xs text-pv-text-secondary self-start md:self-auto px-3 py-1.5 rounded-xl bg-pv-surface-primary border border-pv-border-violet"> {chapterCompletedCount} / {chapterStages.length} Stages Cleared </div> </div> {/* Stage Nodes Track */} <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"> {chapterStages.map(stage => { const status = getStageStatus(stage, chapter); return ( <div key={stage.id} onClick={() => { if (status !== 'LOCKED') setSelectedStage(stage); }} className={`relative rounded-2xl p-5 border transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[160px] ${ status === 'COMPLETED' ? 'bg-pv-surface-primary border-emerald-500/40 hover:border-emerald-500/70' : status === 'CURRENT' ? 'bg-amber-950/30 border-pv-dragon-fruit/80 ring-2 ring-amber-500/30 shadow-sm shadow-pv-dragon-fruit/10' : status === 'UNLOCKED' ? 'bg-pv-surface-primary border-pv-border-violet hover:border-pv-border-strong' : 'bg-pv-bg-primary/30 border-pv-border-violet/40 opacity-50 cursor-not-allowed' }`} > {/* Top Badges */} <div className="flex items-center justify-between"> <span className="text-[11px] font-mono text-pv-text-secondary"> {stage.chapterNumber}.{stage.stageNumber} </span> {status === 'COMPLETED' && ( <div className="flex items-center gap-1 text-emerald-400 text-xs font-semibold"> <CheckCircle2 className="w-4 h-4" /> Cleared </div> )} {status === 'CURRENT' && ( <span className="animate-pulse bg-gradient-primary-btn/20 border border-pv-border-strong text-pv-dragon-fruit-light text-[10px] font-bold px-2 py-0.5 rounded-full"> CURRENT </span> )} {status === 'LOCKED' && ( <Lock className="w-4 h-4 text-pv-text-muted" /> )} </div> {/* Stage Main Info */} <div className="my-3 space-y-1"> <h4 className="font-bold text-sm text-slate-100 line-clamp-1">{stage.title}</h4> <p className="text-xs text-pv-text-secondary line-clamp-2">{stage.description}</p> </div> {/* Stage Footer */} <div className="pt-2 border-t border-pv-border-violet/60 flex items-center justify-between text-xs"> <span className="capitalize text-pv-text-secondary text-[11px] font-medium"> {stage.puzzleType.replace('_', ' ')} </span> <span className="text-pv-dragon-fruit-light font-semibold"> +{stage.rewardXP} XP </span> </div> </div> ); })} </div> </div> ); })} </div> {/* Stage Detail Modal */} {selectedStage && ( <div className="fixed inset-0 z-50 bg-pv-surface-primary flex items-center justify-center p-4"> <div className="bg-pv-bg-secondary border border-pv-border-violet rounded-3xl p-6 md:p-8 max-w-lg w-full space-y-6 shadow-sm relative"> <div className="flex items-start justify-between"> <div> <span className="text-xs font-bold text-pv-dragon-fruit-light uppercase tracking-wide"> Chapter {selectedStage.chapterNumber} · Stage {selectedStage.stageNumber} </span> <h3 className="text-2xl font-black text-slate-100">{selectedStage.title}</h3> </div> <button onClick={() => setSelectedStage(null)} className="text-pv-text-secondary hover:text-slate-200 text-lg font-bold p-1" > ✕ </button> </div> <p className="text-sm text-pv-text-secondary leading-relaxed"> {selectedStage.description} </p> <div className="grid grid-cols-2 gap-3 text-xs bg-pv-bg-primary/70 p-4 rounded-2xl border border-pv-border-violet"> <div> <span className="text-pv-text-secondary block">Puzzle Discipline</span> <span className="font-bold text-slate-200 capitalize">{selectedStage.puzzleType.replace('_', ' ')}</span> </div> <div> <span className="text-pv-text-secondary block">Difficulty</span> <span className="font-bold text-slate-200 capitalize">{selectedStage.difficulty}</span> </div> <div> <span className="text-pv-text-secondary block">XP Reward</span> <span className="font-bold text-pv-dragon-fruit-light">+{selectedStage.rewardXP} XP</span> </div> <div> <span className="text-pv-text-secondary block">Coins Reward</span> <span className="font-bold text-pv-dragon-fruit-light">+{selectedStage.rewardCoins} Coins</span> </div> </div> <div className="flex flex-col sm:flex-row items-center gap-3 pt-2"> <button onClick={() => { const stage = selectedStage; setSelectedStage(null); playJourneyStage(stage); }} className="w-full sm:flex-1 py-3 bg-gradient-primary-btn hover:bg-pv-dragon-fruit-light text-pv-bg-primary font-bold rounded-xl shadow-sm shadow-sm flex items-center justify-center gap-2" > <Play className="w-4 h-4 fill-current" /> Start Stage Now </button> <button onClick={() => { const type = selectedStage.puzzleType; setSelectedStage(null); viewPuzzleGuide(type); }} className="w-full sm:w-auto px-4 py-3 bg-pv-surface-primary hover:bg-pv-surface-soft text-slate-200 font-semibold rounded-xl border border-pv-border-strong flex items-center justify-center gap-2 text-xs" > <BookOpen className="w-4 h-4" /> Learn Rules </button> </div> </div> </div> )} </div> );
+import { Compass, CheckCircle2, Lock, Play, Trophy, BookOpen, X } from 'lucide-react';
+import { PageHeader, Card } from '../components/ui/Card';
+import { PuzzleCoverArt } from '../components/PuzzleArt';
+import { formatCount } from '../utils/format';
+
+export const JourneyPage: React.FC = () => {
+  const { user, playJourneyStage, viewPuzzleGuide } = useStore();
+  const [progress, setProgress] = useState<UserJourneyProgress | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedStage, setSelectedStage] = useState<JourneyStage | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setLoading(true);
+      fetchUserJourneyProgress(user.uid).then((prog) => {
+        setProgress(prog);
+        setLoading(false);
+      });
+    }
+  }, [user]);
+
+  const completedIds = new Set(progress?.completedStageIds || []);
+  const allStages = DEFAULT_JOURNEY_CHAPTERS.flatMap((ch) => ch.stages);
+  const totalStages = allStages.length;
+  const completedCount = completedIds.size;
+  const progressPercent = Math.min(100, Math.round((completedCount / totalStages) * 100));
+
+  const nextStageToPlay = allStages.find((s) => !completedIds.has(s.id)) || allStages[allStages.length - 1];
+
+  const getStageStatus = (stage: JourneyStage, chapter: JourneyChapter) => {
+    if (completedIds.has(stage.id)) return 'COMPLETED';
+    if (chapter.unlockReqChapterId) {
+      const reqChapter = DEFAULT_JOURNEY_CHAPTERS.find((c) => c.id === chapter.unlockReqChapterId);
+      if (reqChapter) {
+        const reqChapterAllCompleted = reqChapter.stages.every((s) => completedIds.has(s.id));
+        if (!reqChapterAllCompleted) return 'LOCKED';
+      }
+    }
+    if (stage.unlockReqStageId && !completedIds.has(stage.unlockReqStageId)) {
+      return 'LOCKED';
+    }
+    if (nextStageToPlay && nextStageToPlay.id === stage.id) {
+      return 'CURRENT';
+    }
+    return 'UNLOCKED';
+  };
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto pb-12 animate-fade-in">
+      {/* Header */}
+      <PageHeader
+        title="Campaign Journey"
+        description="Progress through multi-chapter puzzle stages across all 16 disciplines."
+        action={
+          <div className="bg-pv-surface-primary border border-pv-border rounded-lg p-3 min-w-[200px] shrink-0">
+            <div className="flex items-center justify-between text-xs text-pv-text-secondary mb-1.5">
+              <span>Campaign Progress</span>
+              <span className="font-semibold text-pv-text-primary font-tabular">{progressPercent}%</span>
+            </div>
+            <div className="h-1.5 bg-pv-surface-secondary rounded-full overflow-hidden border border-pv-border">
+              <div
+                className="h-full bg-pv-dragon-fruit transition-all duration-300 rounded-full"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-pv-text-muted mt-1 font-tabular">
+              {completedCount} of {formatCount(totalStages, 'stage')} completed
+            </p>
+          </div>
+        }
+      />
+
+      {/* Next Active Stage Card */}
+      {nextStageToPlay && (
+        <Card
+          surface="featured"
+          padding="none"
+          className="border-[#FF4696]/40 overflow-hidden grid grid-cols-1 md:grid-cols-12 items-stretch"
+        >
+          <div className="md:col-span-8 p-5 sm:p-6 flex flex-col justify-between gap-4">
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-semibold text-[#FF82B8] uppercase tracking-wider">
+                Active Campaign Stage
+              </span>
+              <h3 className="text-lg font-semibold text-[#F5F3F7]">
+                Chapter {nextStageToPlay.chapterNumber} · Stage {nextStageToPlay.stageNumber}: {nextStageToPlay.title}
+              </h3>
+              <p className="text-xs sm:text-sm text-[#C5BFD0] max-w-xl leading-relaxed">
+                {nextStageToPlay.description}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                <span className="px-2 py-0.5 rounded bg-[#16131C] border border-[#342D3D] text-[11px] text-[#C5BFD0] capitalize">
+                  {nextStageToPlay.puzzleType.replace('_', ' ')}
+                </span>
+                <span className="px-2 py-0.5 rounded bg-[#16131C] border border-[#342D3D] text-[11px] text-[#C5BFD0] capitalize">
+                  {nextStageToPlay.difficulty}
+                </span>
+                <span className="text-[#FF82B8] font-mono font-medium text-[11px]">
+                  +{nextStageToPlay.rewardXP} XP · +{nextStageToPlay.rewardCoins} coins
+                </span>
+              </div>
+            </div>
+            <div>
+              <button
+                onClick={() => playJourneyStage(nextStageToPlay)}
+                className="h-10 px-5 bg-[#FF4696] hover:bg-[#E83C86] text-[#110F15] font-semibold text-xs rounded-lg inline-flex items-center justify-center gap-2 transition-colors pv-keycap cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>Continue Journey</span>
+              </button>
+            </div>
+          </div>
+          <div className="md:col-span-4 bg-[#14111A] border-t md:border-t-0 md:border-l border-[#342D3D] min-h-[140px]">
+            <PuzzleCoverArt type={nextStageToPlay.puzzleType} />
+          </div>
+        </Card>
+      )}
+
+      {/* Chapters List */}
+      <div className="space-y-6">
+        {DEFAULT_JOURNEY_CHAPTERS.map((chapter) => {
+          const chapterStages = chapter.stages;
+          const chapterCompletedCount = chapterStages.filter((s) => completedIds.has(s.id)).length;
+          const isChapterComplete = chapterCompletedCount === chapterStages.length;
+
+          return (
+            <Card key={chapter.id} className="p-5 space-y-4">
+              {/* Chapter Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-pv-border">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-pv-dragon-fruit uppercase tracking-wider">
+                      Chapter {chapter.number}
+                    </span>
+                    {isChapterComplete && (
+                      <span className="text-[10px] text-emerald-400 font-medium px-1.5 py-0.2 rounded bg-emerald-950/40 border border-emerald-500/40">
+                        Completed
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-base font-semibold text-pv-text-primary mt-0.5">{chapter.title}</h3>
+                  <p className="text-xs text-pv-text-secondary">{chapter.description}</p>
+                </div>
+                <span className="text-xs text-pv-text-muted font-tabular">
+                  {chapterCompletedCount} / {formatCount(chapterStages.length, 'stage')}
+                </span>
+              </div>
+
+              {/* Stage Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                {chapterStages.map((stage) => {
+                  const status = getStageStatus(stage, chapter);
+
+                  let itemStyle = 'bg-pv-surface-secondary border-pv-border hover:border-pv-border-strong cursor-pointer';
+                  if (status === 'COMPLETED') {
+                    itemStyle = 'bg-pv-surface-secondary border-emerald-500/40 cursor-pointer';
+                  } else if (status === 'CURRENT') {
+                    itemStyle = 'bg-pv-surface-soft border-pv-dragon-fruit cursor-pointer';
+                  } else if (status === 'LOCKED') {
+                    itemStyle = 'bg-pv-surface-primary border-pv-border/40 opacity-40 cursor-not-allowed';
+                  }
+
+                  return (
+                    <div
+                      key={stage.id}
+                      onClick={() => {
+                        if (status !== 'LOCKED') setSelectedStage(stage);
+                      }}
+                      className={`p-3.5 rounded-lg border transition-colors flex flex-col justify-between min-h-[140px] ${itemStyle}`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-mono text-pv-text-muted">
+                          {stage.chapterNumber}.{stage.stageNumber}
+                        </span>
+                        {status === 'COMPLETED' ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : status === 'CURRENT' ? (
+                          <span className="text-[10px] font-semibold text-pv-dragon-fruit uppercase tracking-wider">
+                            Current
+                          </span>
+                        ) : status === 'LOCKED' ? (
+                          <Lock className="w-3.5 h-3.5 text-pv-text-muted" />
+                        ) : null}
+                      </div>
+
+                      <div className="my-1.5 space-y-0.5">
+                        <h4 className="font-medium text-xs text-pv-text-primary line-clamp-1">
+                          {stage.title}
+                        </h4>
+                        <p className="text-[11px] text-pv-text-secondary line-clamp-2">
+                          {stage.description}
+                        </p>
+                      </div>
+
+                      <div className="pt-2 border-t border-pv-border flex items-center justify-between text-[11px]">
+                        <span className="capitalize text-pv-text-muted">
+                          {stage.puzzleType.replace('_', ' ')}
+                        </span>
+                        <span className="text-pv-dragon-fruit font-mono font-medium">
+                          +{stage.rewardXP} XP
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Stage Detail Modal */}
+      {selectedStage && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-pv-surface-primary border border-pv-border rounded-xl p-6 max-w-md w-full space-y-4 shadow-lg relative">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-xs font-medium text-pv-dragon-fruit uppercase tracking-wider">
+                  Chapter {selectedStage.chapterNumber} · Stage {selectedStage.stageNumber}
+                </span>
+                <h3 className="text-lg font-semibold text-pv-text-primary mt-0.5">{selectedStage.title}</h3>
+              </div>
+              <button
+                onClick={() => setSelectedStage(null)}
+                className="p-1 rounded-md text-pv-text-muted hover:text-pv-text-primary hover:bg-pv-surface-secondary transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-pv-text-secondary leading-relaxed">
+              {selectedStage.description}
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 text-xs bg-pv-surface-secondary p-3 rounded-lg border border-pv-border">
+              <div>
+                <span className="text-pv-text-muted block text-[10px]">Discipline</span>
+                <span className="font-medium text-pv-text-primary capitalize">
+                  {selectedStage.puzzleType.replace('_', ' ')}
+                </span>
+              </div>
+              <div>
+                <span className="text-pv-text-muted block text-[10px]">Difficulty</span>
+                <span className="font-medium text-pv-text-primary capitalize">
+                  {selectedStage.difficulty}
+                </span>
+              </div>
+              <div>
+                <span className="text-pv-text-muted block text-[10px]">XP Reward</span>
+                <span className="font-medium text-pv-dragon-fruit font-tabular">
+                  +{selectedStage.rewardXP} XP
+                </span>
+              </div>
+              <div>
+                <span className="text-pv-text-muted block text-[10px]">Coins Reward</span>
+                <span className="font-medium text-pv-dragon-fruit font-tabular">
+                  +{selectedStage.rewardCoins} coins
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 pt-2 border-t border-pv-border">
+              <button
+                onClick={() => {
+                  const type = selectedStage.puzzleType;
+                  setSelectedStage(null);
+                  viewPuzzleGuide(type);
+                }}
+                className="flex-1 h-9 bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <BookOpen className="w-3.5 h-3.5" /> Guide
+              </button>
+              <button
+                onClick={() => {
+                  const stage = selectedStage;
+                  setSelectedStage(null);
+                  playJourneyStage(stage);
+                }}
+                className="flex-1 h-9 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" /> Start Stage
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };

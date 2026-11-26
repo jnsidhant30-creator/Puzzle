@@ -1,31 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { Difficulty } from '../types';
 import { sound } from '../services/sound';
-import { RefreshCw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import { RefreshCw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Lightbulb } from 'lucide-react';
+import { GameHudBar } from '../components/ui/GameHudBar';
+import { useGameTimer } from '../hooks/useGameTimer';
 
 interface Props {
   difficulty: Difficulty;
   onComplete: (score: number, timeSeconds: number, won: boolean) => void;
   useHint: () => boolean;
   hintsLeft: number;
+  isPaused?: boolean;
 }
 
-export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft }) => {
+export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft, isPaused = false }) => {
   const size = difficulty === 'easy' ? 5 : 7;
   const [player, setPlayer] = useState({ r: 0, c: 0 });
   const [walls, setWalls] = useState<boolean[][]>([]);
-  const [timer, setTimer] = useState(0);
   const [solutionSteps, setSolutionSteps] = useState<{ r: number; c: number }[]>([]);
   const [hintActive, setHintActive] = useState(false);
+  const [isWon, setIsWon] = useState(false);
+  const [timer, setTimer] = useGameTimer(isPaused, isWon);
 
   useEffect(() => {
     initMaze();
-    const interval = setInterval(() => setTimer(t => t + 1), 1000);
-    return () => clearInterval(interval);
   }, [difficulty]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        !target ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+        target.isContentEditable ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey ||
+        document.querySelector('[role="dialog"][aria-modal="true"]') ||
+        isWon ||
+        isPaused
+      ) {
+        return;
+      }
       if (['ArrowUp', 'KeyW'].includes(e.code)) {
         e.preventDefault();
         movePlayer(-1, 0);
@@ -43,15 +59,14 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [player, walls, size]);
+  }, [player, walls, size, isWon, isPaused]);
 
   const initMaze = () => {
-    // 1. Build a guaranteed solution path from (0,0) to (size-1, size-1)
     const path: { r: number; c: number }[] = [{ r: 0, c: 0 }];
     let cr = 0;
     let cc = 0;
     const pathSet = new Set<string>();
-    pathSet.add(`0,0`);
+    pathSet.add('0,0');
 
     while (cr !== size - 1 || cc !== size - 1) {
       const candidates: { r: number; c: number }[] = [];
@@ -68,7 +83,6 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
       path.push(chosen);
     }
 
-    // 2. Initialize walls matrix (place walls only in cells NOT on the guaranteed path)
     const wallDensity = difficulty === 'easy' ? 0.35 : 0.45;
     const gridWalls: boolean[][] = Array.from({ length: size }, (_, r) =>
       Array.from({ length: size }, (_, c) => {
@@ -82,19 +96,19 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
     setPlayer({ r: 0, c: 0 });
     setTimer(0);
     setHintActive(false);
+    setIsWon(false);
   };
 
   const movePlayer = (dr: number, dc: number) => {
+    if (isWon || isPaused) return;
     const nextR = player.r + dr;
     const nextC = player.c + dc;
 
-    // Check bounds
     if (nextR < 0 || nextR >= size || nextC < 0 || nextC >= size) {
       sound.playError();
       return;
     }
 
-    // Check wall collision
     if (walls[nextR]?.[nextC]) {
       sound.playError();
       return;
@@ -103,8 +117,8 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
     sound.playMove();
     setPlayer({ r: nextR, c: nextC });
 
-    // Check win condition
     if (nextR === size - 1 && nextC === size - 1) {
+      setIsWon(true);
       sound.playSuccess();
       const score = Math.max(150, 1000 - timer * 6);
       setTimeout(() => onComplete(score, timer, true), 600);
@@ -123,26 +137,18 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
   const gridColsClass = size === 5 ? 'grid-cols-5' : 'grid-cols-7';
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 max-w-xl mx-auto w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between w-full mb-6 bg-pv-surface-primary/80 p-4 rounded-xl border border-pv-border-strong shadow-sm">
-        <div className="text-center">
-          <p className="text-xs text-pv-text-secondary font-semibold uppercase">Maze</p>
-          <p className="text-xl font-bold text-cyan-400">{size}x{size}</p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-pv-text-secondary font-semibold uppercase">Target</p>
-          <p className="text-xl font-bold text-emerald-400">🏁 Exit</p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-pv-text-secondary font-semibold uppercase">Timer</p>
-          <p className="text-xl font-bold text-cyan-400">{timer}s</p>
-        </div>
-      </div>
+    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+      <GameHudBar
+        items={[
+          { label: 'Maze Size', value: `${size} × ${size}` },
+          { label: 'Exit Target', value: `(${size - 1}, ${size - 1})`, tone: 'success' },
+          { label: 'Timer', value: `${timer}s` },
+        ]}
+      />
 
       {/* Grid */}
-      <div className="w-full bg-pv-bg-secondary/90 border-2 border-cyan-500/30 rounded-2xl p-6 mb-6 shadow-sm flex flex-col items-center">
-        <div className={`grid ${gridColsClass} gap-2 w-full max-w-[320px] aspect-square`}>
+      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+        <div className={`grid ${gridColsClass} gap-1.5 w-full max-w-[340px] aspect-square`}>
           {Array.from({ length: size }).map((_, r) =>
             Array.from({ length: size }).map((_, c) => {
               const isPlayer = player.r === r && player.c === c;
@@ -150,22 +156,27 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
               const isWall = walls[r]?.[c];
               const isHintPath = hintActive && solutionSteps.some(s => s.r === r && s.c === c);
 
+              let cellStyle = 'bg-pv-surface-secondary border-pv-border';
+              if (isPlayer) {
+                cellStyle = 'bg-pv-dragon-fruit/20 border-pv-dragon-fruit';
+              } else if (isExit) {
+                cellStyle = 'bg-emerald-950/40 border-emerald-500/60 text-emerald-300';
+              } else if (isWall) {
+                cellStyle = 'bg-pv-bg-primary border-pv-border-strong';
+              } else if (isHintPath) {
+                cellStyle = 'bg-pv-dragon-fruit/20 border-pv-dragon-fruit text-pv-dragon-fruit-light';
+              }
+
               return (
                 <div
                   key={`${r}-${c}`}
-                  className={`aspect-square rounded-xl text-xl sm:text-2xl font-black flex items-center justify-center border-2 transition-all shadow-inner ${
-                    isPlayer
-                      ? 'bg-cyan-500 text-pv-bg-primary border-cyan-300 scale-105 shadow-cyan-500/50 z-10'
-                      : isExit
-                      ? 'bg-emerald-600 text-white border-emerald-400 animate-pulse'
-                      : isWall
-                      ? 'bg-pv-bg-primary border-slate-700/80 shadow-md'
-                      : isHintPath
-                      ? 'bg-pv-dragon-fruit/40 border-pv-dragon-fruit text-pv-dragon-fruit-light animate-pulse ring-2 ring-pv-dragon-fruit'
-                      : 'bg-pv-surface-primary border-pv-border-strong/50 text-pv-text-disabled'
-                  }`}
+                  className={`aspect-square rounded-md flex items-center justify-center border transition-colors select-none ${cellStyle}`}
                 >
-                  {isPlayer ? '🏃' : isExit ? '🏁' : isWall ? '🧱' : ''}
+                  {isPlayer ? (
+                    <span className="w-3 h-3 rounded-full bg-pv-dragon-fruit" />
+                  ) : isExit ? (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider">Exit</span>
+                  ) : null}
                 </div>
               );
             })
@@ -173,56 +184,56 @@ export const MazeEscape: React.FC<Props> = ({ difficulty, onComplete, useHint, h
         </div>
       </div>
 
-      {/* On-screen D-Pad Controls & Keyboard info */}
-      <div className="flex flex-col items-center gap-2 mb-4">
+      {/* D-Pad Controls */}
+      <div className="flex flex-col items-center gap-1.5 mb-5">
         <button
           onClick={() => movePlayer(-1, 0)}
-          className="bg-pv-surface-primary hover:bg-cyan-600 text-white p-3.5 rounded-xl border border-pv-border-strong shadow-md active:scale-95 transition"
+          className="w-12 h-10 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-primary border border-pv-border rounded-lg flex items-center justify-center transition-colors active:translate-y-px"
           aria-label="Move Up"
         >
-          <ArrowUp className="w-5 h-5" />
+          <ArrowUp className="w-4 h-4" />
         </button>
-        <div className="flex gap-4">
+        <div className="flex gap-2">
           <button
             onClick={() => movePlayer(0, -1)}
-            className="bg-pv-surface-primary hover:bg-cyan-600 text-white p-3.5 rounded-xl border border-pv-border-strong shadow-md active:scale-95 transition"
+            className="w-12 h-10 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-primary border border-pv-border rounded-lg flex items-center justify-center transition-colors active:translate-y-px"
             aria-label="Move Left"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => movePlayer(1, 0)}
-            className="bg-pv-surface-primary hover:bg-cyan-600 text-white p-3.5 rounded-xl border border-pv-border-strong shadow-md active:scale-95 transition"
+            className="w-12 h-10 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-primary border border-pv-border rounded-lg flex items-center justify-center transition-colors active:translate-y-px"
             aria-label="Move Down"
           >
-            <ArrowDown className="w-5 h-5" />
+            <ArrowDown className="w-4 h-4" />
           </button>
           <button
             onClick={() => movePlayer(0, 1)}
-            className="bg-pv-surface-primary hover:bg-cyan-600 text-white p-3.5 rounded-xl border border-pv-border-strong shadow-md active:scale-95 transition"
+            className="w-12 h-10 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-primary border border-pv-border rounded-lg flex items-center justify-center transition-colors active:translate-y-px"
             aria-label="Move Right"
           >
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
-        <p className="text-[10px] text-pv-text-muted mt-1">Use Arrow Keys or WASD to navigate</p>
+        <p className="text-[11px] text-pv-text-muted mt-1">Use arrow keys or WASD to navigate</p>
       </div>
 
-      {/* Hint & Reset */}
-      <div className="flex items-center gap-3 w-full">
+      {/* Actions */}
+      <div className="flex items-center gap-2.5 w-full">
         <button
           onClick={handleHint}
           disabled={hintsLeft <= 0 || hintActive}
-          className="flex-1 bg-pv-dragon-fruit/20 hover:bg-pv-dragon-fruit/30 text-pv-dragon-fruit-light border border-pv-dragon-fruit/40 py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-40"
+          className="flex-1 h-9 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <Sparkles className="w-4 h-4" /> Hint ({hintsLeft})
+          <Lightbulb className="w-3.5 h-3.5" /> Hint ({hintsLeft})
         </button>
         <button
           onClick={initMaze}
-          className="p-2.5 bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-secondary border border-pv-border-strong rounded-xl transition"
+          className="h-9 px-3 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
           title="Restart Maze"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-3.5 h-3.5" /> Reset
         </button>
       </div>
     </div>

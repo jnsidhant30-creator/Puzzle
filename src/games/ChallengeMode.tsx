@@ -1,8 +1,127 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Difficulty } from '../types';
 import { sound } from '../services/sound';
-import { Flame, Zap, Trophy } from 'lucide-react'; interface Props { difficulty: Difficulty; onComplete: (score: number, timeSeconds: number, won: boolean) => void; useHint: () => boolean; hintsLeft: number;
-} export const ChallengeMode: React.FC<Props> = ({ onComplete }) => { const [timeLeft, setTimeLeft] = useState(30); /* 30 second time attack */
- const [streak, setStreak] = useState(0); const [score, setScore] = useState(0); const [currentMath, setCurrentMath] = useState({ n1: 0, n2: 0, op: '+', ans: 0, opts: [0] }); useEffect(() => { generateMiniTask(); const interval = setInterval(() => { setTimeLeft(t => { if (t <= 1) { clearInterval(interval); sound.playSuccess(); onComplete(score, 30, true); return 0; } return t - 1; }); }, 1000); return () => clearInterval(interval); }, []); const generateMiniTask = () => { const n1 = Math.floor(Math.random() * 20) + 1; const n2 = Math.floor(Math.random() * 20) + 1; const op = Math.random() > 0.5 ? '+' : '-'; const ans = op === '+' ? n1 + n2 : n1 - n2; const optsSet = new Set<number>(); optsSet.add(ans); while (optsSet.size < 4) { const wrong = ans + (Math.floor(Math.random() * 6) + 1) * (Math.random() > 0.5 ? 1 : -1); optsSet.add(wrong); } setCurrentMath({ n1, n2, op, ans, opts: Array.from(optsSet).sort(() => Math.random() - 0.5) }); }; const handlePickAnswer = (val: number) => { if (val === currentMath.ans) { sound.playSuccess(); const newStreak = streak + 1; const points = 100 * newStreak; setScore(s => s + points); setStreak(newStreak); setTimeLeft(t => Math.min(45, t + 2)); /* Bonus time! generateMiniTask(); */
- } else { sound.playError(); setStreak(0); generateMiniTask(); } }; return ( <div className="flex flex-col items-center justify-center p-4 max-w-xl mx-auto w-full"> {/* Time Attack Header */} <div className="flex items-center justify-between w-full mb-6 bg-pv-surface-secondary p-4 rounded-xl border border-red-500/40 shadow-sm"> <div className="text-center"> <p className="text-xs text-red-300 font-semibold uppercase flex items-center gap-1"> <Flame className="w-4 h-4 text-pv-dragon-fruit" /> Streak </p> <p className="text-2xl font-black text-pv-dragon-fruit-light">{streak}x</p> </div> <div className="text-center"> <p className="text-xs text-red-300 font-semibold uppercase">Time Left</p> <p className={`text-3xl font-black ${timeLeft <= 10 ? 'text-rose-500 animate-ping' : 'text-cyan-400'}`}> {timeLeft}s </p> </div> <div className="text-center"> <p className="text-xs text-red-300 font-semibold uppercase">Score</p> <p className="text-2xl font-black text-emerald-400">{score}</p> </div> </div> {/* Mini Question */} <div className="w-full bg-pv-bg-secondary/90 border-2 border-rose-500/40 rounded-2xl p-8 mb-6 shadow-sm flex flex-col items-center"> <p className="text-xs font-semibold text-rose-300 uppercase tracking-widest mb-4">Rapid Fire Math Frenzy!</p> <div className="text-5xl font-black text-white my-6"> {currentMath.n1} {currentMath.op} {currentMath.n2} = ? </div> </div> {/* Answer Buttons */} <div className="grid grid-cols-2 gap-4 w-full"> {currentMath.opts.map((opt, idx) => ( <button key={idx} onClick={() => handlePickAnswer(opt)} className="p-5 bg-pv-surface-primary hover:bg-rose-600 text-white font-black text-3xl rounded-xl border-2 border-pv-border-strong hover:border-rose-400 transition-all shadow-md active:scale-95" > {opt} </button> ))} </div> </div> );
+import { GameHudBar } from '../components/ui/GameHudBar';
+
+interface Props {
+  difficulty: Difficulty;
+  onComplete: (score: number, timeSeconds: number, won: boolean) => void;
+  useHint: () => boolean;
+  hintsLeft: number;
+  isPaused?: boolean;
+}
+
+export const ChallengeMode: React.FC<Props> = ({ onComplete }) => {
+  const [timeLeft, setTimeLeft] = useState(30);
+  const [streak, setStreak] = useState(0);
+  const [score, setScore] = useState(0);
+  const [isFinished, setIsFinished] = useState(false);
+  const scoreRef = useRef(0);
+  const finishedRef = useRef(false);
+  const deadlineRef = useRef<number>(Date.now() + 30000);
+  const [currentMath, setCurrentMath] = useState({ n1: 0, n2: 0, op: '+', ans: 0, opts: [0] });
+
+  useEffect(() => {
+    generateMiniTask();
+    deadlineRef.current = Date.now() + 30000;
+
+    const syncCountdown = () => {
+      if (finishedRef.current) return;
+      const remaining = Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (remaining <= 0) {
+        finishedRef.current = true;
+        setIsFinished(true);
+        sound.playSuccess();
+        onComplete(scoreRef.current, 30, true);
+      }
+    };
+
+    const interval = setInterval(syncCountdown, 250);
+    const handleVisibility = () => {
+      if (!document.hidden) syncCountdown();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
+  const generateMiniTask = () => {
+    const n1 = Math.floor(Math.random() * 20) + 1;
+    const n2 = Math.floor(Math.random() * 20) + 1;
+    const op = Math.random() > 0.5 ? '+' : '-';
+    const ans = op === '+' ? n1 + n2 : n1 - n2;
+    const optsSet = new Set<number>();
+    optsSet.add(ans);
+    while (optsSet.size < 4) {
+      const wrong = ans + (Math.floor(Math.random() * 6) + 1) * (Math.random() > 0.5 ? 1 : -1);
+      optsSet.add(wrong);
+    }
+    setCurrentMath({
+      n1,
+      n2,
+      op,
+      ans,
+      opts: Array.from(optsSet).sort(() => Math.random() - 0.5),
+    });
+  };
+
+  const handlePickAnswer = (val: number) => {
+    if (finishedRef.current) return;
+    if (val === currentMath.ans) {
+      sound.playSuccess();
+      const newStreak = streak + 1;
+      const points = 100 * newStreak;
+      scoreRef.current += points;
+      setScore(scoreRef.current);
+      setStreak(newStreak);
+      const now = Date.now();
+      const cappedEnd = Math.min(now + 45000, deadlineRef.current + 2000);
+      deadlineRef.current = cappedEnd;
+      setTimeLeft(Math.max(1, Math.ceil((cappedEnd - now) / 1000)));
+      generateMiniTask();
+    } else {
+      sound.playError();
+      setStreak(0);
+      generateMiniTask();
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+      <GameHudBar
+        items={[
+          { label: 'Streak', value: `${streak}x`, tone: streak >= 3 ? 'accent' : 'default' },
+          { label: 'Time Left', value: `${timeLeft}s`, tone: timeLeft <= 5 ? 'warning' : 'default' },
+          { label: 'Score', value: score, tone: 'success' },
+        ]}
+      />
+
+      {/* Equation Card */}
+      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-6 sm:p-8 mb-5 flex flex-col items-center">
+        <p className="text-xs uppercase tracking-wider text-[#9F97AB] font-medium mb-4">
+          Solve Rapid Equation
+        </p>
+        <div className="text-4xl sm:text-5xl font-semibold text-[#F5F3F7] font-tabular tracking-tight my-2">
+          {currentMath.n1} {currentMath.op} {currentMath.n2} = ?
+        </div>
+      </div>
+
+      {/* Answer Buttons */}
+      <div className="grid grid-cols-2 gap-3 w-full">
+        {currentMath.opts.map((opt, idx) => (
+          <button
+            key={idx}
+            disabled={isFinished}
+            onClick={() => handlePickAnswer(opt)}
+            className="h-16 bg-[#24202C] hover:bg-[#2B2533] text-[#F5F3F7] font-semibold text-2xl font-tabular rounded-xl border border-[#342D3D] hover:border-[#FF4696] transition-colors pv-keycap select-none disabled:opacity-50 cursor-pointer"
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 };

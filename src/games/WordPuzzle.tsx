@@ -1,7 +1,252 @@
 import React, { useState, useEffect } from 'react';
 import { Difficulty } from '../types';
 import { sound } from '../services/sound';
-import { HelpCircle, RefreshCw, Sparkles, Check, Delete } from 'lucide-react'; interface Props { difficulty: Difficulty; onComplete: (score: number, timeSeconds: number, won: boolean) => void; useHint: () => boolean; hintsLeft: number;
-} const WORD_BANK = { easy: ['BRAIN', 'PUZZLE', 'SMART', 'LOGIC', 'MATCH', 'POWER', 'THINK', 'SOLVE', 'LEVEL', 'SPEED'], medium: ['CONCEPT', 'MASTERY', 'CHALLENGE', 'PATTERN', 'SEQUENCE', 'DYNAMIC', 'STRATEGY', 'CREATIVE'], hard: ['ALGORITHM', 'CYBERSPACE', 'EXCELLENCE', 'HYPOTHESIS', 'INTELLIGENCE', 'MULTIVERSE', 'PHENOMENON']
-}; export const WordPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft }) => { const [targetWord, setTargetWord] = useState(''); const [scrambled, setScrambled] = useState<string[]>([]); const [userGuess, setUserGuess] = useState<string[]>([]); const [usedIndices, setUsedIndices] = useState<number[]>([]); const [score, setScore] = useState(0); const [timer, setTimer] = useState(0); const [round, setCurrentRound] = useState(1); const totalRounds = 3; const [hintMsg, setHintMessage] = useState<string | null>(null); useEffect(() => { initRound(); const interval = setInterval(() => setTimer(t => t + 1), 1000); return () => clearInterval(interval); }, [round, difficulty]); const initRound = () => { setUserGuess([]); setUsedIndices([]); setHintMessage(null); const pool = WORD_BANK[difficulty]; const word = pool[Math.floor(Math.random() * pool.length)]; setTargetWord(word); let letters = word.split(''); while (letters.join('') === word) { letters = letters.sort(() => Math.random() - 0.5); } setScrambled(letters); }; const handlePickLetter = (char: string, index: number) => { if (usedIndices.includes(index)) return; sound.playClick(); setUserGuess(prev => [...prev, char]); setUsedIndices(prev => [...prev, index]); }; const handleBackspace = () => { if (userGuess.length === 0) return; sound.playClick(); const newGuess = [...userGuess]; newGuess.pop(); setUserGuess(newGuess); const newIndices = [...usedIndices]; newIndices.pop(); setUsedIndices(newIndices); }; const handleClear = () => { sound.playClick(); setUserGuess([]); setUsedIndices([]); }; const handleSubmit = () => { const guessStr = userGuess.join(''); if (guessStr === targetWord) { sound.playSuccess(); const points = difficulty === 'easy' ? 120 : difficulty === 'medium' ? 220 : 400; const newScore = score + points; setScore(newScore); setTimeout(() => { if (round < totalRounds) { setCurrentRound(r => r + 1); } else { onComplete(newScore + Math.max(0, 300 - timer * 4), timer, true); } }, 800); } else { sound.playError(); handleClear(); } }; const handleHint = () => { if (hintsLeft <= 0 || userGuess.length >= targetWord.length) return; if (useHint()) { sound.playClick(); const nextChar = targetWord[userGuess.length]; setHintMessage(`Next letter is: "${nextChar}"`); } }; return ( <div className="flex flex-col items-center justify-center p-4 max-w-xl mx-auto w-full"> {/* Top Bar */} <div className="flex items-center justify-between w-full mb-6 bg-pv-surface-primary/80 p-4 rounded-xl border border-pv-border-strong shadow-sm"> <div className="text-center"> <p className="text-xs text-pv-text-secondary font-semibold uppercase">Round</p> <p className="text-xl font-bold text-teal-400">{round} / {totalRounds}</p> </div> <div className="text-center"> <p className="text-xs text-pv-text-secondary font-semibold uppercase">Timer</p> <p className="text-xl font-bold text-cyan-400">{timer}s</p> </div> <div className="text-center"> <p className="text-xs text-pv-text-secondary font-semibold uppercase">Score</p> <p className="text-xl font-bold text-emerald-400">{score}</p> </div> </div> {/* Target Word Boxes */} <div className="w-full bg-pv-bg-secondary/90 border-2 border-teal-500/30 rounded-2xl p-8 mb-6 shadow-sm flex flex-col items-center"> <p className="text-sm font-medium text-teal-300 uppercase tracking-widest mb-6">Unscramble The Word</p> <div className="flex flex-wrap items-center justify-center gap-2 mb-4"> {Array.from({ length: targetWord.length }).map((_, idx) => { const char = userGuess[idx] || ''; return ( <div key={idx} className={`w-12 h-14 sm:w-14 sm:h-16 rounded-xl border-2 flex items-center justify-center text-2xl font-black uppercase transition-all shadow-inner ${ char ? 'bg-teal-500/20 text-teal-300 border-teal-400 shadow-teal-500/20' : 'bg-pv-surface-primary/80 text-pv-text-disabled border-pv-border-strong' }`} > {char} </div> ); })} </div> {hintMsg && ( <div className="mt-2 bg-teal-500/20 border border-teal-500/40 text-teal-200 px-4 py-2 rounded-lg text-sm flex items-center gap-2"> <Sparkles className="w-4 h-4 text-teal-300" /> {hintMsg} </div> )} </div> {/* Scrambled Letter Palette */} <div className="flex flex-wrap justify-center gap-3 w-full mb-6"> {scrambled.map((char, idx) => { const isUsed = usedIndices.includes(idx); return ( <button key={idx} onClick={() => handlePickLetter(char, idx)} disabled={isUsed} className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 text-2xl font-bold transition-all shadow-md active:scale-95 ${ isUsed ? 'bg-pv-surface-primary/40 text-pv-text-disabled border-pv-border-violet opacity-30 cursor-not-allowed' : 'bg-pv-surface-primary hover:bg-teal-600 text-white border-pv-border-strong hover:border-teal-400' }`} > {char} </button> ); })} </div> {/* Control Buttons */} <div className="grid grid-cols-4 gap-3 w-full"> <button onClick={handleClear} disabled={userGuess.length === 0} className="bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-secondary border border-pv-border-strong py-3 rounded-xl font-semibold text-sm transition disabled:opacity-40" > Clear </button> <button onClick={handleBackspace} disabled={userGuess.length === 0} className="bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-secondary border border-pv-border-strong py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1 transition disabled:opacity-40" > <Delete className="w-4 h-4" /> Del </button> <button onClick={handleHint} disabled={hintsLeft <= 0} className="bg-pv-dragon-fruit/30 hover:bg-pv-dragon-fruit/50 text-pv-dragon-fruit-light border border-pv-border-strong py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-1 transition disabled:opacity-40" > <HelpCircle className="w-4 h-4" /> ({hintsLeft}) </button> <button onClick={handleSubmit} disabled={userGuess.length !== targetWord.length} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl border border-emerald-400 flex items-center justify-center gap-1 transition shadow-sm shadow-emerald-600/30 disabled:opacity-40" > <Check className="w-5 h-5" /> Submit </button> </div> </div> );
+import { Lightbulb, Check, Delete, RefreshCw } from 'lucide-react';
+import { GameHudBar } from '../components/ui/GameHudBar';
+import { useGameTimer } from '../hooks/useGameTimer';
+
+interface Props {
+  difficulty: Difficulty;
+  onComplete: (score: number, timeSeconds: number, won: boolean) => void;
+  useHint: () => boolean;
+  hintsLeft: number;
+  isPaused?: boolean;
+}
+
+const WORD_BANK = {
+  easy: ['BRAIN', 'PUZZLE', 'SMART', 'LOGIC', 'MATCH', 'POWER', 'THINK', 'SOLVE', 'LEVEL', 'SPEED'],
+  medium: ['CONCEPT', 'MASTERY', 'CHALLENGE', 'PATTERN', 'SEQUENCE', 'DYNAMIC', 'STRATEGY', 'CREATIVE'],
+  hard: ['ALGORITHM', 'CYBERSPACE', 'EXCELLENCE', 'HYPOTHESIS', 'INTELLIGENCE', 'MULTIVERSE', 'PHENOMENON']
+};
+
+export const WordPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft, isPaused = false }) => {
+  const [targetWord, setTargetWord] = useState('');
+  const [scrambled, setScrambled] = useState<string[]>([]);
+  const [userGuess, setUserGuess] = useState<string[]>([]);
+  const [usedIndices, setUsedIndices] = useState<number[]>([]);
+  const [score, setScore] = useState(0);
+  const [round, setCurrentRound] = useState(1);
+  const totalRounds = 3;
+  const [hintMsg, setHintMessage] = useState<string | null>(null);
+  const [isRoundLocked, setIsRoundLocked] = useState(false);
+  const [timer] = useGameTimer(isPaused, round === totalRounds && isRoundLocked, [difficulty]);
+
+  useEffect(() => {
+    initRound();
+  }, [round, difficulty]);
+
+  const initRound = () => {
+    setUserGuess([]);
+    setUsedIndices([]);
+    setHintMessage(null);
+    setIsRoundLocked(false);
+
+    const pool = WORD_BANK[difficulty];
+    const word = pool[Math.floor(Math.random() * pool.length)];
+    setTargetWord(word);
+
+    let letters = word.split('');
+    while (letters.join('') === word && letters.length > 1) {
+      letters = letters.sort(() => Math.random() - 0.5);
+    }
+    setScrambled(letters);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        !target ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+        target.isContentEditable ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey ||
+        document.querySelector('[role="dialog"][aria-modal="true"]') ||
+        isRoundLocked ||
+        isPaused
+      ) {
+        return;
+      }
+
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        handleBackspace();
+        return;
+      }
+
+      if (e.key === 'Enter' && userGuess.length === targetWord.length) {
+        e.preventDefault();
+        handleSubmit();
+        return;
+      }
+
+      const upper = e.key.toUpperCase();
+      if (/^[A-Z]$/.test(upper)) {
+        const matchIdx = scrambled.findIndex((ch, idx) => ch === upper && !usedIndices.includes(idx));
+        if (matchIdx !== -1) {
+          e.preventDefault();
+          handlePickLetter(upper, matchIdx);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [scrambled, usedIndices, userGuess, targetWord, isRoundLocked, isPaused]);
+
+  const handlePickLetter = (char: string, index: number) => {
+    if (isRoundLocked || isPaused || usedIndices.includes(index)) return;
+    sound.playClick();
+    setUserGuess(prev => [...prev, char]);
+    setUsedIndices(prev => [...prev, index]);
+  };
+
+  const handleBackspace = () => {
+    if (isRoundLocked || userGuess.length === 0) return;
+    sound.playClick();
+    const newGuess = [...userGuess];
+    newGuess.pop();
+    setUserGuess(newGuess);
+
+    const newIndices = [...usedIndices];
+    newIndices.pop();
+    setUsedIndices(newIndices);
+  };
+
+  const handleClear = () => {
+    if (isRoundLocked) return;
+    sound.playClick();
+    setUserGuess([]);
+    setUsedIndices([]);
+  };
+
+  const handleSubmit = () => {
+    if (isRoundLocked) return;
+    const guessStr = userGuess.join('');
+    if (guessStr === targetWord) {
+      setIsRoundLocked(true);
+      sound.playSuccess();
+      const points = difficulty === 'easy' ? 120 : difficulty === 'medium' ? 220 : 400;
+      const newScore = score + points;
+      setScore(newScore);
+
+      setTimeout(() => {
+        if (round < totalRounds) {
+          setCurrentRound(r => r + 1);
+        } else {
+          onComplete(newScore + Math.max(0, 300 - timer * 4), timer, true);
+        }
+      }, 800);
+    } else {
+      sound.playError();
+      handleClear();
+    }
+  };
+
+  const handleHint = () => {
+    if (hintsLeft <= 0 || userGuess.length >= targetWord.length) return;
+    if (useHint()) {
+      sound.playClick();
+      const nextChar = targetWord[userGuess.length];
+      setHintMessage(`Next letter: "${nextChar}"`);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+      <GameHudBar
+        items={[
+          { label: 'Round', value: `${round} / ${totalRounds}`, tone: 'accent' },
+          { label: 'Timer', value: `${timer}s` },
+          { label: 'Score', value: score, tone: 'success' },
+        ]}
+      />
+
+      {/* Target Word Slots */}
+      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-5 sm:p-6 mb-5 flex flex-col items-center">
+        <p className="text-xs text-pv-text-secondary mb-4 text-center">
+          Unscramble the letters to form the target word.
+        </p>
+
+        <div className="flex flex-wrap items-center justify-center gap-1.5 mb-2">
+          {Array.from({ length: targetWord.length }).map((_, idx) => {
+            const char = userGuess[idx] || '';
+            return (
+              <div
+                key={idx}
+                className={`w-10 h-12 sm:w-11 sm:h-13 rounded-md border flex items-center justify-center text-xl font-mono font-semibold uppercase select-none transition-colors ${
+                  char
+                    ? 'bg-pv-surface-secondary border-pv-dragon-fruit text-pv-text-primary'
+                    : 'bg-pv-surface-secondary/40 border-pv-border text-transparent'
+                }`}
+              >
+                {char || '·'}
+              </div>
+            );
+          })}
+        </div>
+
+        {hintMsg && (
+          <div className="mt-3 p-2 bg-pv-surface-secondary border border-pv-dragon-fruit/40 text-pv-dragon-fruit-light rounded-md text-xs flex items-center gap-1.5">
+            <Lightbulb className="w-3.5 h-3.5 text-pv-dragon-fruit" />
+            <span>{hintMsg}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Scrambled Letter Palette */}
+      <div className="flex flex-wrap justify-center gap-2 w-full mb-5">
+        {scrambled.map((char, idx) => {
+          const isUsed = usedIndices.includes(idx);
+          return (
+            <button
+              key={idx}
+              onClick={() => handlePickLetter(char, idx)}
+              disabled={isUsed}
+              className={`w-11 h-11 sm:w-12 sm:h-12 rounded-lg border font-mono text-lg font-semibold transition-colors select-none active:translate-y-px ${
+                isUsed
+                  ? 'bg-pv-surface-primary border-pv-border text-pv-text-muted opacity-30 cursor-not-allowed'
+                  : 'bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-primary border-pv-border hover:border-pv-border-strong'
+              }`}
+            >
+              {char}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Control Actions */}
+      <div className="grid grid-cols-4 gap-2 w-full">
+        <button
+          onClick={handleClear}
+          disabled={userGuess.length === 0}
+          className="h-9 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium transition-colors disabled:opacity-40"
+        >
+          Clear
+        </button>
+        <button
+          onClick={handleBackspace}
+          disabled={userGuess.length === 0}
+          className="h-9 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-40"
+        >
+          <Delete className="w-3.5 h-3.5" /> Del
+        </button>
+        <button
+          onClick={handleHint}
+          disabled={hintsLeft <= 0}
+          className="h-9 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-40"
+        >
+          <Lightbulb className="w-3.5 h-3.5" /> Hint ({hintsLeft})
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={userGuess.length !== targetWord.length || isRoundLocked}
+          className="h-9 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs rounded-lg flex items-center justify-center gap-1 transition-colors disabled:opacity-40"
+        >
+          <Check className="w-3.5 h-3.5" /> Submit
+        </button>
+      </div>
+    </div>
+  );
 };

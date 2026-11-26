@@ -30,6 +30,14 @@
       "collectionGroup": "leaderboards",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "puzzleType", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "leaderboards",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "period", "order": "ASCENDING" },
         { "fieldPath": "periodKey", "order": "ASCENDING" },
         { "fieldPath": "score", "order": "DESCENDING" },

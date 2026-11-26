@@ -1,12 +1,453 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
-import { fetchUserChallenges, createChallenge2, updateChallenge2Status, rematchChallenge, getChallenge2ById
+import {
+  fetchUserChallenges,
+  createChallenge2,
+  rematchChallenge,
+  getChallenge2ById,
 } from '../services/firebase';
-import { ChallengeItem, ChallengeStatus, PuzzleType, Difficulty } from '../types';
+import { ChallengeItem, PuzzleType, Difficulty } from '../types';
 import { PUZZLE_MODES } from '../data/puzzles';
 import { toast } from '../services/toast';
-import { Swords, PlusCircle, Copy, Check, Play, RotateCcw, Trophy, Clock, Sparkles, Users, Search, ExternalLink, Shield, XCircle, Award, Zap
-} from 'lucide-react'; export const ChallengesPage: React.FC = () => { const { user, playChallengeMatch, setActiveTab } = useStore(); const [challenges, setChallenges] = useState<ChallengeItem[]>([]); const [loading, setLoading] = useState(true); const [filterTab, setFilterTab] = useState<'ALL' | 'INCOMING' | 'SENT' | 'ACTIVE' | 'COMPLETED' | 'EXPIRED'>('ALL'); /* Create Challenge Modal */
- const [showCreateModal, setShowCreateModal] = useState(false); const [selectedPuzzle, setSelectedPuzzle] = useState<PuzzleType>('number'); const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('medium'); const [targetScore, setTargetScore] = useState<number>(500); const [targetTime, setTargetTime] = useState<number>(60); const [opponentName, setOpponentName] = useState<string>(''); const [createdChallengeId, setCreatedChallengeId] = useState<string | null>(null); /* Direct Code Join */
- const [joinCodeInput, setJoinCodeInput] = useState<string>(''); const [joining, setJoining] = useState(false); const [copiedId, setCopiedId] = useState<string | null>(null); useEffect(() => { loadChallenges(); }, [user]); const loadChallenges = async () => { if (!user) return; setLoading(true); try { const data = await fetchUserChallenges(user.uid); setChallenges(data); } catch (err) { console.error('Failed to load challenges:', err); } finally { setLoading(false); } }; const handleCreateChallenge = async () => { if (!user) return; const seed = Math.floor(Math.random() * 100000); const id = await createChallenge2({ creatorUid: user.uid, creatorName: user.displayName, creatorAvatar: user.avatarUrl, opponentName: opponentName.trim() ? opponentName.trim() : undefined, puzzleType: selectedPuzzle, difficulty: selectedDifficulty, targetScore, targetTime, seed, status: 'PENDING', createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString() }); if (id) { setCreatedChallengeId(id); loadChallenges(); } }; const handleJoinByCode = async () => { if (!joinCodeInput.trim() || !user) return; setJoining(true); try { const id = joinCodeInput.trim().toLowerCase(); const challenge = await getChallenge2ById(id); if (challenge) { if (challenge.creatorUid === user.uid) { toast.info("This is your own duel room! Share the link with an opponent."); } else { toast.success("Joined challenge duel! Launching match..."); playChallengeMatch(challenge.id, challenge.puzzleType, challenge.difficulty, challenge.seed); } } else { toast.error("Challenge room not found. Check the room ID and try again."); } } catch (err) { console.error(err); toast.error("Invalid code or connection issue."); } finally { setJoining(false); } }; const handleCopyLink = (id: string) => { const link = `${window.location.origin}/#challenge=${id}`; navigator.clipboard.writeText(link); setCopiedId(id); setTimeout(() => setCopiedId(null), 2000); }; const handleRematch = async (ch: ChallengeItem) => { const newId = await rematchChallenge(ch); if (newId) { loadChallenges(); playChallengeMatch(newId, ch.puzzleType, ch.difficulty, ch.seed); } }; const filteredChallenges = challenges.filter((ch) => { if (!user) return true; const isCreator = ch.creatorUid === user.uid; const isOpponent = ch.opponentUid === user.uid; if (filterTab === 'INCOMING') return isOpponent && ch.status === 'PENDING'; if (filterTab === 'SENT') return isCreator && ch.status === 'PENDING'; if (filterTab === 'ACTIVE') return ch.status === 'IN_PROGRESS' || ch.status === 'ACCEPTED'; if (filterTab === 'COMPLETED') return ch.status === 'COMPLETED'; if (filterTab === 'EXPIRED') return ch.status === 'EXPIRED' || ch.status === 'CANCELLED'; return true; }); return ( <div className="space-y-6 animate-fade-in"> {/* Page Header */} <div className="bg-pv-surface-primary p-6 rounded-3xl border border-pv-border-violet flex flex-col md:flex-row items-start md:items-center justify-between gap-4"> <div> <div className="flex items-center gap-3 mb-1"> <div className="w-10 h-10 rounded-2xl bg-pv-surface-secondary flex items-center justify-center text-white shadow-sm shadow-indigo-500/20"> <Swords className="w-5 h-5" /> </div> <h1 className="text-2xl sm:text-3xl font-black text-white tracking-wide"> Player Challenges 2.0 </h1> </div> <p className="text-xs text-pv-text-secondary"> Deterministic puzzle duels! Challenge friends with seeded boards &amp; compete for rank rewards. </p> </div> <button onClick={() => { setShowCreateModal(true); setCreatedChallengeId(null); }} className="bg-pv-surface-secondary hover:from-amber-400 hover:to-orange-400 text-pv-bg-primary font-black px-5 py-3 rounded-2xl shadow-sm shadow-sm text-xs flex items-center gap-2 uppercase tracking-wider transition shrink-0" > <PlusCircle className="w-4 h-4" /> Create Challenge Duel </button> </div> {/* Code Join Quick-Bar */} <div className="bg-pv-bg-secondary/60 border border-pv-border-violet p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3"> <div className="flex items-center gap-2 text-xs font-bold text-pv-text-secondary"> <Search className="w-4 h-4 text-pv-dragon-fruit-light" /> <span>Have a Challenge Room ID?</span> </div> <div className="flex items-center gap-2 w-full sm:w-auto"> <input type="text" value={joinCodeInput} onChange={(e) => setJoinCodeInput(e.target.value)} placeholder="Enter challenge room ID..." className="bg-pv-bg-primary border border-pv-border-violet rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-full sm:w-64 font-mono" /> <button onClick={handleJoinByCode} disabled={joining || !joinCodeInput.trim()} className="bg-pv-dragon-fruit hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition disabled:opacity-50 shrink-0" > {joining ? 'Joining...' : 'Enter Match'} </button> </div> </div> {/* Filter Segmented Control */} <div className="flex items-center gap-1.5 overflow-x-auto pb-1"> {(['ALL', 'INCOMING', 'SENT', 'ACTIVE', 'COMPLETED', 'EXPIRED'] as const).map((tab) => ( <button key={tab} onClick={() => setFilterTab(tab)} className={`px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${ filterTab === tab ? 'bg-gradient-primary-btn/20 text-pv-dragon-fruit-light border border-pv-border-strong shadow-sm' : 'bg-pv-bg-secondary/60 text-pv-text-secondary hover:text-white border border-pv-border-violet' }`} > {tab} </button> ))} </div> {/* Challenges List / Grid */} {loading ? ( <div className="py-16 text-center"> <div className="w-8 h-8 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" /> <p className="text-xs text-pv-text-secondary font-medium">Loading challenge duels...</p> </div> ) : filteredChallenges.length === 0 ? ( <div className="bg-pv-bg-secondary/60 border border-pv-border-violet rounded-3xl p-12 text-center space-y-4"> <div className="w-14 h-14 bg-pv-surface-primary rounded-2xl flex items-center justify-center text-pv-text-muted mx-auto"> <Swords className="w-7 h-7" /> </div> <div> <h3 className="text-lg font-bold text-white mb-1">No Duels Found</h3> <p className="text-xs text-pv-text-secondary max-w-sm mx-auto"> {filterTab === 'ALL' ? 'No challenges yet. Challenge a friend after completing a puzzle or create a room!' : `No ${filterTab.toLowerCase()} challenges at this time.`} </p> </div> <button onClick={() => setShowCreateModal(true)} className="bg-pv-dragon-fruit hover:bg-indigo-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2" > <PlusCircle className="w-4 h-4" /> Start First Challenge </button> </div> ) : ( <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> {filteredChallenges.map((ch) => { const puzzleInfo = PUZZLE_MODES.find((p) => p.id === ch.puzzleType); const isCreator = user?.uid === ch.creatorUid; const isWinner = user?.uid === ch.winnerUid; return ( <div key={ch.id} className="bg-pv-surface-primary border border-pv-border-violet hover:border-pv-border-strong rounded-2xl p-5 space-y-4 transition shadow-sm relative overflow-hidden" > {/* Header Status & Puzzle Info */} <div className="flex items-center justify-between gap-2 border-b border-pv-border-violet pb-3"> <div className="flex items-center gap-2.5"> <div className="w-8 h-8 rounded-xl bg-pv-surface-primary flex items-center justify-center text-pv-dragon-fruit-light text-sm font-black border border-pv-border-strong"> ⚡ </div> <div> <h4 className="text-sm font-black text-white">{puzzleInfo?.name || ch.puzzleType}</h4> <p className="text-[10px] text-pv-text-secondary uppercase tracking-widest font-bold"> {ch.difficulty} Mode • Seed #{ch.seed} </p> </div> </div> <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${ ch.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : ch.status === 'PENDING' ? 'bg-gradient-primary-btn/10 text-pv-dragon-fruit-light border-pv-border-strong' : 'bg-pv-surface-soft text-pv-dragon-fruit-light border-pv-border-violet' }`} > {ch.status} </span> </div> {/* Score & Matchup Comparison Grid */} <div className="grid grid-cols-2 gap-3 bg-pv-surface-primary p-3.5 rounded-xl border border-pv-border-violet text-xs"> {/* Challenger Side */} <div className="space-y-1 border-r border-pv-border-violet pr-2"> <p className="text-[10px] text-pv-text-secondary font-bold uppercase truncate"> {ch.creatorName} {isCreator && '(You)'} </p> <p className="font-mono text-sm font-black text-pv-dragon-fruit-light"> {ch.creatorScore !== undefined ? `${ch.creatorScore} PTS` : `Target: ${ch.targetScore}`} </p> <p className="text-[10px] text-pv-text-muted"> {ch.creatorTime ? `${ch.creatorTime}s` : `Target Time: ${ch.targetTime}s`} </p> </div> {/* Opponent Side */} <div className="space-y-1 pl-2"> <p className="text-[10px] text-pv-text-secondary font-bold uppercase truncate"> {ch.opponentName ? ch.opponentName : 'Open Opponent'} </p> <p className="font-mono text-sm font-black text-cyan-400"> {ch.opponentScore !== undefined ? `${ch.opponentScore} PTS` : 'Pending Match'} </p> <p className="text-[10px] text-pv-text-muted"> {ch.opponentTime ? `${ch.opponentTime}s` : 'Waiting score'} </p> </div> </div> {/* Winner Banner if completed */} {ch.status === 'COMPLETED' && ch.winnerName && ( <div className="bg-pv-surface-secondary border border-emerald-500/30 p-2.5 rounded-xl flex items-center justify-between text-xs"> <span className="text-emerald-300 font-bold flex items-center gap-1.5"> <Trophy className="w-4 h-4 text-pv-dragon-fruit-light" /> Winner: {ch.winnerName} </span> <span className="text-[10px] text-emerald-400 font-bold">+150 XP &amp; +75 Coins</span> </div> )} {/* Action Controls */} <div className="flex items-center gap-2 pt-1"> {ch.status !== 'COMPLETED' && ( <button onClick={() => playChallengeMatch(ch.id, ch.puzzleType, ch.difficulty, ch.seed)} className="flex-1 bg-pv-surface-secondary hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition shadow-md shadow-indigo-500/20" > <Play className="w-3.5 h-3.5 fill-white" /> Play Challenge </button> )} {ch.status === 'COMPLETED' && ( <button onClick={() => handleRematch(ch)} className="flex-1 bg-pv-surface-primary hover:bg-pv-surface-soft text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition border border-pv-border-strong" > <RotateCcw className="w-3.5 h-3.5 text-pv-dragon-fruit-light" /> Rematch </button> )} <button onClick={() => handleCopyLink(ch.id)} className="p-2.5 bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-secondary rounded-xl transition border border-pv-border-strong" title="Copy Share Link" > {copiedId === ch.id ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />} </button> </div> </div> ); })} </div> )} {/* Create Challenge Modal */} {showCreateModal && ( <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-pv-bg-primary/85 animate-fade-in"> <div className="bg-pv-bg-secondary border border-pv-border-violet rounded-3xl p-6 max-w-lg w-full space-y-5 shadow-sm relative"> <div className="flex items-center justify-between border-b border-pv-border-violet pb-3"> <h3 className="text-lg font-black text-white flex items-center gap-2"> <Swords className="w-5 h-5 text-pv-dragon-fruit-light" /> Create Custom Duel </h3> <button onClick={() => setShowCreateModal(false)} className="text-pv-text-secondary hover:text-white font-bold text-sm" > ✕ </button> </div> {createdChallengeId ? ( <div className="text-center py-6 space-y-4"> <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto border border-emerald-500/30"> <Check className="w-6 h-6" /> </div> <div> <h4 className="text-base font-bold text-white">Duel Room Created!</h4> <p className="text-xs text-pv-text-secondary mt-1"> Room ID: <span className="font-mono text-pv-dragon-fruit-light font-bold">{createdChallengeId}</span> </p> </div> <div className="bg-pv-bg-primary p-4 rounded-2xl border border-pv-border-violet flex items-center justify-between gap-3 text-xs font-mono text-pv-text-secondary"> <span className="truncate">{`${window.location.origin}/#challenge=${createdChallengeId}`}</span> <button onClick={() => handleCopyLink(createdChallengeId)} className="bg-gradient-primary-btn hover:bg-pv-dragon-fruit-light text-pv-bg-primary font-black px-3 py-1.5 rounded-xl text-xs transition shrink-0" > {copiedId === createdChallengeId ? 'Copied!' : 'Copy'} </button> </div> <button onClick={() => { const ch = challenges.find((c) => c.id === createdChallengeId); setShowCreateModal(false); if (ch) { playChallengeMatch(ch.id, ch.puzzleType, ch.difficulty, ch.seed); } }} className="w-full bg-pv-surface-secondary hover:from-emerald-400 hover:to-teal-400 text-pv-bg-primary font-black py-3 rounded-2xl text-xs uppercase tracking-wider transition" > Start Your Match Now </button> </div> ) : ( <div className="space-y-4 text-xs"> {/* Puzzle Type Selector */} <div> <label className="block text-pv-text-secondary font-bold mb-1.5">Puzzle Type</label> <select value={selectedPuzzle} onChange={(e) => setSelectedPuzzle(e.target.value as PuzzleType)} className="w-full bg-pv-bg-primary border border-pv-border-violet rounded-xl p-3 text-white font-bold focus:outline-none focus:border-pv-dragon-fruit" > {PUZZLE_MODES.map((p) => ( <option key={p.id} value={p.id}> {p.name} ({p.category}) </option> ))} </select> </div> {/* Difficulty Selector */} <div> <label className="block text-pv-text-secondary font-bold mb-1.5">Difficulty Mode</label> <div className="grid grid-cols-3 gap-2"> {(['easy', 'medium', 'hard'] as const).map((diff) => ( <button key={diff} type="button" onClick={() => setSelectedDifficulty(diff)} className={`py-2 rounded-xl font-bold uppercase text-[10px] tracking-wider transition ${ selectedDifficulty === diff ? 'bg-gradient-primary-btn text-pv-bg-primary shadow-md shadow-sm' : 'bg-pv-bg-primary text-pv-text-secondary border border-pv-border-violet hover:text-white' }`} > {diff} </button> ))} </div> </div> {/* Targets */} <div className="grid grid-cols-2 gap-3"> <div> <label className="block text-pv-text-secondary font-bold mb-1">Target Score</label> <input type="number" value={targetScore} onChange={(e) => setTargetScore(Number(e.target.value))} className="w-full bg-pv-bg-primary border border-pv-border-violet rounded-xl p-3 text-white font-mono font-bold focus:outline-none focus:border-pv-dragon-fruit" /> </div> <div> <label className="block text-pv-text-secondary font-bold mb-1">Target Time (Sec)</label> <input type="number" value={targetTime} onChange={(e) => setTargetTime(Number(e.target.value))} className="w-full bg-pv-bg-primary border border-pv-border-violet rounded-xl p-3 text-white font-mono font-bold focus:outline-none focus:border-pv-dragon-fruit" /> </div> </div> {/* Opponent Handle */} <div> <label className="block text-pv-text-secondary font-bold mb-1">Opponent Name (Optional)</label> <input type="text" value={opponentName} onChange={(e) => setOpponentName(e.target.value)} placeholder="Leave blank for open shareable link..." className="w-full bg-pv-bg-primary border border-pv-border-violet rounded-xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-pv-dragon-fruit" /> </div> <div className="pt-3 flex gap-2"> <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-secondary font-bold py-3 rounded-2xl transition" > Cancel </button> <button onClick={handleCreateChallenge} className="flex-1 bg-pv-surface-secondary hover:from-amber-400 hover:to-orange-400 text-pv-bg-primary font-black py-3 rounded-2xl uppercase tracking-wider transition shadow-sm shadow-sm" > Generate Room </button> </div> </div> )} </div> </div> )} </div> );
+import {
+  Swords,
+  Plus,
+  Copy,
+  Check,
+  Play,
+  RotateCcw,
+  Trophy,
+  Search,
+  X,
+} from 'lucide-react';
+import { PageHeader, Card } from '../components/ui/Card';
+
+export const ChallengesPage: React.FC = () => {
+  const { user, playChallengeMatch } = useStore();
+  const [challenges, setChallenges] = useState<ChallengeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterTab, setFilterTab] = useState<'ALL' | 'INCOMING' | 'SENT' | 'ACTIVE' | 'COMPLETED' | 'EXPIRED'>('ALL');
+
+  /* Create Challenge Modal */
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedPuzzle, setSelectedPuzzle] = useState<PuzzleType>('number');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('medium');
+  const [targetScore, setTargetScore] = useState<number>(500);
+  const [targetTime, setTargetTime] = useState<number>(60);
+  const [opponentName, setOpponentName] = useState<string>('');
+  const [createdChallengeId, setCreatedChallengeId] = useState<string | null>(null);
+
+  /* Direct Code Join */
+  const [joinCodeInput, setJoinCodeInput] = useState<string>('');
+  const [joining, setJoining] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadChallenges();
+  }, [user]);
+
+  const loadChallenges = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const data = await fetchUserChallenges(user.uid);
+      setChallenges(data);
+    } catch (err) {
+      console.error('Failed to load challenges:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateChallenge = async () => {
+    if (!user) return;
+    const seed = Math.floor(Math.random() * 100000);
+    const id = await createChallenge2({
+      creatorUid: user.uid,
+      creatorName: user.displayName,
+      creatorAvatar: user.avatarUrl,
+      opponentName: opponentName.trim() ? opponentName.trim() : undefined,
+      puzzleType: selectedPuzzle,
+      difficulty: selectedDifficulty,
+      targetScore,
+      targetTime,
+      seed,
+      status: 'PENDING',
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
+    });
+    if (id) {
+      setCreatedChallengeId(id);
+      loadChallenges();
+    }
+  };
+
+  const handleJoinByCode = async () => {
+    if (!joinCodeInput.trim() || !user) return;
+    setJoining(true);
+    try {
+      const id = joinCodeInput.trim().toLowerCase();
+      const challenge = await getChallenge2ById(id);
+      if (challenge) {
+        if (challenge.creatorUid === user.uid) {
+          toast.info('This is your own duel room. Share the link with an opponent.');
+        } else {
+          toast.success('Joined challenge room. Launching match...');
+          playChallengeMatch(challenge.id, challenge.puzzleType, challenge.difficulty, challenge.seed);
+        }
+      } else {
+        toast.error('Challenge room not found. Check the ID and try again.');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Invalid code or connection issue.');
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  const handleCopyLink = (id: string) => {
+    const link = `${window.location.origin}/challenges?id=${id}`;
+    navigator.clipboard.writeText(link);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleRematch = async (ch: ChallengeItem) => {
+    const newId = await rematchChallenge(ch);
+    if (newId) {
+      loadChallenges();
+      playChallengeMatch(newId, ch.puzzleType, ch.difficulty, ch.seed);
+    }
+  };
+
+  const filteredChallenges = challenges.filter((ch) => {
+    if (!user) return true;
+    const isCreator = ch.creatorUid === user.uid;
+    const isOpponent = ch.opponentUid === user.uid;
+    if (filterTab === 'INCOMING') return isOpponent && ch.status === 'PENDING';
+    if (filterTab === 'SENT') return isCreator && ch.status === 'PENDING';
+    if (filterTab === 'ACTIVE') return ch.status === 'IN_PROGRESS' || ch.status === 'ACCEPTED';
+    if (filterTab === 'COMPLETED') return ch.status === 'COMPLETED';
+    if (filterTab === 'EXPIRED') return ch.status === 'EXPIRED' || ch.status === 'CANCELLED';
+    return true;
+  });
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto animate-fade-in">
+      {/* Header */}
+      <PageHeader
+        title="Direct Challenges"
+        description="Compete in deterministic head-to-head puzzle rooms with identical board seeds."
+        action={
+          <button
+            onClick={() => {
+              setShowCreateModal(true);
+              setCreatedChallengeId(null);
+            }}
+            className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg flex items-center gap-1.5 transition-colors shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Create Challenge Room</span>
+          </button>
+        }
+      />
+
+      {/* Code Join Bar */}
+      <Card className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-medium text-pv-text-secondary">
+          <Search className="w-4 h-4 text-pv-dragon-fruit" />
+          <span>Have a challenge room ID?</span>
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <input
+            type="text"
+            value={joinCodeInput}
+            onChange={(e) => setJoinCodeInput(e.target.value)}
+            placeholder="Paste room ID..."
+            className="bg-pv-surface-secondary border border-pv-border rounded-lg px-3 h-8 text-xs text-pv-text-primary placeholder-pv-text-muted focus:outline-none focus:border-pv-dragon-fruit w-full sm:w-64 font-mono"
+          />
+          <button
+            onClick={handleJoinByCode}
+            disabled={joining || !joinCodeInput.trim()}
+            className="h-8 px-3.5 bg-pv-surface-soft hover:bg-pv-surface-highlight text-pv-text-primary border border-pv-border-strong rounded-lg text-xs font-medium transition-colors disabled:opacity-40 shrink-0"
+          >
+            {joining ? 'Connecting...' : 'Join Room'}
+          </button>
+        </div>
+      </Card>
+
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-pv-border">
+        {(['ALL', 'INCOMING', 'SENT', 'ACTIVE', 'COMPLETED', 'EXPIRED'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setFilterTab(tab)}
+            className={`px-3 h-7 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+              filterTab === tab
+                ? 'bg-pv-surface-soft text-pv-text-primary border border-pv-border-strong'
+                : 'text-pv-text-secondary hover:text-pv-text-primary hover:bg-pv-surface-primary'
+            }`}
+          >
+            {tab.charAt(0) + tab.slice(1).toLowerCase()}
+          </button>
+        ))}
+      </div>
+
+      {/* Challenges Grid */}
+      {loading ? (
+        <Card className="py-16 text-center">
+          <div className="w-6 h-6 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs text-pv-text-secondary font-medium">Loading challenge rooms...</p>
+        </Card>
+      ) : filteredChallenges.length === 0 ? (
+        <Card className="p-12 text-center space-y-3">
+          <div className="w-12 h-12 bg-pv-surface-secondary rounded-lg flex items-center justify-center text-pv-text-muted mx-auto border border-pv-border">
+            <Swords className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-semibold text-pv-text-primary mb-1">No challenges found</h3>
+          <p className="text-xs text-pv-text-secondary max-w-sm mx-auto">
+            {filterTab === 'ALL'
+              ? 'No active challenges at this time. Create a room to challenge another player.'
+              : `No ${filterTab.toLowerCase()} challenges found.`}
+          </p>
+          <div className="pt-2">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Create Challenge Room</span>
+            </button>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredChallenges.map((ch) => {
+            const puzzleInfo = PUZZLE_MODES.find((p) => p.id === ch.puzzleType);
+            const isCreator = user?.uid === ch.creatorUid;
+
+            return (
+              <Card key={ch.id} className="p-4 space-y-4">
+                <div className="flex items-center justify-between gap-2 border-b border-pv-border pb-3">
+                  <div>
+                    <h4 className="text-xs font-semibold text-pv-text-primary">
+                      {puzzleInfo?.name || ch.puzzleType}
+                    </h4>
+                    <p className="text-[11px] text-pv-text-muted capitalize font-tabular mt-0.5">
+                      {ch.difficulty} tier • Seed #{ch.seed}
+                    </p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-medium border border-pv-border bg-pv-surface-secondary text-pv-text-secondary uppercase">
+                    {ch.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 bg-pv-surface-secondary p-3 rounded-lg border border-pv-border text-xs">
+                  <div className="border-r border-pv-border pr-2">
+                    <p className="text-[10px] text-pv-text-muted font-medium uppercase truncate">
+                      {ch.creatorName} {isCreator && '(You)'}
+                    </p>
+                    <p className="font-semibold text-pv-text-primary font-tabular mt-0.5">
+                      {ch.creatorScore !== undefined ? `${ch.creatorScore} pts` : `Target: ${ch.targetScore}`}
+                    </p>
+                    <p className="text-[10px] text-pv-text-muted font-tabular">
+                      {ch.creatorTime ? `${ch.creatorTime}s` : `${ch.targetTime}s target`}
+                    </p>
+                  </div>
+
+                  <div className="pl-2">
+                    <p className="text-[10px] text-pv-text-muted font-medium uppercase truncate">
+                      {ch.opponentName ? ch.opponentName : 'Open opponent'}
+                    </p>
+                    <p className="font-semibold text-pv-dragon-fruit font-tabular mt-0.5">
+                      {ch.opponentScore !== undefined ? `${ch.opponentScore} pts` : 'Pending'}
+                    </p>
+                    <p className="text-[10px] text-pv-text-muted font-tabular">
+                      {ch.opponentTime ? `${ch.opponentTime}s` : 'Waiting for score'}
+                    </p>
+                  </div>
+                </div>
+
+                {ch.status === 'COMPLETED' && ch.winnerName && (
+                  <div className="bg-pv-surface-secondary border border-pv-border p-2.5 rounded-lg flex items-center justify-between text-xs">
+                    <span className="text-pv-text-primary font-medium flex items-center gap-1.5">
+                      <Trophy className="w-3.5 h-3.5 text-pv-dragon-fruit" /> Winner: {ch.winnerName}
+                    </span>
+                    <span className="text-[11px] text-emerald-400 font-medium font-tabular">
+                      +150 XP • +75 Coins
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 pt-1">
+                  {ch.status !== 'COMPLETED' ? (
+                    <button
+                      onClick={() => playChallengeMatch(ch.id, ch.puzzleType, ch.difficulty, ch.seed)}
+                      className="flex-1 h-8 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" /> Play Match
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleRematch(ch)}
+                      className="flex-1 h-8 bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" /> Rematch
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleCopyLink(ch.id)}
+                    className="h-8 px-2.5 bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-secondary hover:text-pv-text-primary rounded-lg border border-pv-border transition-colors"
+                    title="Copy share link"
+                  >
+                    {copiedId === ch.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 ">
+          <div className="bg-pv-surface-primary border border-pv-border rounded-xl p-6 max-w-md w-full space-y-4 shadow-lg relative">
+            <div className="flex items-center justify-between border-b border-pv-border pb-3">
+              <h3 className="text-base font-semibold text-pv-text-primary flex items-center gap-2">
+                <Swords className="w-4 h-4 text-pv-dragon-fruit" /> Create Challenge Room
+              </h3>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-1 rounded-md text-pv-text-muted hover:text-pv-text-primary hover:bg-pv-surface-secondary transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {createdChallengeId ? (
+              <div className="text-center py-4 space-y-4">
+                <div className="w-10 h-10 bg-emerald-950/40 text-emerald-400 rounded-lg flex items-center justify-center mx-auto border border-emerald-500/40">
+                  <Check className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-pv-text-primary">Challenge Room Created</h4>
+                  <p className="text-xs text-pv-text-secondary mt-0.5">
+                    Room ID: <span className="font-mono text-pv-dragon-fruit font-semibold">{createdChallengeId}</span>
+                  </p>
+                </div>
+                <div className="bg-pv-surface-secondary p-3 rounded-lg border border-pv-border flex items-center justify-between gap-2 text-xs font-mono text-pv-text-secondary">
+                  <span className="truncate">{`${window.location.origin}/challenges?id=${createdChallengeId}`}</span>
+                  <button
+                    onClick={() => handleCopyLink(createdChallengeId)}
+                    className="h-7 px-2.5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded transition-colors shrink-0"
+                  >
+                    {copiedId === createdChallengeId ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+                <button
+                  onClick={() => {
+                    const ch = challenges.find((c) => c.id === createdChallengeId);
+                    setShowCreateModal(false);
+                    if (ch) {
+                      playChallengeMatch(ch.id, ch.puzzleType, ch.difficulty, ch.seed);
+                    }
+                  }}
+                  className="w-full h-10 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg transition-colors"
+                >
+                  Start Your Match
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-pv-text-secondary font-medium mb-1">Puzzle Mode</label>
+                  <select
+                    value={selectedPuzzle}
+                    onChange={(e) => setSelectedPuzzle(e.target.value as PuzzleType)}
+                    className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2.5 text-xs text-pv-text-primary focus:outline-none focus:border-pv-dragon-fruit"
+                  >
+                    {PUZZLE_MODES.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.category})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-pv-text-secondary font-medium mb-1">Difficulty</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['easy', 'medium', 'hard'] as const).map((diff) => (
+                      <button
+                        key={diff}
+                        type="button"
+                        onClick={() => setSelectedDifficulty(diff)}
+                        className={`h-8 rounded-lg font-medium uppercase text-[11px] tracking-wider transition-colors border ${
+                          selectedDifficulty === diff
+                            ? 'bg-pv-surface-soft text-pv-text-primary border-pv-border-strong font-semibold'
+                            : 'bg-pv-surface-secondary text-pv-text-secondary border-pv-border hover:border-pv-border-strong hover:text-pv-text-primary'
+                        }`}
+                      >
+                        {diff}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-pv-text-secondary font-medium mb-1">Target Score</label>
+                    <input
+                      type="number"
+                      value={targetScore}
+                      onChange={(e) => setTargetScore(Number(e.target.value))}
+                      className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2 text-xs text-pv-text-primary font-mono focus:outline-none focus:border-pv-dragon-fruit"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-pv-text-secondary font-medium mb-1">Target Time (s)</label>
+                    <input
+                      type="number"
+                      value={targetTime}
+                      onChange={(e) => setTargetTime(Number(e.target.value))}
+                      className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2 text-xs text-pv-text-primary font-mono focus:outline-none focus:border-pv-dragon-fruit"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-pv-text-secondary font-medium mb-1">Opponent Name (optional)</label>
+                  <input
+                    type="text"
+                    value={opponentName}
+                    onChange={(e) => setOpponentName(e.target.value)}
+                    placeholder="Leave empty for public share link"
+                    className="w-full bg-pv-surface-secondary border border-pv-border rounded-lg p-2 text-xs text-pv-text-primary placeholder-pv-text-muted focus:outline-none focus:border-pv-dragon-fruit"
+                  />
+                </div>
+
+                <div className="pt-2 flex gap-2">
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    className="flex-1 h-9 bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-secondary hover:text-pv-text-primary font-medium rounded-lg text-xs border border-pv-border transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateChallenge}
+                    className="flex-1 h-9 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold font-medium rounded-lg text-xs transition-colors"
+                  >
+                    Create Room
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };

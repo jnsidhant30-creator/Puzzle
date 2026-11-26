@@ -1,28 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Difficulty } from '../types';
 import { sound } from '../services/sound';
-import { RefreshCw, Sparkles } from 'lucide-react';
+import { RefreshCw, Lightbulb } from 'lucide-react';
+import { GameHudBar } from '../components/ui/GameHudBar';
+import { useGameTimer } from '../hooks/useGameTimer';
 
 interface Props {
   difficulty: Difficulty;
   onComplete: (score: number, timeSeconds: number, won: boolean) => void;
   useHint: () => boolean;
   hintsLeft: number;
+  isPaused?: boolean;
 }
 
-export const NumberPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft }) => {
+export const NumberPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft, isPaused = false }) => {
   const size = difficulty === 'easy' ? 3 : 4;
   const maxNumber = size * size;
   const [targetPath, setTargetPath] = useState<number[]>([]);
   const [currentPath, setCurrentPath] = useState<number[]>([]);
-  const [timer, setTimer] = useState(0);
   const [errorVal, setErrorVal] = useState<number | null>(null);
   const [hintVal, setHintVal] = useState<number | null>(null);
+  const [isWon, setIsWon] = useState(false);
+  const [timer, setTimer] = useGameTimer(isPaused, isWon);
 
   useEffect(() => {
     initGame();
-    const interval = setInterval(() => setTimer(t => t + 1), 1000);
-    return () => clearInterval(interval);
   }, [difficulty]);
 
   const initGame = () => {
@@ -32,9 +34,11 @@ export const NumberPath: React.FC<Props> = ({ difficulty, onComplete, useHint, h
     setErrorVal(null);
     setHintVal(null);
     setTimer(0);
+    setIsWon(false);
   };
 
   const handleCellClick = (val: number) => {
+    if (isWon) return;
     sound.playClick();
     const expectedNext = currentPath.length + 1;
     if (val === expectedNext) {
@@ -44,11 +48,11 @@ export const NumberPath: React.FC<Props> = ({ difficulty, onComplete, useHint, h
       setHintVal(null);
 
       if (newPath.length === maxNumber) {
+        setIsWon(true);
         const score = Math.max(120, 1000 - timer * 6);
         setTimeout(() => onComplete(score, timer, true), 600);
       }
     } else if (!currentPath.includes(val)) {
-      // Misclick: penalize timer by 2 seconds and flash error, but DO NOT wipe progress!
       sound.playError();
       setErrorVal(val);
       setTimer(t => t + 2);
@@ -71,51 +75,42 @@ export const NumberPath: React.FC<Props> = ({ difficulty, onComplete, useHint, h
   const gridColsClass = size === 3 ? 'grid-cols-3' : 'grid-cols-4';
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 max-w-xl mx-auto w-full">
-      {/* Top Header */}
-      <div className="flex items-center justify-between w-full mb-6 bg-pv-surface-primary/80 p-4 rounded-xl border border-pv-border-strong shadow-sm">
-        <div className="text-center">
-          <p className="text-xs text-pv-text-secondary font-semibold uppercase">Next Number</p>
-          <p className="text-xl font-bold text-pv-dragon-fruit-light">{currentPath.length + 1} / {maxNumber}</p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-pv-text-secondary font-semibold uppercase">Progress</p>
-          <p className="text-xl font-bold text-emerald-400">{Math.round((currentPath.length / maxNumber) * 100)}%</p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-pv-text-secondary font-semibold uppercase">Timer</p>
-          <p className="text-xl font-bold text-cyan-400">{timer}s</p>
-        </div>
-      </div>
+    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+      <GameHudBar
+        items={[
+          { label: 'Next Number', value: `${currentPath.length + 1} / ${maxNumber}`, tone: 'accent' },
+          { label: 'Progress', value: `${Math.round((currentPath.length / maxNumber) * 100)}%`, tone: 'success' },
+          { label: 'Timer', value: `${timer}s` },
+        ]}
+      />
 
       {/* Grid */}
-      <div className="w-full bg-pv-bg-secondary/90 border-2 border-pv-border-strong rounded-2xl p-6 mb-6 shadow-sm flex flex-col items-center">
-        <p className="text-xs font-semibold text-pv-dragon-fruit-light uppercase tracking-widest mb-6">
-          Click Numbers in Sequence: 1 ➔ {maxNumber}
+      <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+        <p className="text-xs text-[#C5BFD0] mb-4 text-center">
+          Click numbers in numerical order from 1 to {maxNumber}.
         </p>
-        <div className={`grid ${gridColsClass} gap-3 w-full max-w-[320px] aspect-square`}>
+
+        <div className={`grid ${gridColsClass} gap-2.5 w-full max-w-[340px] aspect-square`}>
           {targetPath.map((val, idx) => {
             const isSelected = currentPath.includes(val);
-            const isNext = val === currentPath.length + 1;
             const isError = errorVal === val;
             const isHint = hintVal === val;
+
+            let tileStyle = 'bg-pv-surface-secondary border-pv-border hover:border-pv-border-strong text-pv-text-primary';
+            if (isSelected) {
+              tileStyle = 'bg-pv-surface-soft border-pv-border-strong text-pv-text-muted opacity-40';
+            } else if (isError) {
+              tileStyle = 'bg-rose-950/40 border-rose-500 text-rose-300';
+            } else if (isHint) {
+              tileStyle = 'bg-pv-dragon-fruit/20 border-pv-dragon-fruit text-pv-dragon-fruit-light font-bold';
+            }
 
             return (
               <button
                 key={idx}
                 onClick={() => handleCellClick(val)}
                 disabled={isSelected}
-                className={`aspect-square rounded-2xl text-2xl sm:text-3xl font-black flex items-center justify-center border-2 transition-all shadow-md active:scale-95 ${
-                  isSelected
-                    ? 'bg-emerald-600/30 text-emerald-400 border-emerald-500/50 scale-95 opacity-80'
-                    : isError
-                    ? 'bg-rose-600/40 border-rose-500 text-rose-300 animate-shake'
-                    : isHint
-                    ? 'bg-pv-dragon-fruit/40 border-pv-dragon-fruit text-white animate-pulse ring-4 ring-pv-dragon-fruit scale-105'
-                    : isNext
-                    ? 'bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-dragon-fruit-light border-pv-dragon-fruit/40'
-                    : 'bg-pv-surface-primary hover:bg-pv-surface-soft text-white border-pv-border-strong'
-                }`}
+                className={`aspect-square rounded-lg text-xl sm:text-2xl font-semibold font-tabular flex items-center justify-center border transition-colors select-none active:translate-y-px ${tileStyle}`}
               >
                 {val}
               </button>
@@ -124,21 +119,21 @@ export const NumberPath: React.FC<Props> = ({ difficulty, onComplete, useHint, h
         </div>
       </div>
 
-      {/* Hint & Reset */}
-      <div className="flex items-center gap-3 w-full">
+      {/* Controls */}
+      <div className="flex items-center gap-2.5 w-full">
         <button
           onClick={handleHint}
           disabled={hintsLeft <= 0 || hintVal !== null}
-          className="flex-1 bg-pv-dragon-fruit/20 hover:bg-pv-dragon-fruit/30 text-pv-dragon-fruit-light border border-pv-dragon-fruit/40 py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition disabled:opacity-40"
+          className="flex-1 h-9 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <Sparkles className="w-4 h-4" /> Hint ({hintsLeft})
+          <Lightbulb className="w-3.5 h-3.5" /> Next Clue ({hintsLeft})
         </button>
         <button
           onClick={initGame}
-          className="p-2.5 bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-secondary border border-pv-border-strong rounded-xl transition"
-          title="Restart Sequence"
+          className="h-9 px-3 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+          title="Reset Numbers"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-3.5 h-3.5" /> Reset
         </button>
       </div>
     </div>

@@ -1,9 +1,535 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
-import { Users, Shield, Award, Search, Plus, Trophy, ChevronRight, Filter, Lock, Unlock, Sparkles, Zap, Calculator, Brain, BookOpen, Compass, ArrowRight, Flame, Swords
+import {
+  Users,
+  Shield,
+  Search,
+  Plus,
+  Trophy,
+  ChevronRight,
+  Filter,
+  Lock,
+  Unlock,
+  Zap,
+  Calculator,
+  Brain,
+  BookOpen,
+  Compass,
+  Clock,
+  X,
 } from 'lucide-react';
 import { Club, PuzzleType, ClubPrivacy } from '../types';
-import { fetchClubs, fetchUserClubMembership, createClub, joinClub, fetchActiveClubCompetitions, fetchClubCompetitionScores } from '../services/firebase'; export const ClubsPage: React.FC = () => { const { user, viewClubDetail, userClub, setUserClub } = useStore(); const [clubs, setClubs] = useState<Club[]>([]); const [loading, setLoading] = useState(true); const [searchQuery, setSearchQuery] = useState(''); const [focusFilter, setFocusFilter] = useState<string>('all'); /* Create Club modal */
- const [showCreateModal, setShowCreateModal] = useState(false); const [newClubName, setNewClubName] = useState(''); const [newClubTag, setNewClubTag] = useState(''); const [newClubDesc, setNewClubDesc] = useState(''); const [newClubFocus, setNewClubFocus] = useState<PuzzleType | 'all'>('all'); const [newClubPrivacy, setNewClubPrivacy] = useState<ClubPrivacy>('public'); const [newClubColor, setNewClubColor] = useState('amber'); const [isSubmitting, setIsSubmitting] = useState(false); /* Active Competition */
- const [activeComp, setActiveComp] = useState<any>(null); const [topScores, setTopScores] = useState<any[]>([]); useEffect(() => { loadClubData(); }, [searchQuery, focusFilter, user]); const loadClubData = async () => { setLoading(true); try { const fetchedClubs = await fetchClubs(searchQuery, focusFilter); setClubs(fetchedClubs); if (user) { const myMembership = await fetchUserClubMembership(user.uid); if (myMembership) { setUserClub(myMembership.club, myMembership.member); } else { setUserClub(null, null); } } const comps = await fetchActiveClubCompetitions(); if (comps.length > 0) { setActiveComp(comps[0]); const scores = await fetchClubCompetitionScores(comps[0].id); setTopScores(scores); } } catch (err) { console.error('Error loading club data:', err); } finally { setLoading(false); } }; const handleCreateClubSubmit = async (e: React.FormEvent) => { e.preventDefault(); if (!user || !newClubName.trim() || !newClubTag.trim()) return; setIsSubmitting(true); try { const { club, member } = await createClub( { name: newClubName.trim(), tag: newClubTag.trim().toUpperCase(), description: newClubDesc.trim(), primaryFocus: newClubFocus, privacy: newClubPrivacy, themeColor: newClubColor, icon: 'Shield' }, user ); setUserClub(club, member); setShowCreateModal(false); viewClubDetail(club.id); } catch (err) { console.error('Failed to create club:', err); } finally { setIsSubmitting(false); } }; const handleJoinClub = async (clubId: string) => { if (!user) return; try { const { club, member } = await joinClub(clubId, user); setUserClub(club, member); viewClubDetail(club.id); } catch (err) { console.error('Failed to join club:', err); } }; const getFocusIcon = (focus: string) => { switch (focus) { case 'logic': return Brain; case 'number': return Calculator; case 'word': return BookOpen; case 'laser_mirror': return Compass; default: return Zap; } }; return ( <div className="space-y-8 max-w-6xl mx-auto"> {/* Header Banner */} <div className="relative overflow-hidden rounded-2xl bg-pv-surface-secondary border border-pv-border-violet p-6 sm:p-8 shadow-sm"> <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-primary-btn/10 rounded-full -mr-20 -mt-20 pointer-events-none" /> <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6"> <div className="space-y-2 max-w-2xl"> <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-primary-btn/10 border border-pv-border-strong text-pv-dragon-fruit-light text-xs font-bold tracking-wider uppercase"> <Users className="w-3.5 h-3.5" /> Phase 77 & 78 — Clubs & Team Competitions </div> <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight"> Player Clubs & Puzzle Communities </h1> <p className="text-pv-text-secondary text-sm sm:text-base leading-relaxed"> Join forces with fellow puzzle enthusiasts! Contribute to weekly team goals, clash in club duels, and rise up the global community leaderboards together. </p> </div> <div className="flex flex-col sm:flex-row gap-3 shrink-0"> {userClub ? ( <button onClick={() => viewClubDetail(userClub.id)} className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm bg-pv-surface-secondary hover:from-amber-400 hover:to-amber-500 text-pv-bg-primary shadow-sm shadow-sm transition-all duration-200" > <Shield className="w-4 h-4" /> <span>My Club: [{userClub.tag}] {userClub.name}</span> <ChevronRight className="w-4 h-4 ml-1" /> </button> ) : ( <button onClick={() => setShowCreateModal(true)} className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm bg-pv-surface-secondary hover:from-amber-400 hover:to-amber-500 text-pv-bg-primary shadow-sm shadow-sm transition-all duration-200" > <Plus className="w-4 h-4" /> <span>Create a Club</span> </button> )} </div> </div> </div> {/* User Club Quick Bar (If in a club) */} {userClub && ( <div className="bg-pv-surface-primary border border-pv-border-strong rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm shadow-pv-dragon-fruit/5"> <div className="flex items-center gap-4"> <div className="w-12 h-12 rounded-xl bg-gradient-primary-btn/20 border border-pv-border-strong flex items-center justify-center text-pv-dragon-fruit-light font-extrabold text-lg"> {userClub.tag} </div> <div> <div className="flex items-center gap-2"> <span className="text-xs uppercase font-bold text-pv-dragon-fruit-light tracking-wider">Active Club Membership</span> <span className="text-xs bg-pv-surface-primary text-pv-text-secondary px-2 py-0.5 rounded font-mono">Lvl {userClub.level}</span> </div> <h3 className="text-lg font-bold text-white">{userClub.name}</h3> </div> </div> <div className="flex items-center gap-6"> <div className="text-center md:text-right"> <span className="text-xs text-pv-text-secondary uppercase font-semibold">Weekly Points</span> <div className="text-pv-dragon-fruit-light font-black text-lg">{userClub.weeklyPoints.toLocaleString()} XP</div> </div> <div className="text-center md:text-right"> <span className="text-xs text-pv-text-secondary uppercase font-semibold">Members</span> <div className="text-slate-200 font-bold text-lg">{userClub.memberCount}/{userClub.maxMembers}</div> </div> <button onClick={() => viewClubDetail(userClub.id)} className="px-4 py-2 rounded-xl bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-dragon-fruit-light font-bold text-xs border border-pv-border-strong transition" > Enter Club Hub </button> </div> </div> )} {/* Weekly Club Competition Banner & Top Rankings */} {activeComp && ( <div className="bg-pv-bg-secondary/60 border border-pv-border-violet rounded-2xl p-6 space-y-4"> <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pv-border-violet pb-4"> <div className="flex items-center gap-3"> <div className="w-10 h-10 rounded-xl bg-gradient-primary-btn/10 border border-pv-border-strong flex items-center justify-center text-pv-dragon-fruit-light"> <Trophy className="w-5 h-5" /> </div> <div> <span className="text-xs uppercase font-bold text-pv-dragon-fruit-light tracking-wider">Active Team Event</span> <h2 className="text-xl font-extrabold text-white">{activeComp.title}</h2> </div> </div> <div className="flex items-center gap-2 text-xs text-pv-text-secondary bg-pv-bg-primary px-3 py-1.5 rounded-lg border border-pv-border-violet"> <Flame className="w-3.5 h-3.5 text-rose-400" /> <span>Ends in 5 days</span> </div> </div> <p className="text-sm text-pv-text-secondary leading-relaxed">{activeComp.description}</p> {/* Top 3 Rankings */} <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2"> {topScores.slice(0, 3).map((score, idx) => ( <div key={score.id} onClick={() => viewClubDetail(score.clubId)} className={`p-4 rounded-xl border transition cursor-pointer flex items-center justify-between ${ idx === 0 ? 'bg-gradient-primary-btn/10 border-pv-border-strong hover:border-pv-dragon-fruit/50' : 'bg-pv-surface-primary border-pv-border-violet hover:border-pv-border-strong' }`} > <div className="flex items-center gap-3"> <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black ${ idx === 0 ? 'bg-gradient-primary-btn text-pv-bg-primary' : idx === 1 ? 'bg-slate-300 text-pv-bg-primary' : 'bg-amber-700 text-white' }`}> {idx + 1} </span> <div> <div className="text-xs font-bold text-pv-dragon-fruit-light">[{score.clubTag}]</div> <div className="text-sm font-bold text-white line-clamp-1">{score.clubName}</div> </div> </div> <div className="text-right"> <div className="text-xs font-mono font-bold text-slate-200">{score.totalPoints.toLocaleString()}</div> <div className="text-[10px] text-pv-text-muted uppercase">Points</div> </div> </div> ))} </div> </div> )} {/* Search & Filter Bar */} <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-pv-bg-secondary/60 p-4 rounded-2xl border border-pv-border-violet"> <div className="relative w-full sm:w-80"> <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-pv-text-muted" /> <input type="text" placeholder="Search club name or [TAG]..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-pv-bg-primary border border-pv-border-violet rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-pv-dragon-fruit/50 transition" /> </div> <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0"> <Filter className="w-4 h-4 text-pv-text-muted shrink-0" /> <span className="text-xs font-bold text-pv-text-secondary shrink-0 uppercase tracking-wider">Focus:</span> {[ { id: 'all', label: 'All Puzzles' }, { id: 'logic', label: 'Logic' }, { id: 'number', label: 'Math' }, { id: 'word', label: 'Words' }, { id: 'laser_mirror', label: 'Spatial' } ].map((f) => ( <button key={f.id} onClick={() => setFocusFilter(f.id)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${ focusFilter === f.id ? 'bg-gradient-primary-btn text-pv-bg-primary shadow-md shadow-sm' : 'bg-pv-bg-primary text-pv-text-secondary hover:text-slate-200 border border-pv-border-violet' }`} > {f.label} </button> ))} </div> </div> {/* Club Grid */} <div className="space-y-4"> <div className="flex items-center justify-between"> <h2 className="text-xl font-bold text-white flex items-center gap-2"> <Users className="w-5 h-5 text-pv-dragon-fruit-light" /> <span>Discover Clubs ({clubs.length})</span> </h2> <span className="text-xs text-pv-text-muted">Sorted by Weekly Activity</span> </div> {loading ? ( <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> {[1, 2, 3, 4, 5, 6].map((i) => ( <div key={i} className="h-48 bg-pv-bg-secondary/40 border border-pv-border-violet rounded-2xl animate-pulse" /> ))} </div> ) : clubs.length === 0 ? ( <div className="bg-pv-bg-secondary/40 border border-pv-border-violet rounded-2xl p-12 text-center space-y-3"> <Shield className="w-12 h-12 text-pv-text-disabled mx-auto" /> <h3 className="text-lg font-bold text-pv-text-secondary">No clubs found</h3> <p className="text-sm text-pv-text-muted max-w-md mx-auto"> Try adjusting your search query or focus filter, or create your own brand-new puzzle club! </p> <button onClick={() => setShowCreateModal(true)} className="px-4 py-2 rounded-xl bg-gradient-primary-btn text-pv-bg-primary font-bold text-xs hover:bg-pv-dragon-fruit-light transition" > Create New Club </button> </div> ) : ( <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> {clubs.map((c) => { const FocusIcon = getFocusIcon(c.primaryFocus); const isFull = c.memberCount >= c.maxMembers; const isMyClub = userClub?.id === c.id; return ( <div key={c.id} className={`bg-pv-bg-secondary/60 border rounded-2xl p-5 flex flex-col justify-between hover:border-pv-border-strong transition duration-200 group ${ isMyClub ? 'border-pv-border-strong shadow-sm shadow-pv-dragon-fruit/5' : 'border-pv-border-violet' }`} > <div className="space-y-4"> {/* Card Top */} <div className="flex items-start justify-between gap-3"> <div className="flex items-center gap-3"> <div className="w-11 h-11 rounded-xl bg-gradient-primary-btn/10 border border-pv-border-strong flex items-center justify-center text-pv-dragon-fruit-light font-extrabold text-sm shrink-0"> {c.tag} </div> <div> <div className="flex items-center gap-1.5"> <span className="text-xs font-bold text-pv-dragon-fruit-light">[{c.tag}]</span> {c.privacy === 'private' ? ( <Lock className="w-3 h-3 text-pv-text-muted" /> ) : ( <Unlock className="w-3 h-3 text-pv-text-muted" /> )} </div> <h3 className="font-bold text-white text-base group-hover:text-pv-dragon-fruit-light transition line-clamp-1"> {c.name} </h3> </div> </div> <span className="px-2 py-1 rounded bg-pv-bg-primary border border-pv-border-violet text-[10px] font-mono text-pv-text-secondary uppercase"> Lvl {c.level} </span> </div> <p className="text-xs text-pv-text-secondary line-clamp-2 leading-relaxed min-h-[32px]"> {c.description} </p> {/* Stats pills */} <div className="grid grid-cols-2 gap-2 text-xs"> <div className="bg-pv-surface-primary p-2 rounded-xl border border-pv-border-violet"> <span className="text-[10px] text-pv-text-muted uppercase font-semibold block">Weekly XP</span> <span className="font-mono font-bold text-pv-dragon-fruit-light">{c.weeklyPoints.toLocaleString()}</span> </div> <div className="bg-pv-surface-primary p-2 rounded-xl border border-pv-border-violet"> <span className="text-[10px] text-pv-text-muted uppercase font-semibold block">Members</span> <span className="font-mono font-bold text-slate-200">{c.memberCount}/{c.maxMembers}</span> </div> </div> </div> {/* Card Bottom Actions */} <div className="pt-4 border-t border-pv-border-violet mt-4 flex items-center justify-between"> <div className="flex items-center gap-1.5 text-xs text-pv-text-secondary"> <FocusIcon className="w-3.5 h-3.5 text-pv-dragon-fruit-light" /> <span className="capitalize">{c.primaryFocus.replace('_', ' ')}</span> </div> <div className="flex items-center gap-2"> <button onClick={() => viewClubDetail(c.id)} className="px-3 py-1.5 rounded-xl bg-pv-surface-primary hover:bg-pv-surface-soft text-slate-200 font-bold text-xs transition" > View </button> {isMyClub ? ( <span className="px-3 py-1.5 rounded-xl bg-gradient-primary-btn/20 text-pv-dragon-fruit-light border border-pv-border-strong font-bold text-xs"> Joined </span> ) : !userClub && !isFull ? ( <button onClick={() => handleJoinClub(c.id)} className="px-3 py-1.5 rounded-xl bg-gradient-primary-btn hover:bg-pv-dragon-fruit-light text-pv-bg-primary font-bold text-xs transition" > Join </button> ) : null} </div> </div> </div> ); })} </div> )} </div> {/* Create Club Modal */} {showCreateModal && ( <div className="fixed inset-0 z-50 bg-pv-surface-primary flex items-center justify-center p-4"> <div className="bg-pv-bg-secondary border border-pv-border-violet rounded-2xl max-w-lg w-full p-6 space-y-6 shadow-sm relative"> <div className="flex items-center justify-between border-b border-pv-border-violet pb-4"> <div className="flex items-center gap-3"> <div className="w-10 h-10 rounded-xl bg-gradient-primary-btn/10 border border-pv-border-strong flex items-center justify-center text-pv-dragon-fruit-light"> <Shield className="w-5 h-5" /> </div> <div> <h3 className="text-lg font-bold text-white">Create a New Club</h3> <p className="text-xs text-pv-text-secondary">Assemble your puzzle community</p> </div> </div> <button onClick={() => setShowCreateModal(false)} className="text-pv-text-muted hover:text-pv-text-secondary font-bold text-sm" > ✕ </button> </div> <form onSubmit={handleCreateClubSubmit} className="space-y-4"> <div> <label className="block text-xs font-bold text-pv-text-secondary uppercase tracking-wider mb-1"> Club Name </label> <input type="text" required maxLength={30} placeholder="e.g. Logic Masterminds" value={newClubName} onChange={(e) => setNewClubName(e.target.value)} className="w-full bg-pv-bg-primary border border-pv-border-violet rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-pv-dragon-fruit" /> </div> <div className="grid grid-cols-2 gap-4"> <div> <label className="block text-xs font-bold text-pv-text-secondary uppercase tracking-wider mb-1"> Club Tag (2-5 letters) </label> <input type="text" required maxLength={5} placeholder="e.g. LOGIC" value={newClubTag} onChange={(e) => setNewClubTag(e.target.value.toUpperCase())} className="w-full bg-pv-bg-primary border border-pv-border-violet rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-pv-dragon-fruit-light focus:outline-none focus:border-pv-dragon-fruit uppercase" /> </div> <div> <label className="block text-xs font-bold text-pv-text-secondary uppercase tracking-wider mb-1"> Primary Focus </label> <select value={newClubFocus} onChange={(e) => setNewClubFocus(e.target.value as any)} className="w-full bg-pv-bg-primary border border-pv-border-violet rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-pv-dragon-fruit" > <option value="all">All Puzzles</option> <option value="logic">Logic Puzzles</option> <option value="number">Math & Numbers</option> <option value="word">Word Puzzles</option> <option value="laser_mirror">Spatial & Grid</option> </select> </div> </div> <div> <label className="block text-xs font-bold text-pv-text-secondary uppercase tracking-wider mb-1"> Club Description </label> <textarea rows={3} maxLength={150} placeholder="Tell potential members what your club is about..." value={newClubDesc} onChange={(e) => setNewClubDesc(e.target.value)} className="w-full bg-pv-bg-primary border border-pv-border-violet rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-pv-dragon-fruit" /> </div> <div className="flex items-center justify-between pt-2"> <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2.5 rounded-xl bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-secondary font-bold text-xs" > Cancel </button> <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 rounded-xl bg-gradient-primary-btn hover:bg-pv-dragon-fruit-light text-pv-bg-primary font-bold text-xs transition shadow-sm shadow-sm" > {isSubmitting ? 'Creating...' : 'Establish Club (+100 XP)'} </button> </div> </form> </div> </div> )} </div> );
+import {
+  fetchClubs,
+  fetchUserClubMembership,
+  createClub,
+  joinClub,
+  fetchActiveClubCompetitions,
+  fetchClubCompetitionScores,
+} from '../services/firebase';
+import { Card, PageHeader } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+
+export const ClubsPage: React.FC = () => {
+  const { user, viewClubDetail, userClub, setUserClub } = useStore();
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [focusFilter, setFocusFilter] = useState<string>('all');
+
+  /* Create Club modal */
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newClubName, setNewClubName] = useState('');
+  const [newClubTag, setNewClubTag] = useState('');
+  const [newClubDesc, setNewClubDesc] = useState('');
+  const [newClubFocus, setNewClubFocus] = useState<PuzzleType | 'all'>('all');
+  const [newClubPrivacy, setNewClubPrivacy] = useState<ClubPrivacy>('public');
+  const [newClubColor] = useState('amber');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /* Active Competition */
+  const [activeComp, setActiveComp] = useState<any>(null);
+  const [topScores, setTopScores] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadClubData();
+  }, [searchQuery, focusFilter, user]);
+
+  const loadClubData = async () => {
+    setLoading(true);
+    try {
+      const fetchedClubs = await fetchClubs(searchQuery, focusFilter);
+      setClubs(fetchedClubs);
+
+      if (user) {
+        const myMembership = await fetchUserClubMembership(user.uid);
+        if (myMembership) {
+          setUserClub(myMembership.club, myMembership.member);
+        } else {
+          setUserClub(null, null);
+        }
+      }
+
+      const comps = await fetchActiveClubCompetitions();
+      if (comps.length > 0) {
+        setActiveComp(comps[0]);
+        const scores = await fetchClubCompetitionScores(comps[0].id);
+        setTopScores(scores);
+      }
+    } catch (err) {
+      console.error('Error loading club data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateClubSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !newClubName.trim() || !newClubTag.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const { club, member } = await createClub(
+        {
+          name: newClubName.trim(),
+          tag: newClubTag.trim().toUpperCase(),
+          description: newClubDesc.trim(),
+          primaryFocus: newClubFocus,
+          privacy: newClubPrivacy,
+          themeColor: newClubColor,
+          icon: 'Shield',
+        },
+        user
+      );
+      setUserClub(club, member);
+      setShowCreateModal(false);
+      viewClubDetail(club.id);
+    } catch (err) {
+      console.error('Failed to create club:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleJoinClub = async (clubId: string) => {
+    if (!user) return;
+    try {
+      const { club, member } = await joinClub(clubId, user);
+      setUserClub(club, member);
+      viewClubDetail(club.id);
+    } catch (err) {
+      console.error('Failed to join club:', err);
+    }
+  };
+
+  const getFocusIcon = (focus: string) => {
+    switch (focus) {
+      case 'logic':
+        return Brain;
+      case 'number':
+        return Calculator;
+      case 'word':
+        return BookOpen;
+      case 'laser_mirror':
+        return Compass;
+      default:
+        return Zap;
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* Header Banner */}
+      <PageHeader
+        title="Clubs & Competitions"
+        description="Form puzzle communities, collaborate on weekly objectives, and compete on the global leaderboard."
+        action={
+          userClub ? (
+            <Button
+              onClick={() => viewClubDetail(userClub.id)}
+              variant="primary"
+              size="md"
+              className="flex items-center gap-2"
+            >
+              <Shield className="w-4 h-4" />
+              <span>[{userClub.tag}] {userClub.name}</span>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              variant="primary"
+              size="md"
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Club</span>
+            </Button>
+          )
+        }
+      />
+
+      {/* User Club Quick Bar (If in a club) */}
+      {userClub && (
+        <Card className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 rounded bg-pv-surface-soft border border-pv-border flex items-center justify-center text-pv-dragon-fruit font-bold text-base font-tabular">
+              {userClub.tag}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] uppercase font-semibold text-pv-dragon-fruit tracking-wider">
+                  Active Club
+                </span>
+                <span className="text-xs bg-pv-surface-soft text-pv-text-muted px-2 py-0.5 rounded border border-pv-border font-tabular">
+                  Lvl {userClub.level}
+                </span>
+              </div>
+              <h3 className="text-base font-semibold text-pv-text-primary">{userClub.name}</h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="text-left md:text-right">
+              <span className="text-[11px] text-pv-text-muted uppercase font-medium">Weekly XP</span>
+              <div className="text-pv-text-primary font-bold text-base font-tabular">
+                {userClub.weeklyPoints.toLocaleString()}
+              </div>
+            </div>
+            <div className="text-left md:text-right">
+              <span className="text-[11px] text-pv-text-muted uppercase font-medium">Members</span>
+              <div className="text-pv-text-primary font-bold text-base font-tabular">
+                {userClub.memberCount}/{userClub.maxMembers}
+              </div>
+            </div>
+            <Button
+              onClick={() => viewClubDetail(userClub.id)}
+              variant="secondary"
+              size="sm"
+            >
+              Enter Hub
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* Weekly Club Competition Banner & Top Rankings */}
+      {activeComp && (
+        <Card className="p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-pv-border pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded bg-pv-dragon-fruit/10 border border-pv-dragon-fruit/20 flex items-center justify-center text-pv-dragon-fruit">
+                <Trophy className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[11px] uppercase font-semibold text-pv-dragon-fruit tracking-wider">
+                  Active Team Event
+                </span>
+                <h2 className="text-lg font-bold text-pv-text-primary">{activeComp.title}</h2>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-pv-text-muted bg-pv-surface-soft px-3 py-1.5 rounded border border-pv-border">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Ends in 5 days</span>
+            </div>
+          </div>
+
+          <p className="text-xs text-pv-text-secondary leading-relaxed">{activeComp.description}</p>
+
+          {/* Top 3 Rankings */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            {topScores.slice(0, 3).map((score, idx) => (
+              <div
+                key={score.id}
+                onClick={() => viewClubDetail(score.clubId)}
+                className="p-3.5 rounded-lg border border-pv-border bg-pv-surface-soft hover:border-pv-border-hover transition-colors cursor-pointer flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`w-5 h-5 rounded flex items-center justify-center text-xs font-bold font-tabular ${
+                      idx === 0
+                        ? 'bg-amber-400/20 text-amber-400 border border-amber-400/30'
+                        : idx === 1
+                        ? 'bg-slate-300/20 text-slate-300 border border-slate-300/30'
+                        : 'bg-amber-700/20 text-amber-500 border border-amber-700/30'
+                    }`}
+                  >
+                    {idx + 1}
+                  </span>
+                  <div>
+                    <div className="text-[11px] font-semibold text-pv-dragon-fruit">[{score.clubTag}]</div>
+                    <div className="text-xs font-semibold text-pv-text-primary line-clamp-1">{score.clubName}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-bold text-pv-text-primary font-tabular">
+                    {score.totalPoints.toLocaleString()}
+                  </div>
+                  <div className="text-[10px] text-pv-text-muted uppercase">Points</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Search & Filter Bar */}
+      <Card className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-pv-text-muted" />
+          <input
+            type="text"
+            placeholder="Search club name or tag..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-pv-surface-soft border border-pv-border rounded-lg pl-10 pr-4 py-2 text-xs text-pv-text-primary placeholder:text-pv-text-muted focus:outline-none focus:border-pv-border-hover transition-colors"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+          <Filter className="w-3.5 h-3.5 text-pv-text-muted shrink-0" />
+          <span className="text-[11px] font-medium text-pv-text-muted shrink-0 uppercase tracking-wider">Focus:</span>
+          {[
+            { id: 'all', label: 'All' },
+            { id: 'logic', label: 'Logic' },
+            { id: 'number', label: 'Math' },
+            { id: 'word', label: 'Words' },
+            { id: 'laser_mirror', label: 'Spatial' },
+          ].map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFocusFilter(f.id)}
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors whitespace-nowrap ${
+                focusFilter === f.id
+                  ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                  : 'bg-pv-surface-soft text-pv-text-secondary hover:text-pv-text-primary border border-pv-border'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </Card>
+
+      {/* Club Grid */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
+            <Users className="w-4 h-4 text-pv-dragon-fruit" />
+            <span>Discover Clubs ({clubs.length})</span>
+          </h2>
+          <span className="text-xs text-pv-text-muted">Sorted by weekly activity</span>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-44 bg-pv-surface-soft border border-pv-border rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : clubs.length === 0 ? (
+          <Card className="p-12 text-center space-y-3">
+            <Shield className="w-10 h-10 text-pv-text-muted mx-auto" />
+            <h3 className="text-base font-semibold text-pv-text-primary">No clubs found</h3>
+            <p className="text-xs text-pv-text-muted max-w-sm mx-auto">
+              Adjust your search query or focus filter, or establish a new club.
+            </p>
+            <Button onClick={() => setShowCreateModal(true)} variant="primary" size="sm">
+              Create Club
+            </Button>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {clubs.map((c) => {
+              const FocusIcon = getFocusIcon(c.primaryFocus);
+              const isFull = c.memberCount >= c.maxMembers;
+              const isMyClub = userClub?.id === c.id;
+
+              return (
+                <Card
+                  key={c.id}
+                  className={`p-5 flex flex-col justify-between transition-colors ${
+                    isMyClub ? 'border-pv-dragon-fruit/40' : ''
+                  }`}
+                >
+                  <div className="space-y-3">
+                    {/* Card Top */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded bg-pv-surface-soft border border-pv-border flex items-center justify-center text-pv-dragon-fruit font-bold text-xs shrink-0 font-tabular">
+                          {c.tag}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-semibold text-pv-dragon-fruit">[{c.tag}]</span>
+                            {c.privacy === 'private' ? (
+                              <Lock className="w-3 h-3 text-pv-text-muted" />
+                            ) : (
+                              <Unlock className="w-3 h-3 text-pv-text-muted" />
+                            )}
+                          </div>
+                          <h3 className="font-semibold text-pv-text-primary text-sm line-clamp-1">{c.name}</h3>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded bg-pv-surface-soft border border-pv-border text-[10px] font-tabular text-pv-text-muted">
+                        Lvl {c.level}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-pv-text-secondary line-clamp-2 min-h-[32px] leading-relaxed">
+                      {c.description}
+                    </p>
+
+                    {/* Stats pills */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-pv-surface-soft p-2 rounded border border-pv-border">
+                        <span className="text-[10px] text-pv-text-muted uppercase font-medium block">Weekly XP</span>
+                        <span className="font-bold text-pv-text-primary font-tabular">
+                          {c.weeklyPoints.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="bg-pv-surface-soft p-2 rounded border border-pv-border">
+                        <span className="text-[10px] text-pv-text-muted uppercase font-medium block">Members</span>
+                        <span className="font-bold text-pv-text-secondary font-tabular">
+                          {c.memberCount}/{c.maxMembers}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Bottom Actions */}
+                  <div className="pt-3 border-t border-pv-border mt-3 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs text-pv-text-muted">
+                      <FocusIcon className="w-3.5 h-3.5" />
+                      <span className="capitalize">{c.primaryFocus.replace('_', ' ')}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => viewClubDetail(c.id)}
+                        variant="ghost"
+                        size="sm"
+                      >
+                        View
+                      </Button>
+                      {isMyClub ? (
+                        <span className="px-2.5 py-1 rounded bg-pv-dragon-fruit/10 text-pv-dragon-fruit border border-pv-dragon-fruit/20 font-medium text-xs">
+                          Joined
+                        </span>
+                      ) : !userClub && !isFull ? (
+                        <Button
+                          onClick={() => handleJoinClub(c.id)}
+                          variant="primary"
+                          size="sm"
+                        >
+                          Join
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Create Club Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <Card className="max-w-lg w-full p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-pv-border pb-3">
+              <div className="flex items-center gap-2.5">
+                <Shield className="w-4 h-4 text-pv-dragon-fruit" />
+                <h3 className="text-base font-semibold text-pv-text-primary">Create Club</h3>
+              </div>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-pv-text-muted hover:text-pv-text-primary transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateClubSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-pv-text-secondary mb-1">Club Name</label>
+                <input
+                  type="text"
+                  required
+                  maxLength={30}
+                  placeholder="e.g. Logic Syndicate"
+                  value={newClubName}
+                  onChange={(e) => setNewClubName(e.target.value)}
+                  className="w-full bg-pv-surface-soft border border-pv-border rounded-lg px-3 py-2 text-xs text-pv-text-primary placeholder:text-pv-text-muted focus:outline-none focus:border-pv-border-hover"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-pv-text-secondary mb-1">
+                    Tag (2-5 letters)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={5}
+                    placeholder="e.g. LOGIC"
+                    value={newClubTag}
+                    onChange={(e) => setNewClubTag(e.target.value.toUpperCase())}
+                    className="w-full bg-pv-surface-soft border border-pv-border rounded-lg px-3 py-2 text-xs font-tabular font-bold text-pv-dragon-fruit focus:outline-none focus:border-pv-border-hover uppercase"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-pv-text-secondary mb-1">Primary Focus</label>
+                  <select
+                    value={newClubFocus}
+                    onChange={(e) => setNewClubFocus(e.target.value as any)}
+                    className="w-full bg-pv-surface-soft border border-pv-border rounded-lg px-3 py-2 text-xs text-pv-text-primary focus:outline-none focus:border-pv-border-hover"
+                  >
+                    <option value="all">All Puzzles</option>
+                    <option value="logic">Logic Puzzles</option>
+                    <option value="number">Math & Numbers</option>
+                    <option value="word">Word Puzzles</option>
+                    <option value="laser_mirror">Spatial & Grid</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-pv-text-secondary mb-1">Club Description</label>
+                <textarea
+                  rows={3}
+                  maxLength={150}
+                  placeholder="Describe your club objectives..."
+                  value={newClubDesc}
+                  onChange={(e) => setNewClubDesc(e.target.value)}
+                  className="w-full bg-pv-surface-soft border border-pv-border rounded-lg px-3 py-2 text-xs text-pv-text-primary placeholder:text-pv-text-muted focus:outline-none focus:border-pv-border-hover"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-pv-border">
+                <Button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  variant="ghost"
+                  size="sm"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  variant="primary"
+                  size="sm"
+                >
+                  {isSubmitting ? 'Creating...' : 'Establish Club (+100 XP)'}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
 };

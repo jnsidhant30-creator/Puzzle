@@ -1,16 +1,730 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { PUZZLE_MODES } from '../data/puzzles';
-import { getUnlockedTitles, TITLE_DEFINITIONS
-} from '../services/recommendation';
-import { User, Shield, Trophy, Star, Award, Coins, HelpCircle, Save, LogOut, RotateCcw, Flame, Zap, RefreshCw, Lock, CheckCircle2, Sliders, Eye, Heart, Volume2, VolumeX, Sparkles, ShieldCheck, TrendingUp
+import { getUnlockedTitles, TITLE_DEFINITIONS } from '../services/recommendation';
+import { formatCount } from '../utils/format';
+import {
+  User,
+  Shield,
+  Trophy,
+  Award,
+  Coins,
+  HelpCircle,
+  Save,
+  LogOut,
+  RotateCcw,
+  Flame,
+  Zap,
+  RefreshCw,
+  Lock,
+  CheckCircle2,
+  Sliders,
+  Eye,
+  Heart,
+  Volume2,
+  VolumeX,
+  Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import { signOut, auth, fetchUserRecentGameSessions, fetchPersonalBestHistory } from '../services/firebase';
 import { GameSession, PersonalBestHistoryItem, PuzzleType, Difficulty } from '../types';
 import { calculateUserMasteryProfile } from '../data/masteryData';
-import { PlayerWallSection } from '../components/PlayerWallSection'; const AVATARS = [ 'https://api.dicebear.com/7.x/bottts/svg?seed=Alpha', 'https://api.dicebear.com/7.x/bottts/svg?seed=Beta', 'https://api.dicebear.com/7.x/bottts/svg?seed=Gamma', 'https://api.dicebear.com/7.x/bottts/svg?seed=Delta', 'https://api.dicebear.com/7.x/bottts/svg?seed=Epsilon', 'https://api.dicebear.com/7.x/bottts/svg?seed=Zeta', 'https://api.dicebear.com/7.x/bottts/svg?seed=Omega', 'https://api.dicebear.com/7.x/bottts/svg?seed=Nova'
-]; export const ProfilePage: React.FC = () => { const { user, updateProfile, setUser, isGuest, startReplaySession, resetAdaptiveProfiles, soundMuted, toggleSound, setActiveTab: setActiveTabGlobal } = useStore(); const [displayName, setDisplayName] = useState(user?.displayName || ''); const [selectedAvatar, setSelectedAvatar] = useState(user?.avatarUrl || AVATARS[0]); const [selectedTitle, setSelectedTitle] = useState(user?.selectedTitle || 'Puzzle Apprentice'); const [bio, setBio] = useState(user?.bio || ''); const [favoriteGames, setFavoriteGames] = useState<PuzzleType[]>(user?.favoriteGameTypes || []); /* Preferences state */
- const [preferredDiff, setPreferredDiff] = useState<Difficulty | 'adaptive'>(user?.preferences?.preferredDifficulty || 'adaptive'); const [showTutorials, setShowTutorials] = useState<boolean>(user?.preferences?.showTutorials ?? true); const [reduceAnimations, setReduceAnimations] = useState<boolean>(user?.preferences?.reduceAnimations ?? false); const [compactUI, setCompactUI] = useState<boolean>(user?.preferences?.compactUI ?? false); /* Privacy controls */
- const [profileVis, setProfileVis] = useState<'public' | 'friends_only' | 'private'>(user?.privacy?.profileVisibility || 'public'); const [friendVis, setFriendVis] = useState<'public' | 'friends_only' | 'private'>(user?.privacy?.friendVisibility || 'public'); const [activityVis, setActivityVis] = useState<'public' | 'friends_only' | 'private'>(user?.privacy?.activityVisibility || 'public'); const [saved, setSaved] = useState(false); const [resetConfirm, setResetConfirm] = useState(false); const [recentSessions, setRecentSessions] = useState<GameSession[]>([]); const [pbHistory, setPbHistory] = useState<PersonalBestHistoryItem[]>([]); const [loadingHistory, setLoadingHistory] = useState(false); const [activeTab, setActiveTab] = useState<'customization' | 'preferences' | 'preview' | 'pbs' | 'history'>('customization'); const unlockedTitles = getUnlockedTitles(user); useEffect(() => { if (!user) return; setDisplayName(user.displayName || ''); setSelectedAvatar(user.avatarUrl || AVATARS[0]); setSelectedTitle(user.selectedTitle || 'Puzzle Apprentice'); setBio(user.bio || ''); setFavoriteGames(user.favoriteGameTypes || []); }, [user]); useEffect(() => { if (!user) return; setLoadingHistory(true); Promise.all([ fetchUserRecentGameSessions(user.uid, 10), fetchPersonalBestHistory(user.uid, undefined, 10) ]) .then(([sessions, history]) => { setRecentSessions(sessions); setPbHistory(history); setLoadingHistory(false); }) .catch(() => setLoadingHistory(false)); }, [user?.uid]); const handleSave = async () => { if (!user) return; /* Validate inputs */
- const cleanName = displayName.trim().slice(0, 50) || 'Puzzle Master'; const cleanBio = bio.trim().slice(0, 150); const updates = { displayName: cleanName, avatarUrl: selectedAvatar, selectedTitle, bio: cleanBio, favoriteGameTypes: favoriteGames, preferences: { preferredDifficulty: preferredDiff, showTutorials, reduceAnimations, soundMuted, compactUI }, privacy: { profileVisibility: profileVis, friendVisibility: friendVis, activityVisibility: activityVis } }; await updateProfile(updates); setSaved(true); setTimeout(() => setSaved(false), 2500); }; const toggleFavorite = (id: PuzzleType) => { if (favoriteGames.includes(id)) { setFavoriteGames(favoriteGames.filter((g) => g !== id)); } else { if (favoriteGames.length >= 4) return; setFavoriteGames([...favoriteGames, id]); } }; const handleResetDifficulty = async () => { await resetAdaptiveProfiles(); setResetConfirm(false); }; const handleLogout = async () => { await signOut(auth); setUser(null, true); }; const personalBests = user?.personalBests || {}; const adaptiveProfiles = user?.adaptiveProfiles || {}; return ( <div className="space-y-8 animate-fade-in max-w-[900px] mx-auto px-4 md:px-8 mt-8 pb-16"> {/* Profile Header Card */} <div className="bg-pv-surface-primary border border-pv-border-violet p-8 rounded-2xl flex flex-col sm:flex-row items-start gap-8"> <img src={selectedAvatar} alt={displayName} className="w-24 h-24 rounded-2xl object-cover border border-pv-border-strong shrink-0" /> <div className="space-y-2 text-center sm:text-left flex-1"> <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2"> <h2 className="text-2xl font-black text-white">{displayName}</h2> <span className="bg-pv-surface-secondary text-pv-text-muted text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider"> {selectedTitle} </span> {user?.role === 'ADMIN' && ( <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-black px-2 py-0.5 rounded-md uppercase"> Admin </span> )} </div> <p className="text-sm text-pv-text-muted font-mono">@{user?.username || 'player'}</p> {bio && ( <p className="text-sm text-pv-text-muted max-w-md italic leading-relaxed pt-1"> "{bio}" </p> )} <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-2 text-xs font-bold"> <span className="bg-gradient-primary-btn text-pv-bg-primary px-3 py-1 rounded-lg font-black"> Level {user?.level || 1} </span> <span className="text-pv-dragon-fruit-light flex items-center gap-1"> <Coins className="w-4 h-4" /> {user?.coins || 0} Coins </span> <span className="text-pv-dragon-fruit-light flex items-center gap-1"> <HelpCircle className="w-4 h-4" /> {user?.hints || 0} Hints </span> </div> </div> </div> {/* Skill Mastery Summary Banner */} {(() => { const masteryProf = calculateUserMasteryProfile(user); return ( <div className="bg-pv-surface-primary border border-pv-border-violet p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4"> <div className="flex items-center gap-3"> <div className="p-2 bg-pv-surface-secondary text-pv-text-secondary rounded-lg"> <Award className="w-6 h-6" /> </div> <div> <h3 className="text-sm font-black text-white flex items-center gap-2"> Puzzle Mastery Profile <span className="text-[10px] bg-pv-surface-secondary text-pv-text-muted font-bold px-2 py-1 rounded uppercase"> Level {masteryProf.overallMasteryLevel} Master </span> </h3> <p className="text-sm text-pv-text-muted"> Total Points: <strong className="text-white">{masteryProf.totalMasteryPoints} Pts</strong> ({masteryProf.overallMasteryPercent}% Overall) across all 16 skill trees. </p> </div> </div> <button onClick={() => setActiveTabGlobal('mastery')} className="bg-pv-surface-secondary hover:bg-pv-surface-highlight text-pv-text-primary font-semibold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 transition shrink-0" > <Award className="w-4 h-4" /> <span>Skill Tree Hub</span> </button> </div> ); })()} {/* Player Showcase Shortcut Banner */} <div className="bg-pv-surface-primary border border-pv-border-violet p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4"> <div className="flex items-center gap-3"> <div className="p-2 bg-pv-surface-secondary text-pv-text-secondary rounded-lg"> <Sparkles className="w-6 h-6" /> </div> <div> <h3 className="text-sm font-black text-white flex items-center gap-2"> Player Accomplishments Showcase <span className="text-[10px] bg-pv-surface-secondary text-pv-text-muted font-bold px-2 py-1 rounded uppercase"> Public Ready </span> </h3> <p className="text-sm text-pv-text-muted"> Showcase verified titles, personal best records, and unlocked achievements on your public profile. </p> </div> </div> <button onClick={() => setActiveTabGlobal('showcase')} className="bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-soft text-pv-bg-primary font-bold px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 transition shrink-0" > <Trophy className="w-4 h-4" /> <span>View Showcase</span> </button> </div> {/* Navigation Sub-Tabs */} <div className="flex flex-wrap items-center gap-1 border-b border-pv-border-violet pb-2"> <button onClick={() => setActiveTab('customization')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ activeTab === 'customization' ? 'bg-white/10 text-pv-text-primary' : 'text-pv-text-secondary hover:bg-white/5 hover:text-pv-text-primary' }`} > Customization </button> <button onClick={() => setActiveTab('preferences')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ activeTab === 'preferences' ? 'bg-white/10 text-pv-text-primary' : 'text-pv-text-secondary hover:bg-white/5 hover:text-pv-text-primary' }`} > Settings </button> <button onClick={() => setActiveTab('preview')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ activeTab === 'preview' ? 'bg-white/10 text-pv-text-primary' : 'text-pv-text-secondary hover:bg-white/5 hover:text-pv-text-primary' }`} > Public Preview </button> <button onClick={() => setActiveTab('pbs')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ activeTab === 'pbs' ? 'bg-white/10 text-pv-text-primary' : 'text-pv-text-secondary hover:bg-white/5 hover:text-pv-text-primary' }`} > Personal Bests </button> <button onClick={() => setActiveTab('history')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ activeTab === 'history' ? 'bg-white/10 text-pv-text-primary' : 'text-pv-text-secondary hover:bg-white/5 hover:text-pv-text-primary' }`} > Activity &amp; Replays </button> <button onClick={() => setActiveTab('wall' as any)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ (activeTab as any) === 'wall' ? 'bg-white/10 text-pv-text-primary' : 'text-pv-text-secondary hover:bg-white/5 hover:text-pv-text-primary' }`} > Player Wall </button> </div> {/* TAB 1: Profile Customization */} {activeTab === 'customization' && ( <div className="space-y-8 mt-6"> <div className="flex items-center justify-between"> <h3 className="text-xl font-semibold text-pv-text-primary flex items-center gap-2"> <User className="w-5 h-5 text-pv-dragon-fruit-light" /> Player Personalization </h3> <span className="text-sm text-pv-text-muted">Phase 67 Customization</span> </div> {saved && ( <div className="bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 p-3 rounded-xl text-xs text-center font-bold"> Profile updated successfully! </div> )} {/* Display Name */} <div className="space-y-2"> <label className="text-xs font-bold text-pv-text-secondary">Display Name</label> <input type="text" maxLength={50} value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full bg-pv-surface-primary border border-pv-border-strong text-pv-text-primary px-4 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pv-dragon-fruit" /> </div> {/* Title Integration Picker */} <div className="space-y-2"> <div className="flex items-center justify-between"> <label className="text-xs font-bold text-pv-text-secondary">Selected Title</label> <span className="text-[10px] text-pv-text-muted">Unlocked by achievements, levels, and streak</span> </div> <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1 bg-pv-bg-primary rounded-2xl border border-pv-border-violet"> {TITLE_DEFINITIONS.map((def) => { const isUnlocked = unlockedTitles.includes(def.title); const isSelected = selectedTitle === def.title; return ( <button key={def.id} disabled={!isUnlocked} onClick={() => isUnlocked && setSelectedTitle(def.title)} className={`p-3 rounded-xl border text-left transition flex items-center justify-between ${ isSelected ? 'border-pv-dragon-fruit bg-gradient-primary-btn/10 text-pv-dragon-fruit-light' : isUnlocked ? 'border-pv-border-violet hover:border-pv-border-strong text-pv-text-secondary' : 'border-pv-border-strong bg-pv-bg-secondary/40 text-pv-text-disabled cursor-not-allowed' }`} > <div> <div className="flex items-center gap-2"> <span className="text-xs font-extrabold">{def.title}</span> {!isUnlocked && <Lock className="w-3 h-3 text-pv-text-disabled" />} </div> <p className="text-[10px] text-pv-text-muted line-clamp-1">{def.description}</p> </div> {isSelected && <CheckCircle2 className="w-4 h-4 text-pv-dragon-fruit-light shrink-0" />} </button> ); })} </div> </div> {/* Avatar Options */} <div className="space-y-2"> <label className="text-xs font-bold text-pv-text-secondary">Choose Avatar</label> <div className="grid grid-cols-4 sm:grid-cols-8 gap-2"> {AVATARS.map((url, idx) => ( <button key={idx} onClick={() => setSelectedAvatar(url)} className={`p-1 rounded-xl border-2 transition ${ selectedAvatar === url ? 'border-pv-dragon-fruit bg-gradient-primary-btn/20' : 'border-pv-border-violet hover:border-pv-border-strong' }`} > <img src={url} alt="Avatar option" className="w-full h-auto rounded-lg" /> </button> ))} </div> </div> {/* Player Bio */} <div className="space-y-2"> <div className="flex justify-between items-center"> <label className="text-xs font-bold text-pv-text-secondary">Short Bio</label> <span className="text-[10px] text-pv-text-muted">{bio.length}/150</span> </div> <textarea maxLength={150} rows={2} value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Share a short note about your puzzle journey..." className="w-full bg-pv-surface-primary border border-pv-border-strong text-pv-text-primary px-4 py-2.5 rounded-lg text-xs focus:outline-none focus:border-pv-dragon-fruit resize-none" /> </div> {/* Favorite Game Types Multi-Select */} <div className="space-y-2"> <div className="flex justify-between items-center"> <label className="text-xs font-bold text-pv-text-secondary">Favorite Puzzle Types (Max 4)</label> <span className="text-[10px] text-pv-dragon-fruit-light font-bold">{favoriteGames.length}/4 selected</span> </div> <div className="grid grid-cols-2 sm:grid-cols-4 gap-2"> {PUZZLE_MODES.map((p) => { const isFav = favoriteGames.includes(p.id); return ( <button key={p.id} onClick={() => toggleFavorite(p.id)} className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between transition ${ isFav ? 'border-pv-dragon-fruit bg-gradient-primary-btn/20 text-pv-dragon-fruit-light' : 'border-pv-border-violet hover:border-pv-border-strong text-pv-text-secondary' }`} > <span className="truncate">{p.name}</span> <Heart className={`w-3.5 h-3.5 shrink-0 ${isFav ? 'fill-pv-dragon-fruit text-pv-dragon-fruit-light' : 'text-pv-text-disabled'}`} /> </button> ); })} </div> </div> {/* Save Action */} <div className="flex gap-3 pt-2"> <button onClick={handleSave} className="flex-1 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-soft text-pv-bg-primary font-bold py-2.5 px-6 rounded-lg text-sm transition-colors flex items-center justify-center gap-2" > <Save className="w-4 h-4" /> Save Profile </button> {!isGuest && ( <button onClick={handleLogout} className="bg-pv-surface-primary hover:bg-rose-600 text-pv-text-secondary hover:bg-white/5 hover:text-pv-text-primary border border-pv-border-strong px-4 py-3.5 rounded-xl text-xs font-bold transition flex items-center gap-2" > <LogOut className="w-4 h-4" /> Log Out </button> )} </div> </div> )} {/* TAB 2: Player Preferences & Settings */} {activeTab === 'preferences' && ( <div className="space-y-8 mt-6"> <div className="flex items-center justify-between"> <h3 className="text-xl font-semibold text-pv-text-primary flex items-center gap-2"> <Sliders className="w-5 h-5 text-pv-dragon-fruit-light" /> Gameplay &amp; System Preferences </h3> <span className="text-sm text-pv-text-muted">Settings &amp; Audio</span> </div> <div className="space-y-4 divide-y divide-slate-800"> {/* Preferred Difficulty */} <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"> <div> <h4 className="text-sm font-bold text-white">Default Preferred Difficulty</h4> <p className="text-sm text-pv-text-muted">Default difficulty pre-selected when launching new puzzles</p> </div> <select value={preferredDiff} onChange={(e) => setPreferredDiff(e.target.value as any)} className="bg-pv-bg-primary border border-pv-border-violet text-pv-dragon-fruit-light font-bold px-3 py-2 rounded-xl text-xs focus:outline-none" > <option value="adaptive">Smart Adaptive (Recommended)</option> <option value="easy">Easy Mode</option> <option value="medium">Medium Mode</option> <option value="hard">Hard Mode</option> </select> </div> {/* Sound Mute Toggle */} <div className="pt-3 flex items-center justify-between"> <div> <h4 className="text-sm font-bold text-white">Sound Effects</h4> <p className="text-sm text-pv-text-muted">Toggle gameplay click, victory, and level-up sounds</p> </div> <button onClick={toggleSound} className={`p-2.5 rounded-xl border font-bold text-xs flex items-center gap-2 transition ${ soundMuted ? 'bg-pv-surface-primary text-pv-text-secondary border-pv-border-strong' : 'bg-gradient-primary-btn/20 text-pv-dragon-fruit-light border-pv-border-strong' }`} > {soundMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-pv-dragon-fruit-light" />} <span>{soundMuted ? 'Muted' : 'Sound On'}</span> </button> </div> {/* Privacy Controls */} <div className="pt-3 space-y-3"> <h4 className="text-sm font-bold text-white flex items-center gap-2"> <ShieldCheck className="w-4 h-4 text-emerald-400" /> Privacy &amp; Visibility Controls </h4> <div className="grid grid-cols-1 sm:grid-cols-3 gap-3"> <div className="bg-pv-bg-primary p-3 rounded-2xl border border-pv-border-violet space-y-1"> <span className="text-[11px] font-bold text-pv-text-secondary block">Profile Visibility</span> <select value={profileVis} onChange={(e) => setProfileVis(e.target.value as any)} className="w-full bg-pv-bg-secondary border border-pv-border-violet text-white font-semibold px-2.5 py-1.5 rounded-xl text-xs" > <option value="public">Public</option> <option value="friends_only">Friends Only</option> <option value="private">Private</option> </select> </div> <div className="bg-pv-bg-primary p-3 rounded-2xl border border-pv-border-violet space-y-1"> <span className="text-[11px] font-bold text-pv-text-secondary block">Friend Requests</span> <select value={friendVis} onChange={(e) => setFriendVis(e.target.value as any)} className="w-full bg-pv-bg-secondary border border-pv-border-violet text-white font-semibold px-2.5 py-1.5 rounded-xl text-xs" > <option value="public">Allow Everyone</option> <option value="friends_only">Friends of Friends</option> <option value="private">Block Requests</option> </select> </div> <div className="bg-pv-bg-primary p-3 rounded-2xl border border-pv-border-violet space-y-1"> <span className="text-[11px] font-bold text-pv-text-secondary block">Activity Visibility</span> <select value={activityVis} onChange={(e) => setActivityVis(e.target.value as any)} className="w-full bg-pv-bg-secondary border border-pv-border-violet text-white font-semibold px-2.5 py-1.5 rounded-xl text-xs" > <option value="public">Public</option> <option value="friends_only">Friends Only</option> <option value="private">Private</option> </select> </div> </div> </div> {/* Reset Difficulty Engine */} <div className="pt-4"> <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2"> <Zap className="w-4 h-4 text-pv-dragon-fruit-light" /> Smart Adaptive Recommendation Engine </h4> <p className="text-sm text-pv-text-muted mb-4"> Recalibrate adaptive recommendation history without touching level, coins, or achievements. </p> {resetConfirm ? ( <div className="bg-pv-bg-primary p-4 rounded-2xl border border-rose-500/40 flex items-center justify-between"> <span className="text-xs text-rose-300 font-bold">Reset adaptive difficulty for all games?</span> <div className="flex gap-2"> <button onClick={handleResetDifficulty} className="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg" > Confirm Reset </button> <button onClick={() => setResetConfirm(false)} className="bg-pv-surface-primary text-pv-text-secondary text-xs font-bold px-3 py-1.5 rounded-lg" > Cancel </button> </div> </div> ) : ( <button onClick={() => setResetConfirm(true)} className="bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-secondary border border-pv-border-strong text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2" > <RefreshCw className="w-3.5 h-3.5" /> Reset Adaptive Recommendations </button> )} </div> </div> <button onClick={handleSave} className="bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-soft text-pv-bg-primary font-bold py-2.5 px-6 rounded-lg text-sm transition-colors flex items-center justify-center gap-2 w-full sm:w-auto" > <Save className="w-4 h-4" /> Save Preferences </button> </div> )} {/* TAB 3: Public Profile Preview */} {activeTab === 'preview' && ( <div className="space-y-8 mt-6"> <div className="flex items-center justify-between"> <h3 className="text-xl font-semibold text-pv-text-primary flex items-center gap-2"> <Eye className="w-5 h-5 text-pv-dragon-fruit-light" /> Public Profile Preview </h3> <span className="text-xs text-emerald-400 font-bold">Visibility: {profileVis.toUpperCase()}</span> </div> <div className="bg-pv-surface-primary p-6 rounded-xl border border-pv-border-violet space-y-6"> <div className="flex items-center gap-4"> <img src={selectedAvatar} alt={displayName} className="w-16 h-16 rounded-2xl border border-pv-dragon-fruit" /> <div> <h4 className="text-lg font-black text-white">{displayName}</h4> <p className="text-xs text-pv-dragon-fruit-light font-bold uppercase">{selectedTitle}</p> <p className="text-[10px] text-pv-text-muted">@{user?.username || 'player'}</p> </div> </div> {profileVis === 'private' ? ( <div className="p-4 bg-pv-bg-secondary rounded-xl border border-pv-border-violet text-center text-sm text-pv-text-muted"> 🔒 This profile is set to Private. Other players cannot view stats or activity. </div> ) : ( <div className="space-y-3"> {bio && <p className="text-sm text-pv-text-muted italic">"{bio}"</p>} <div className="grid grid-cols-3 gap-2 text-center text-xs"> <div className="bg-pv-bg-secondary p-2.5 rounded-xl border border-pv-border-violet"> <span className="text-[10px] text-pv-text-muted block">Level</span> <span className="font-black text-pv-dragon-fruit-light">{user?.level || 1}</span> </div> <div className="bg-pv-bg-secondary p-2.5 rounded-xl border border-pv-border-violet"> <span className="text-[10px] text-pv-text-muted block">Wins</span> <span className="font-black text-emerald-400">{user?.totalWins || 0}</span> </div> <div className="bg-pv-bg-secondary p-2.5 rounded-xl border border-pv-border-violet"> <span className="text-[10px] text-pv-text-muted block">Streak</span> <span className="font-black text-pv-dragon-fruit">{user?.currentStreak || 1}d</span> </div> </div> {favoriteGames.length > 0 && ( <div> <span className="text-[10px] text-pv-text-secondary font-bold uppercase block mb-1">Favorite Puzzles</span> <div className="flex flex-wrap gap-1.5"> {favoriteGames.map((g) => { const puzzle = PUZZLE_MODES.find((p) => p.id === g); return ( <span key={g} className="text-[10px] bg-pv-bg-secondary text-pv-dragon-fruit-light border border-pv-border-violet px-2 py-0.5 rounded-lg font-bold"> {puzzle?.name || g} </span> ); })} </div> </div> )} </div> )} </div> </div> )} {/* TAB 4: Personal Bests */} {activeTab === 'pbs' && ( <div className="space-y-6"> <div className="space-y-6 mt-6"> <div className="flex items-center justify-between mb-4"> <h3 className="text-xl font-semibold text-pv-text-primary flex items-center gap-2"> <Award className="w-5 h-5 text-pv-dragon-fruit-light" /> Personal Bests by Game </h3> <span className="text-sm text-pv-text-muted">Validated Game Records</span> </div> <div className="grid grid-cols-1 md:grid-cols-2 gap-3"> {PUZZLE_MODES.map((puzzle) => { const pb = personalBests[puzzle.id]; const adapt = adaptiveProfiles[puzzle.id]; return ( <div key={puzzle.id} className="bg-pv-surface-primary border border-pv-border-violet p-5 rounded-xl space-y-2"> <div className="flex items-center justify-between"> <span className="font-bold text-white text-sm">{puzzle.name}</span> <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-pv-surface-secondary text-pv-text-muted"> Rec: {adapt?.currentRecommendedDifficulty || 'easy'} </span> </div> <div className="grid grid-cols-3 gap-2 text-[11px] pt-1 border-t border-pv-border-violet/50"> <div> <span className="text-pv-text-muted block">Best Score</span> <span className="font-black text-pv-dragon-fruit-light">{pb?.bestScore ? `${pb.bestScore} pts` : '-'}</span> </div> <div> <span className="text-pv-text-muted block">Fastest Time</span> <span className="font-black text-cyan-400">{pb?.bestTime ? `${pb.bestTime}s` : '-'}</span> </div> <div> <span className="text-pv-text-muted block">Max Diff</span> <span className="font-black text-pv-dragon-fruit-light uppercase">{pb?.bestDifficulty || 'easy'}</span> </div> </div> </div> ); })} </div> </div> {/* PB Progress Timeline */} {pbHistory.length > 0 && ( <div className="space-y-6 mt-6 space-y-4"> <h4 className="text-sm font-bold text-white flex items-center gap-2"> <Flame className="w-4 h-4 text-pv-dragon-fruit" /> Personal Best Progress Timeline </h4> <div className="space-y-2"> {pbHistory.map((item, idx) => ( <div key={idx} className="bg-pv-surface-primary p-3 rounded-xl border border-pv-border-violet flex items-center justify-between text-xs"> <div> <span className="font-bold text-pv-dragon-fruit-light uppercase mr-2">{item.puzzleType}</span> <span className="text-pv-text-secondary font-semibold">{item.score} PTS ({item.timeSeconds}s)</span> </div> <span className="text-[10px] text-emerald-400 font-bold"> {item.improvementScore ? `+${item.improvementScore} pts record` : 'New Record'} </span> </div> ))} </div> </div> )} </div> )} {/* TAB 5: Activity & Replays */} {activeTab === 'history' && ( <div className="bg-pv-surface-primary border border-pv-border-violet p-6 rounded-3xl space-y-4 shadow-sm"> <h3 className="text-xl font-semibold text-pv-text-primary flex items-center gap-2"> <RotateCcw className="w-5 h-5 text-pv-dragon-fruit-light" /> Recent Game Sessions &amp; Replays </h3> <p className="text-sm text-pv-text-muted"> Replaying a past attempt generates a brand new game session attempt without duplicating rewards. </p> {loadingHistory ? ( <p className="text-xs text-pv-text-muted py-4 text-center">Loading game history...</p> ) : recentSessions.length === 0 ? ( <p className="text-xs text-pv-text-muted py-4 text-center">No recent game sessions recorded yet. Play a puzzle to see history!</p> ) : ( <div className="space-y-3"> {recentSessions.map((session, idx) => { const puzzleInfo = PUZZLE_MODES.find((p) => p.id === session.puzzleType); return ( <div key={session.id || idx} className="bg-pv-surface-primary border border-pv-border-violet p-5 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" > <div> <div className="flex items-center gap-2 mb-1"> <span className="font-bold text-white text-sm">{puzzleInfo?.name || session.puzzleType}</span> <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${ session.won ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400' }`}> {session.won ? 'SOLVED' : 'FAILED'} </span> {session.isReplay && ( <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-pv-surface-soft text-pv-dragon-fruit-light"> Replay </span> )} </div> <div className="flex items-center gap-4 text-xs font-semibold text-pv-text-secondary"> <span>Score: <strong className="text-pv-dragon-fruit-light">{session.score}</strong></span> <span>Time: <strong className="text-cyan-400">{session.timeSeconds}s</strong></span> <span className="uppercase text-pv-dragon-fruit-light">{session.difficulty}</span> </div> </div> <button onClick={() => startReplaySession(session)} className="w-full sm:w-auto bg-pv-surface-primary hover:bg-pv-dragon-fruit text-white font-bold px-4 py-2 rounded-xl border border-pv-border-strong text-xs flex items-center justify-center gap-1.5 transition active:scale-95" > <RotateCcw className="w-3.5 h-3.5" /> Replay Attempt </button> </div> ); })} </div> )} </div> )} {/* TAB 6: Player Wall */} {(activeTab as any) === 'wall' && user && ( <PlayerWallSection profileUserId={user.uid} profileUserName={user.displayName} /> )} </div> );
+import { PlayerWallSection } from '../components/PlayerWallSection';
+import { PageHeader, Card } from '../components/ui/Card';
+import { AVATAR_PRESETS, resolveAvatarUrl } from '../utils/avatar';
+
+const AVATARS = AVATAR_PRESETS;
+
+export const ProfilePage: React.FC = () => {
+  const {
+    user,
+    updateProfile,
+    setUser,
+    isGuest,
+    startReplaySession,
+    resetAdaptiveProfiles,
+    soundMuted,
+    toggleSound,
+    setActiveTab: setActiveTabGlobal,
+  } = useStore();
+
+  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [selectedAvatar, setSelectedAvatar] = useState(resolveAvatarUrl(user?.avatarUrl, user?.uid || 'alpha'));
+  const [selectedTitle, setSelectedTitle] = useState(user?.selectedTitle || 'Puzzle Apprentice');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [favoriteGames, setFavoriteGames] = useState<PuzzleType[]>(user?.favoriteGameTypes || []);
+
+  const [preferredDiff, setPreferredDiff] = useState<Difficulty | 'adaptive'>(
+    user?.preferences?.preferredDifficulty || 'adaptive'
+  );
+  const [showTutorials, setShowTutorials] = useState<boolean>(user?.preferences?.showTutorials ?? true);
+  const [reduceAnimations, setReduceAnimations] = useState<boolean>(user?.preferences?.reduceAnimations ?? false);
+  const [compactUI, setCompactUI] = useState<boolean>(user?.preferences?.compactUI ?? false);
+
+  const [profileVis, setProfileVis] = useState<'public' | 'friends_only' | 'private'>(
+    user?.privacy?.profileVisibility || 'public'
+  );
+  const [friendVis, setFriendVis] = useState<'public' | 'friends_only' | 'private'>(
+    user?.privacy?.friendVisibility || 'public'
+  );
+  const [activityVis, setActivityVis] = useState<'public' | 'friends_only' | 'private'>(
+    user?.privacy?.activityVisibility || 'public'
+  );
+
+  const [saved, setSaved] = useState(false);
+  const [resetConfirm, setResetConfirm] = useState(false);
+  const [recentSessions, setRecentSessions] = useState<GameSession[]>([]);
+  const [pbHistory, setPbHistory] = useState<PersonalBestHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState<'customization' | 'preferences' | 'preview' | 'pbs' | 'history' | 'wall'>(
+    'customization'
+  );
+
+  const unlockedTitles = getUnlockedTitles(user);
+
+  useEffect(() => {
+    if (!user) return;
+    setDisplayName(user.displayName || '');
+    setSelectedAvatar(resolveAvatarUrl(user.avatarUrl, user.uid || 'alpha'));
+    setSelectedTitle(user.selectedTitle || 'Puzzle Apprentice');
+    setBio(user.bio || '');
+    setFavoriteGames(user.favoriteGameTypes || []);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    setLoadingHistory(true);
+    Promise.all([
+      fetchUserRecentGameSessions(user.uid, 10),
+      fetchPersonalBestHistory(user.uid, undefined, 10),
+    ])
+      .then(([sessions, history]) => {
+        setRecentSessions(sessions);
+        setPbHistory(history);
+        setLoadingHistory(false);
+      })
+      .catch(() => setLoadingHistory(false));
+  }, [user?.uid]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    const cleanName = displayName.trim().slice(0, 50) || 'Puzzle Player';
+    const cleanBio = bio.trim().slice(0, 150);
+    const updates = {
+      displayName: cleanName,
+      avatarUrl: selectedAvatar,
+      selectedTitle,
+      bio: cleanBio,
+      favoriteGameTypes: favoriteGames,
+      preferences: {
+        preferredDifficulty: preferredDiff,
+        showTutorials,
+        reduceAnimations,
+        soundMuted,
+        compactUI,
+      },
+      privacy: {
+        profileVisibility: profileVis,
+        friendVisibility: friendVis,
+        activityVisibility: activityVis,
+      },
+    };
+    await updateProfile(updates);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  const toggleFavorite = (id: PuzzleType) => {
+    if (favoriteGames.includes(id)) {
+      setFavoriteGames(favoriteGames.filter((g) => g !== id));
+    } else {
+      if (favoriteGames.length >= 4) return;
+      setFavoriteGames([...favoriteGames, id]);
+    }
+  };
+
+  const handleResetDifficulty = async () => {
+    await resetAdaptiveProfiles();
+    setResetConfirm(false);
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setUser(null, true);
+  };
+
+  const personalBests = user?.personalBests || {};
+  const adaptiveProfiles = user?.adaptiveProfiles || {};
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto animate-fade-in">
+      {/* Player Identity Banner */}
+      <Card surface="featured" padding="lg" className="border-[#494052]">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+          <img
+            src={selectedAvatar}
+            alt={displayName}
+            className="w-20 h-20 rounded-xl object-cover border-2 border-[#494052] shrink-0 bg-[#16131C]"
+          />
+          <div className="space-y-2.5 text-center sm:text-left flex-1 min-w-0">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <h2 className="text-2xl font-semibold text-[#F5F3F7] tracking-tight">{displayName}</h2>
+              <span className="bg-[#16131C] text-[#C5BFD0] text-[10px] font-medium px-2.5 py-0.5 rounded-md border border-[#342D3D] uppercase tracking-wider">
+                {selectedTitle}
+              </span>
+              {user?.role === 'ADMIN' && (
+                <span className="bg-[#FF4696]/15 text-[#FF82B8] border border-[#FF4696]/40 text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase">
+                  Admin
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-[#9F97AB] font-mono">@{user?.username || 'player'}</p>
+            {bio && (
+              <p className="text-xs text-[#C5BFD0] max-w-lg leading-relaxed">
+                "{bio}"
+              </p>
+            )}
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1 text-xs">
+              <span className="bg-[#16131C] border border-[#342D3D] px-2.5 py-1 rounded-md text-[#F5F3F7] font-semibold font-tabular">
+                Level {user?.level || 1}
+              </span>
+              <span className="bg-[#16131C] border border-[#342D3D] px-2.5 py-1 rounded-md text-[#C5BFD0] font-tabular">
+                {user?.xp || 0} XP
+              </span>
+              <span className="bg-[#16131C] border border-[#342D3D] px-2.5 py-1 rounded-md text-[#C5BFD0] flex items-center gap-1.5 font-tabular">
+                <Coins className="w-3.5 h-3.5 text-[#FF4696]" /> {formatCount(user?.coins || 0, 'coin')}
+              </span>
+              <span className="bg-[#16131C] border border-[#342D3D] px-2.5 py-1 rounded-md text-[#C5BFD0] flex items-center gap-1.5 font-tabular">
+                <HelpCircle className="w-3.5 h-3.5 text-[#38BDF8]" /> {formatCount(user?.hints || 0, 'hint')}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Sub Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-pv-border">
+        {[
+          { id: 'customization', label: 'Customization' },
+          { id: 'preferences', label: 'Preferences' },
+          { id: 'preview', label: 'Public Preview' },
+          { id: 'pbs', label: 'Personal Bests' },
+          { id: 'history', label: 'Activity & Replays' },
+          { id: 'wall', label: 'Player Wall' },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`px-3.5 h-8 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+              activeTab === tab.id
+                ? 'bg-pv-surface-soft text-pv-text-primary border border-pv-border-strong'
+                : 'text-pv-text-secondary hover:text-pv-text-primary hover:bg-pv-surface-primary'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* TAB 1: Customization */}
+      {activeTab === 'customization' && (
+        <Card className="p-6 space-y-6">
+          <div className="flex items-center justify-between border-b border-pv-border pb-3">
+            <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
+              <User className="w-4 h-4 text-pv-dragon-fruit" /> Profile Identity
+            </h3>
+          </div>
+
+          {saved && (
+            <div className="bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 p-3 rounded-lg text-xs text-center font-medium">
+              Profile changes saved successfully.
+            </div>
+          )}
+
+          {/* Display Name */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-pv-text-secondary">Display Name</label>
+            <input
+              type="text"
+              maxLength={50}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 h-9 rounded-lg text-xs focus:outline-none focus:border-pv-dragon-fruit"
+            />
+          </div>
+
+          {/* Title Picker */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-pv-text-secondary">Selected Title</label>
+              <span className="text-[11px] text-pv-text-muted">Earned via achievements, levels, and streaks</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1 bg-pv-surface-secondary rounded-lg border border-pv-border">
+              {TITLE_DEFINITIONS.map((def) => {
+                const isUnlocked = unlockedTitles.includes(def.title);
+                const isSelected = selectedTitle === def.title;
+                return (
+                  <button
+                    key={def.id}
+                    type="button"
+                    disabled={!isUnlocked}
+                    onClick={() => isUnlocked && setSelectedTitle(def.title)}
+                    className={`p-2.5 rounded-md border text-left transition-colors flex items-center justify-between ${
+                      isSelected
+                        ? 'border-pv-dragon-fruit bg-pv-surface-soft text-pv-text-primary font-medium'
+                        : isUnlocked
+                        ? 'border-pv-border hover:border-pv-border-strong text-pv-text-secondary'
+                        : 'border-pv-border/40 bg-pv-surface-primary text-pv-text-muted opacity-40 cursor-not-allowed'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs">{def.title}</span>
+                        {!isUnlocked && <Lock className="w-3 h-3 text-pv-text-muted" />}
+                      </div>
+                      <p className="text-[10px] text-pv-text-muted line-clamp-1">{def.description}</p>
+                    </div>
+                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-pv-dragon-fruit shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Avatar Options */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-pv-text-secondary">Avatar Graphic</label>
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+              {AVATARS.map((url, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedAvatar(url)}
+                  className={`p-1 rounded-lg border transition-colors ${
+                    selectedAvatar === url
+                      ? 'border-pv-dragon-fruit bg-pv-surface-soft'
+                      : 'border-pv-border hover:border-pv-border-strong'
+                  }`}
+                >
+                  <img src={url} alt={`Avatar ${idx + 1}`} className="w-full h-auto rounded" />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bio */}
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-medium text-pv-text-secondary">Short Biography</label>
+              <span className="text-[10px] text-pv-text-muted">{bio.length}/150</span>
+            </div>
+            <textarea
+              maxLength={150}
+              rows={2}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Describe your puzzle style or favorite challenge types..."
+              className="w-full bg-pv-surface-secondary border border-pv-border text-pv-text-primary px-3 py-2 rounded-lg text-xs focus:outline-none focus:border-pv-dragon-fruit resize-none placeholder-pv-text-muted"
+            />
+          </div>
+
+          {/* Favorite Game Types */}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-medium text-pv-text-secondary">
+                Favorite Puzzle Types (up to 4)
+              </label>
+              <span className="text-[11px] text-pv-text-muted font-tabular">
+                {favoriteGames.length} / 4 selected
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {PUZZLE_MODES.map((p) => {
+                const isFav = favoriteGames.includes(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => toggleFavorite(p.id)}
+                    className={`p-2.5 rounded-lg border text-xs font-medium flex items-center justify-between transition-colors ${
+                      isFav
+                        ? 'border-pv-dragon-fruit bg-pv-surface-soft text-pv-text-primary'
+                        : 'border-pv-border hover:border-pv-border-strong text-pv-text-secondary'
+                    }`}
+                  >
+                    <span className="truncate">{p.name}</span>
+                    <Heart
+                      className={`w-3.5 h-3.5 shrink-0 ${
+                        isFav ? 'fill-pv-dragon-fruit text-pv-dragon-fruit' : 'text-pv-text-muted'
+                      }`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={handleSave}
+              className="h-9 px-5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+            >
+              <Save className="w-3.5 h-3.5" /> Save Changes
+            </button>
+            {!isGuest && (
+              <button
+                onClick={handleLogout}
+                className="h-9 px-4 bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5" /> Log Out
+              </button>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* TAB 2: Preferences */}
+      {activeTab === 'preferences' && (
+        <Card className="p-6 space-y-6">
+          <div className="flex items-center justify-between border-b border-pv-border pb-3">
+            <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-pv-dragon-fruit" /> Gameplay Settings
+            </h3>
+          </div>
+
+          <div className="space-y-4 divide-y divide-pv-border">
+            {/* Preferred Difficulty */}
+            <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-xs font-semibold text-pv-text-primary">Default Difficulty</h4>
+                <p className="text-[11px] text-pv-text-secondary mt-0.5">
+                  Initial difficulty level selected when opening any puzzle
+                </p>
+              </div>
+              <select
+                value={preferredDiff}
+                onChange={(e) => setPreferredDiff(e.target.value as any)}
+                className="bg-pv-surface-secondary border border-pv-border text-pv-text-primary font-medium px-3 h-8 rounded-lg text-xs focus:outline-none"
+              >
+                <option value="adaptive">Smart Adaptive</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+
+            {/* Sound Toggle */}
+            <div className="pt-3 flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-semibold text-pv-text-primary">Audio Effects</h4>
+                <p className="text-[11px] text-pv-text-secondary mt-0.5">
+                  Play move feedback and victory chimes during puzzles
+                </p>
+              </div>
+              <button
+                onClick={toggleSound}
+                className="h-8 px-3 rounded-lg border border-pv-border bg-pv-surface-secondary text-pv-text-primary text-xs font-medium flex items-center gap-1.5 hover:bg-pv-surface-soft transition-colors"
+              >
+                {soundMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-pv-dragon-fruit" />}
+                <span>{soundMuted ? 'Muted' : 'Enabled'}</span>
+              </button>
+            </div>
+
+            {/* Privacy Controls */}
+            <div className="pt-3 space-y-3">
+              <h4 className="text-xs font-semibold text-pv-text-primary flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" /> Privacy Controls
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-pv-surface-secondary p-3 rounded-lg border border-pv-border space-y-1">
+                  <span className="text-[11px] font-medium text-pv-text-secondary block">
+                    Profile Visibility
+                  </span>
+                  <select
+                    value={profileVis}
+                    onChange={(e) => setProfileVis(e.target.value as any)}
+                    className="w-full bg-pv-surface-primary border border-pv-border text-pv-text-primary px-2.5 h-7 rounded text-xs"
+                  >
+                    <option value="public">Public</option>
+                    <option value="friends_only">Friends Only</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
+                <div className="bg-pv-surface-secondary p-3 rounded-lg border border-pv-border space-y-1">
+                  <span className="text-[11px] font-medium text-pv-text-secondary block">
+                    Friend Requests
+                  </span>
+                  <select
+                    value={friendVis}
+                    onChange={(e) => setFriendVis(e.target.value as any)}
+                    className="w-full bg-pv-surface-primary border border-pv-border text-pv-text-primary px-2.5 h-7 rounded text-xs"
+                  >
+                    <option value="public">Allow Everyone</option>
+                    <option value="friends_only">Friends of Friends</option>
+                    <option value="private">Block Requests</option>
+                  </select>
+                </div>
+                <div className="bg-pv-surface-secondary p-3 rounded-lg border border-pv-border space-y-1">
+                  <span className="text-[11px] font-medium text-pv-text-secondary block">
+                    Activity Visibility
+                  </span>
+                  <select
+                    value={activityVis}
+                    onChange={(e) => setActivityVis(e.target.value as any)}
+                    className="w-full bg-pv-surface-primary border border-pv-border text-pv-text-primary px-2.5 h-7 rounded text-xs"
+                  >
+                    <option value="public">Public</option>
+                    <option value="friends_only">Friends Only</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Reset Adaptive Engine */}
+            <div className="pt-4">
+              <h4 className="text-xs font-semibold text-pv-text-primary mb-1">
+                Adaptive Recommendation Calibration
+              </h4>
+              <p className="text-[11px] text-pv-text-secondary mb-3">
+                Recalibrate difficulty calibration weights across all games without modifying coins or level.
+              </p>
+              {resetConfirm ? (
+                <div className="bg-pv-surface-secondary p-3 rounded-lg border border-rose-500/40 flex items-center justify-between">
+                  <span className="text-xs text-rose-300">Reset recommendation profiles for all games?</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleResetDifficulty}
+                      className="bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium px-3 h-7 rounded"
+                    >
+                      Confirm Reset
+                    </button>
+                    <button
+                      onClick={() => setResetConfirm(false)}
+                      className="bg-pv-surface-primary text-pv-text-secondary text-xs font-medium px-3 h-7 rounded border border-pv-border"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setResetConfirm(true)}
+                  className="h-8 px-3 bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-secondary hover:text-pv-text-primary border border-pv-border text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Reset Recommendations
+                </button>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={handleSave}
+            className="h-9 px-5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg transition-colors"
+          >
+            Save Preferences
+          </button>
+        </Card>
+      )}
+
+      {/* TAB 3: Public Preview */}
+      {activeTab === 'preview' && (
+        <Card className="p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-pv-border pb-3">
+            <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
+              <Eye className="w-4 h-4 text-pv-dragon-fruit" /> Public Profile View
+            </h3>
+            <span className="text-xs text-pv-text-muted capitalize">
+              Visibility: {profileVis.replace('_', ' ')}
+            </span>
+          </div>
+
+          <div className="bg-pv-surface-secondary p-5 rounded-lg border border-pv-border space-y-4">
+            <div className="flex items-center gap-4">
+              <img
+                src={selectedAvatar}
+                alt={displayName}
+                className="w-14 h-14 rounded-lg border border-pv-border object-cover"
+              />
+              <div>
+                <h4 className="text-base font-semibold text-pv-text-primary">{displayName}</h4>
+                <p className="text-xs text-pv-dragon-fruit font-medium">{selectedTitle}</p>
+                <p className="text-[11px] text-pv-text-muted font-mono">@{user?.username || 'player'}</p>
+              </div>
+            </div>
+
+            {profileVis === 'private' ? (
+              <div className="p-4 bg-pv-surface-primary rounded-lg border border-pv-border text-center text-xs text-pv-text-muted">
+                This profile is set to Private. Stats and activity are hidden from other players.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {bio && <p className="text-xs text-pv-text-secondary italic">"{bio}"</p>}
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="bg-pv-surface-primary p-2.5 rounded-lg border border-pv-border">
+                    <span className="text-[10px] text-pv-text-muted block">Level</span>
+                    <span className="font-semibold text-pv-text-primary font-tabular">
+                      {user?.level || 1}
+                    </span>
+                  </div>
+                  <div className="bg-pv-surface-primary p-2.5 rounded-lg border border-pv-border">
+                    <span className="text-[10px] text-pv-text-muted block">Wins</span>
+                    <span className="font-semibold text-emerald-400 font-tabular">
+                      {user?.totalWins || 0}
+                    </span>
+                  </div>
+                  <div className="bg-pv-surface-primary p-2.5 rounded-lg border border-pv-border">
+                    <span className="text-[10px] text-pv-text-muted block">Streak</span>
+                    <span className="font-semibold text-pv-dragon-fruit font-tabular">
+                      {user?.currentStreak || 1}d
+                    </span>
+                  </div>
+                </div>
+
+                {favoriteGames.length > 0 && (
+                  <div>
+                    <span className="text-[10px] text-pv-text-muted font-medium uppercase tracking-wider block mb-1">
+                      Favorite Puzzles
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {favoriteGames.map((g) => {
+                        const puzzle = PUZZLE_MODES.find((p) => p.id === g);
+                        return (
+                          <span
+                            key={g}
+                            className="text-[10px] bg-pv-surface-primary text-pv-text-secondary border border-pv-border px-2 py-0.5 rounded font-medium"
+                          >
+                            {puzzle?.name || g}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* TAB 4: Personal Bests */}
+      {activeTab === 'pbs' && (
+        <div className="space-y-6">
+          <Card className="p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-pv-border pb-3">
+              <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
+                <Award className="w-4 h-4 text-pv-dragon-fruit" /> Verified Personal Bests
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {PUZZLE_MODES.map((puzzle) => {
+                const pb = personalBests[puzzle.id];
+                const adapt = adaptiveProfiles[puzzle.id];
+                return (
+                  <div
+                    key={puzzle.id}
+                    className="bg-pv-surface-secondary border border-pv-border p-3.5 rounded-lg space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-pv-text-primary text-xs">{puzzle.name}</span>
+                      <span className="text-[10px] uppercase font-medium px-1.5 py-0.5 rounded bg-pv-surface-primary text-pv-text-muted border border-pv-border">
+                        Tier: {adapt?.currentRecommendedDifficulty || 'easy'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-[11px] pt-1 border-t border-pv-border/60">
+                      <div>
+                        <span className="text-pv-text-muted block text-[10px]">Best Score</span>
+                        <span className="font-semibold text-pv-text-primary font-tabular">
+                          {pb?.bestScore ? `${pb.bestScore} pts` : '-'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-pv-text-muted block text-[10px]">Fastest Time</span>
+                        <span className="font-semibold text-pv-text-secondary font-tabular">
+                          {pb?.bestTime ? `${pb.bestTime}s` : '-'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-pv-text-muted block text-[10px]">Max Diff</span>
+                        <span className="font-semibold text-pv-text-secondary uppercase">
+                          {pb?.bestDifficulty || 'easy'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* TAB 5: Activity & Replays */}
+      {activeTab === 'history' && (
+        <Card className="p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-pv-border pb-3">
+            <h3 className="text-sm font-semibold text-pv-text-primary flex items-center gap-2">
+              <RotateCcw className="w-4 h-4 text-pv-dragon-fruit" /> Recent Game Sessions & Replays
+            </h3>
+          </div>
+
+          {loadingHistory ? (
+            <p className="text-xs text-pv-text-muted py-6 text-center">Loading game history...</p>
+          ) : recentSessions.length === 0 ? (
+            <p className="text-xs text-pv-text-muted py-6 text-center">
+              No recent game sessions recorded. Complete a puzzle to see session records.
+            </p>
+          ) : (
+            <div className="space-y-2.5">
+              {recentSessions.map((session, idx) => {
+                const puzzleInfo = PUZZLE_MODES.find((p) => p.id === session.puzzleType);
+                return (
+                  <div
+                    key={session.id || idx}
+                    className="bg-pv-surface-secondary border border-pv-border p-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-pv-text-primary text-xs">
+                          {puzzleInfo?.name || session.puzzleType}
+                        </span>
+                        <span
+                          className={`text-[10px] font-medium uppercase px-1.5 py-0.2 rounded border ${
+                            session.won
+                              ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/40'
+                              : 'bg-rose-950/40 text-rose-400 border-rose-500/40'
+                          }`}
+                        >
+                          {session.won ? 'Solved' : 'Incomplete'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-pv-text-secondary">
+                        <span className="font-tabular">Score: {session.score}</span>
+                        <span className="font-tabular">Time: {session.timeSeconds}s</span>
+                        <span className="capitalize">{session.difficulty}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => startReplaySession(session)}
+                      className="h-7 px-3 bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-primary border border-pv-border rounded text-xs font-medium flex items-center gap-1.5 transition-colors"
+                    >
+                      <RotateCcw className="w-3 h-3" /> Replay
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* TAB 6: Player Wall */}
+      {activeTab === 'wall' && user && (
+        <PlayerWallSection profileUserId={user.uid} profileUserName={user.displayName} />
+      )}
+    </div>
+  );
 };

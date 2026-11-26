@@ -3,7 +3,207 @@ import { useStore } from '../store/useStore';
 import { PuzzleCollection, UserCollectionProgress } from '../types';
 import { fetchPuzzleCollectionById, fetchUserCollectionProgress } from '../services/firebase';
 import { PUZZLE_MODES } from '../data/puzzles';
-import { Layers, ChevronLeft, CheckCircle, Play, Clock, Award, Lock, Sparkles, Trophy, Zap, RotateCcw
-} from 'lucide-react'; export const CollectionDetailPage: React.FC = () => { const { user, selectedCollectionId, setActiveTab, playCollectionPuzzle } = useStore(); const [collection, setCollection] = useState<PuzzleCollection | null>(null); const [progress, setProgress] = useState<UserCollectionProgress | null>(null); const [loading, setLoading] = useState(true); useEffect(() => { async function loadDetail() { if (!selectedCollectionId) return; setLoading(true); const col = await fetchPuzzleCollectionById(selectedCollectionId); setCollection(col); if (user?.uid && col) { const prog = await fetchUserCollectionProgress(user.uid, col.id); setProgress(prog); } setLoading(false); } loadDetail(); }, [selectedCollectionId, user?.uid]); if (loading) { return ( <div className="flex justify-center py-20 text-pv-text-secondary"> <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div> </div> ); } if (!collection) { return ( <div className="bg-pv-surface-primary border border-pv-border-violet p-8 rounded-3xl text-center space-y-4 max-w-xl mx-auto"> <Layers className="w-10 h-10 text-pv-dragon-fruit mx-auto" /> <h2 className="text-xl font-black text-white">Collection Not Found</h2> <button onClick={() => setActiveTab('collections')} className="bg-gradient-primary-btn text-pv-bg-primary font-black px-6 py-2.5 rounded-xl text-xs uppercase" > Return to Collections </button> </div> ); } const completedIndices = new Set<number>(progress?.completedPuzzleIndices || []); const completedCount = completedIndices.size; const totalCount = collection.items.length; const pct = Math.round((completedCount / totalCount) * 100); const isCompleted = progress?.status === 'COMPLETED' || completedCount >= totalCount; /* Find next uncompleted puzzle index */
- const nextIndex = collection.items.findIndex((_, idx) => !completedIndices.has(idx)); const activePlayIndex = nextIndex !== -1 ? nextIndex : 0; const handlePrimaryClick = () => { const targetItem = collection.items[activePlayIndex]; if (targetItem) { playCollectionPuzzle( collection.id, activePlayIndex, targetItem.puzzleType, targetItem.difficulty, targetItem.seed ); } }; return ( <div className="space-y-6 animate-fade-in max-w-4xl mx-auto"> {/* Top Back Navigation */} <button onClick={() => setActiveTab('collections')} className="flex items-center gap-1.5 text-xs text-pv-text-secondary hover:text-white transition font-bold" > <ChevronLeft className="w-4 h-4" /> Back to Collections </button> {/* Collection Hero Header */} <div className="bg-pv-surface-secondary border border-pv-border-strong p-8 rounded-3xl space-y-6 shadow-sm relative overflow-hidden"> <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"> <div className="space-y-2"> <div className="flex items-center gap-2"> <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-pv-surface-soft text-pv-dragon-fruit-light border border-pv-border-violet"> {collection.category} </span> <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase ${ collection.difficulty === 'easy' ? 'bg-emerald-500/20 text-emerald-300' : collection.difficulty === 'medium' ? 'bg-gradient-primary-btn/20 text-pv-dragon-fruit-light' : 'bg-rose-500/20 text-rose-300' }`}> {collection.difficulty} Difficulty </span> </div> <h1 className="text-3xl font-black text-white">{collection.title}</h1> <p className="text-xs text-pv-text-secondary">{collection.description}</p> </div> <button onClick={handlePrimaryClick} className="bg-gradient-primary-btn hover:bg-pv-dragon-fruit-light text-pv-bg-primary font-black px-6 py-3.5 rounded-2xl text-xs uppercase tracking-wider flex items-center gap-2 transition shrink-0 shadow-sm" > <Play className="w-4 h-4 fill-current" /> <span> {isCompleted ? 'Replay Playlist' : completedCount > 0 ? 'Continue Playlist' : 'Start Playlist'} </span> </button> </div> {/* Progress Bar & Rewards Info */} <div className="bg-pv-surface-primary border border-pv-border-violet p-5 rounded-2xl space-y-3"> <div className="flex items-center justify-between text-xs font-bold"> <span className="text-pv-text-secondary flex items-center gap-1.5"> <Clock className="w-4 h-4 text-pv-dragon-fruit-light" /> ~{collection.estimatedMinutes || 5} mins • {completedCount}/{totalCount} Steps Solved </span> <span className="text-pv-dragon-fruit-light flex items-center gap-1"> <Award className="w-4 h-4" /> Reward: +{collection.rewardXP} XP & +{collection.rewardCoins} Coins </span> </div> <div className="w-full bg-pv-bg-secondary h-3 rounded-full overflow-hidden border border-pv-border-violet"> <div className={`h-full transition-all duration-300 ${ isCompleted ? 'bg-emerald-500' : 'bg-pv-surface-secondary' }`} style={{ width: `${pct}%` }} ></div> </div> </div> </div> {/* Playlist Steps List */} <div className="bg-pv-surface-primary border border-pv-border-violet p-6 rounded-3xl space-y-4"> <h3 className="text-lg font-bold text-white flex items-center gap-2"> <Layers className="w-5 h-5 text-pv-dragon-fruit-light" /> Playlist Steps ({collection.items.length} Puzzles) </h3> <div className="space-y-3"> {collection.items.map((item, idx) => { const pzMeta = PUZZLE_MODES.find((p) => p.id === item.puzzleType); const isSolved = completedIndices.has(idx); const isNext = idx === activePlayIndex && !isCompleted; return ( <div key={idx} className={`p-4 rounded-2xl border transition flex items-center justify-between gap-4 ${ isSolved ? 'bg-pv-surface-primary border-emerald-500/30' : isNext ? 'bg-pv-bg-primary border-pv-dragon-fruit/60 ring-1 ring-amber-500/30' : 'bg-pv-bg-primary/40 border-pv-border-violet' }`} > <div className="flex items-center gap-4"> <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs ${ isSolved ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : isNext ? 'bg-gradient-primary-btn text-pv-bg-primary' : 'bg-pv-surface-primary text-pv-text-secondary' }`} > {isSolved ? <CheckCircle className="w-5 h-5" /> : idx + 1} </div> <div> <h4 className="text-sm font-black text-white flex items-center gap-2"> {pzMeta?.name || item.puzzleType} {isSolved && <span className="text-[10px] text-emerald-400 font-bold uppercase">(Completed)</span>} </h4> <p className="text-xs text-pv-text-secondary"> {pzMeta?.description || 'Curated playlist challenge'} • <span className="capitalize">{item.difficulty}</span> difficulty </p> </div> </div> <button onClick={() => playCollectionPuzzle(collection.id, idx, item.puzzleType, item.difficulty, item.seed) } className={`px-4 py-2 rounded-xl text-xs font-bold uppercase flex items-center gap-1.5 transition ${ isSolved ? 'bg-pv-bg-secondary border border-pv-border-strong text-pv-text-secondary hover:text-white' : isNext ? 'bg-gradient-primary-btn hover:bg-pv-dragon-fruit-light text-pv-bg-primary font-black' : 'bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-secondary' }`} > <Play className="w-3.5 h-3.5 fill-current" /> <span>{isSolved ? 'Replay' : 'Play Step'}</span> </button> </div> ); })} </div> </div> </div> );
+import { Layers, ChevronLeft, CheckCircle, Play, Clock, Award } from 'lucide-react';
+import { PageHeader, Card } from '../components/ui/Card';
+import { formatCount } from '../utils/format';
+
+export const CollectionDetailPage: React.FC = () => {
+  const { user, selectedCollectionId, setActiveTab, playCollectionPuzzle } = useStore();
+  const [collection, setCollection] = useState<PuzzleCollection | null>(null);
+  const [progress, setProgress] = useState<UserCollectionProgress | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadDetail() {
+      if (!selectedCollectionId) return;
+      setLoading(true);
+      const col = await fetchPuzzleCollectionById(selectedCollectionId);
+      setCollection(col);
+      if (user?.uid && col) {
+        const prog = await fetchUserCollectionProgress(user.uid, col.id);
+        setProgress(prog);
+      }
+      setLoading(false);
+    }
+    loadDetail();
+  }, [selectedCollectionId, user?.uid]);
+
+  if (loading) {
+    return (
+      <Card className="py-20 text-center max-w-lg mx-auto">
+        <div className="w-6 h-6 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-xs text-pv-text-secondary font-medium">Loading playlist...</p>
+      </Card>
+    );
+  }
+
+  if (!collection) {
+    return (
+      <Card className="p-8 text-center space-y-3 max-w-md mx-auto">
+        <Layers className="w-8 h-8 text-pv-dragon-fruit mx-auto" />
+        <h2 className="text-base font-semibold text-pv-text-primary">Collection Not Found</h2>
+        <button
+          onClick={() => setActiveTab('collections')}
+          className="h-9 px-4 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg"
+        >
+          Return to Collections
+        </button>
+      </Card>
+    );
+  }
+
+  const completedIndices = new Set<number>(progress?.completedPuzzleIndices || []);
+  const completedCount = completedIndices.size;
+  const totalCount = collection.items.length;
+  const pct = Math.round((completedCount / totalCount) * 100);
+  const isCompleted = progress?.status === 'COMPLETED' || completedCount >= totalCount;
+
+  const nextIndex = collection.items.findIndex((_, idx) => !completedIndices.has(idx));
+  const activePlayIndex = nextIndex !== -1 ? nextIndex : 0;
+
+  const handlePrimaryClick = () => {
+    const targetItem = collection.items[activePlayIndex];
+    if (targetItem) {
+      playCollectionPuzzle(
+        collection.id,
+        activePlayIndex,
+        targetItem.puzzleType,
+        targetItem.difficulty,
+        targetItem.seed
+      );
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto pb-12">
+      {/* Back Button */}
+      <button
+        onClick={() => setActiveTab('collections')}
+        className="flex items-center gap-1.5 text-xs text-pv-text-secondary hover:text-pv-text-primary transition-colors font-medium"
+      >
+        <ChevronLeft className="w-4 h-4" /> Back to Playlists
+      </button>
+
+      {/* Hero Header */}
+      <Card className="p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium uppercase bg-pv-surface-secondary border border-pv-border text-pv-text-muted">
+                {collection.category}
+              </span>
+              <span className="text-[10px] font-medium capitalize text-pv-text-secondary">
+                {collection.difficulty} Difficulty
+              </span>
+            </div>
+            <h1 className="text-2xl font-semibold text-pv-text-primary">{collection.title}</h1>
+            <p className="text-xs text-pv-text-secondary max-w-xl">{collection.description}</p>
+          </div>
+
+          <button
+            onClick={handlePrimaryClick}
+            className="h-10 px-5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg flex items-center gap-2 transition-colors shrink-0"
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>
+              {isCompleted ? 'Replay Playlist' : completedCount > 0 ? 'Continue' : 'Start Playlist'}
+            </span>
+          </button>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="bg-pv-surface-secondary border border-pv-border p-3.5 rounded-lg space-y-2">
+          <div className="flex items-center justify-between text-xs font-medium">
+            <span className="text-pv-text-secondary flex items-center gap-1.5 font-tabular">
+              <Clock className="w-3.5 h-3.5 text-pv-dragon-fruit" /> ~{collection.estimatedMinutes || 5} min • {completedCount} / {totalCount} steps
+            </span>
+            <span className="text-pv-dragon-fruit font-mono text-[11px] font-medium">
+              +{collection.rewardXP} XP • +{collection.rewardCoins} coins
+            </span>
+          </div>
+          <div className="w-full bg-pv-surface-primary h-1.5 rounded-full overflow-hidden border border-pv-border">
+            <div
+              className={`h-full transition-all duration-300 rounded-full ${
+                isCompleted ? 'bg-emerald-500' : 'bg-pv-dragon-fruit'
+              }`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* Playlist Steps */}
+      <Card className="p-5 space-y-3">
+        <h3 className="text-xs font-semibold text-pv-text-primary border-b border-pv-border pb-2.5">
+          Playlist Sequence ({formatCount(collection.items.length, 'step')})
+        </h3>
+
+        <div className="space-y-2">
+          {collection.items.map((item, idx) => {
+            const pzMeta = PUZZLE_MODES.find((p) => p.id === item.puzzleType);
+            const isSolved = completedIndices.has(idx);
+            const isNext = idx === activePlayIndex && !isCompleted;
+
+            return (
+              <div
+                key={idx}
+                className={`p-3 rounded-lg border transition-colors flex items-center justify-between gap-3 ${
+                  isSolved
+                    ? 'bg-pv-surface-secondary border-emerald-500/30'
+                    : isNext
+                    ? 'bg-pv-surface-soft border-pv-dragon-fruit'
+                    : 'bg-pv-surface-secondary border-pv-border'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-7 h-7 rounded flex items-center justify-center text-xs font-mono font-medium ${
+                      isSolved
+                        ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/40'
+                        : isNext
+                        ? 'bg-pv-dragon-fruit text-[#110F15] font-semibold'
+                        : 'bg-pv-surface-primary text-pv-text-muted border border-pv-border'
+                    }`}
+                  >
+                    {isSolved ? <CheckCircle className="w-4 h-4" /> : idx + 1}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-semibold text-pv-text-primary flex items-center gap-2">
+                      {pzMeta?.name || item.puzzleType}
+                      {isSolved && (
+                        <span className="text-[10px] text-emerald-400 font-medium">Completed</span>
+                      )}
+                    </h4>
+                    <p className="text-[11px] text-pv-text-secondary capitalize">
+                      {item.difficulty} tier
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() =>
+                    playCollectionPuzzle(
+                      collection.id,
+                      idx,
+                      item.puzzleType,
+                      item.difficulty,
+                      item.seed
+                    )
+                  }
+                  className={`h-7 px-3 rounded text-xs font-medium flex items-center gap-1 transition-colors ${
+                    isNext
+                      ? 'bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold'
+                      : 'bg-pv-surface-primary hover:bg-pv-surface-soft text-pv-text-secondary hover:text-pv-text-primary border border-pv-border'
+                  }`}
+                >
+                  <Play className="w-3 h-3 fill-current" />
+                  <span>{isSolved ? 'Replay' : 'Play'}</span>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    </div>
+  );
 };

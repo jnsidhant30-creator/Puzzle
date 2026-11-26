@@ -1,10 +1,242 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { fetchUserGoals, claimGoalReward } from '../services/firebase';
-import { PlayerGoalItem, GoalType, GoalCategory } from '../types';
-import { Target, CheckCircle2, Award, Zap, Coins, Calendar, Flame, Trophy, Compass, Sparkles, Gift
-} from 'lucide-react';
-import { toast } from '../services/toast'; export const GoalsPage: React.FC = () => { const { user, addXPAndCoins } = useStore(); const [goals, setGoals] = useState<PlayerGoalItem[]>([]); const [loading, setLoading] = useState(true); const [activeTab, setActiveTab] = useState<'ALL' | 'daily' | 'weekly' | 'personal' | 'CLAIMABLE'>('ALL'); const [claimingId, setClaimingId] = useState<string | null>(null); useEffect(() => { loadGoals(); }, [user]); const loadGoals = async () => { if (!user) return; setLoading(true); try { const data = await fetchUserGoals(user.uid); setGoals(data); } catch (err) { console.error('Failed to load player goals:', err); } finally { setLoading(false); } }; const handleClaim = async (goal: PlayerGoalItem) => { if (!user || goal.claimed || goal.status !== 'COMPLETED') return; setClaimingId(goal.id); try { const { xpAwarded, coinsAwarded } = await claimGoalReward(user.uid, goal.id, goal.rewardXP, goal.rewardCoins); /* Award user XP & Coins in state */
- await addXPAndCoins(xpAwarded, coinsAwarded, 0, true); /* Local state update */
-setGoals((prev) => prev.map((g) => (g.id === goal.id ? { ...g, claimed: true } : g)) ); toast.success(`Claimed +${xpAwarded} XP & +${coinsAwarded} Coins!`); } catch (err) { console.error('Claim reward error:', err); toast.error('Failed to claim goal reward.'); } finally { setClaimingId(null); } }; const completedCount = goals.filter((g) => g.status === 'COMPLETED').length; const claimableCount = goals.filter((g) => g.status === 'COMPLETED' && !g.claimed).length; const filteredGoals = goals.filter((g) => { if (activeTab === 'CLAIMABLE') return g.status === 'COMPLETED' && !g.claimed; if (activeTab === 'daily') return g.type === 'daily'; if (activeTab === 'weekly') return g.type === 'weekly'; if (activeTab === 'personal') return g.type === 'personal'; return true; }); const getCategoryIcon = (category: GoalCategory) => { switch (category) { case 'games': return <Flame className="w-4 h-4 text-pv-dragon-fruit" />; case 'score': return <Trophy className="w-4 h-4 text-pv-dragon-fruit-light" />; case 'speed': return <Zap className="w-4 h-4 text-cyan-400" />; case 'challenges': return <Sparkles className="w-4 h-4 text-pv-dragon-fruit-light" />; case 'variety': return <Compass className="w-4 h-4 text-emerald-400" />; default: return <Target className="w-4 h-4 text-pv-dragon-fruit-light" />; } }; return ( <div className="space-y-6 animate-fade-in"> {/* Page Header */} <div className="bg-pv-surface-primary p-6 rounded-3xl border border-pv-border-violet flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"> <div> <div className="flex items-center gap-3 mb-1"> <div className="w-10 h-10 rounded-2xl bg-pv-surface-secondary flex items-center justify-center text-pv-bg-primary shadow-sm shadow-sm"> <Target className="w-5 h-5" /> </div> <h1 className="text-2xl sm:text-3xl font-black text-white tracking-wide"> Player Goals &amp; Objectives </h1> </div> <p className="text-xs text-pv-text-secondary"> Personal gameplay targets. Complete daily, weekly, and milestone goals to earn XP &amp; Coins! </p> </div> {/* Claimable Badge Counter */} {claimableCount > 0 && ( <div className="bg-pv-surface-secondary border border-pv-border-strong px-4 py-2.5 rounded-2xl flex items-center gap-2 text-pv-dragon-fruit-light text-xs font-black animate-pulse shrink-0"> <Gift className="w-4 h-4" /> <span>{claimableCount} Reward{claimableCount > 1 ? 's' : ''} Ready!</span> </div> )} </div> {/* Summary KPI Bar */} <div className="grid grid-cols-2 sm:grid-cols-4 gap-3"> <div className="bg-pv-surface-primary border border-pv-border-violet p-4 rounded-2xl"> <p className="text-[10px] text-pv-text-secondary font-bold uppercase tracking-wider">Total Goals</p> <p className="text-2xl font-black text-white font-mono mt-1">{goals.length}</p> </div> <div className="bg-pv-surface-primary border border-pv-border-violet p-4 rounded-2xl"> <p className="text-[10px] text-pv-text-secondary font-bold uppercase tracking-wider">Completed</p> <p className="text-2xl font-black text-emerald-400 font-mono mt-1">{completedCount}</p> </div> <div className="bg-pv-surface-primary border border-pv-border-violet p-4 rounded-2xl"> <p className="text-[10px] text-pv-text-secondary font-bold uppercase tracking-wider">Claimable</p> <p className="text-2xl font-black text-pv-dragon-fruit-light font-mono mt-1">{claimableCount}</p> </div> <div className="bg-pv-surface-primary border border-pv-border-violet p-4 rounded-2xl"> <p className="text-[10px] text-pv-text-secondary font-bold uppercase tracking-wider">Completion Rate</p> <p className="text-2xl font-black text-cyan-400 font-mono mt-1"> {goals.length > 0 ? `${Math.round((completedCount / goals.length) * 100)}%` : '0%'} </p> </div> </div> {/* Filter Segmented Control */} <div className="flex items-center gap-1.5 overflow-x-auto pb-1"> {(['ALL', 'daily', 'weekly', 'personal', 'CLAIMABLE'] as const).map((tab) => ( <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${ activeTab === tab ? 'bg-gradient-primary-btn/20 text-pv-dragon-fruit-light border border-pv-border-strong shadow-sm' : 'bg-pv-bg-secondary/60 text-pv-text-secondary hover:text-white border border-pv-border-violet' }`} > {tab === 'daily' ? 'Daily Objectives' : tab === 'weekly' ? 'Weekly Objectives' : tab === 'personal' ? 'Personal Milestones' : tab === 'CLAIMABLE' ? `Claimable (${claimableCount})` : 'All Goals'} </button> ))} </div> {/* Goals List */} {loading ? ( <div className="py-16 text-center"> <div className="w-8 h-8 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" /> <p className="text-xs text-pv-text-secondary font-medium">Loading objective records...</p> </div> ) : filteredGoals.length === 0 ? ( <div className="bg-pv-bg-secondary/60 border border-pv-border-violet rounded-3xl p-12 text-center space-y-3"> <div className="w-12 h-12 bg-pv-surface-primary rounded-2xl flex items-center justify-center text-pv-text-muted mx-auto"> <Target className="w-6 h-6" /> </div> <h3 className="text-base font-bold text-white">No Objectives in this View</h3> <p className="text-xs text-pv-text-secondary max-w-xs mx-auto"> {activeTab === 'CLAIMABLE' ? 'All rewards claimed! Play more puzzles to progress active goals.' : 'No goals matching the selected category.'} </p> </div> ) : ( <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> {filteredGoals.map((g) => { const percent = Math.min(100, Math.round((g.currentValue / g.targetValue) * 100)); const isDone = g.status === 'COMPLETED'; return ( <div key={g.id} className={`bg-pv-surface-primary border p-5 rounded-2xl space-y-3.5 transition relative overflow-hidden ${ g.claimed ? 'border-pv-border-violet opacity-70' : isDone ? 'border-pv-dragon-fruit/50 shadow-sm shadow-pv-dragon-fruit/10' : 'border-pv-border-violet hover:border-pv-border-strong' }`} > {/* Header */} <div className="flex items-start justify-between gap-3"> <div className="flex items-center gap-3"> <div className="p-2.5 rounded-xl bg-pv-bg-primary border border-pv-border-violet"> {getCategoryIcon(g.category)} </div> <div> <h4 className="text-sm font-black text-white">{g.title}</h4> <p className="text-xs text-pv-text-secondary mt-0.5">{g.description}</p> </div> </div> <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-pv-surface-primary text-pv-text-secondary border border-pv-border-strong shrink-0"> {g.type} </span> </div> {/* Progress Bar */} <div className="space-y-1.5"> <div className="flex justify-between items-center text-[10px] font-mono font-bold"> <span className="text-pv-text-secondary">Progress</span> <span className="text-white"> {g.currentValue} / {g.targetValue} ({percent}%) </span> </div> <div className="w-full bg-pv-bg-primary h-2 rounded-full overflow-hidden border border-pv-border-violet"> <div className={`h-full transition-all duration-500 rounded-full ${ isDone ? 'bg-pv-surface-secondary' : 'bg-pv-surface-secondary' }`} style={{ width: `${percent}%` }} /> </div> </div> {/* Rewards & Claim Button */} <div className="flex items-center justify-between border-t border-pv-border-violet pt-3 text-xs"> <div className="flex items-center gap-3 text-pv-dragon-fruit-light font-mono font-bold"> <span className="flex items-center gap-1"> <Zap className="w-3.5 h-3.5 fill-pv-dragon-fruit" /> +{g.rewardXP} XP </span> <span className="flex items-center gap-1 text-pv-dragon-fruit"> <Coins className="w-3.5 h-3.5 fill-yellow-400" /> +{g.rewardCoins} </span> </div> {g.claimed ? ( <span className="text-[10px] font-bold text-pv-text-muted flex items-center gap-1"> <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Claimed </span> ) : isDone ? ( <button onClick={() => handleClaim(g)} disabled={claimingId === g.id} className="bg-pv-surface-secondary hover:from-amber-400 hover:to-orange-400 text-pv-bg-primary font-black px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition shadow-md shadow-sm disabled:opacity-50" > {claimingId === g.id ? 'Claiming...' : 'Claim Reward'} </button> ) : ( <span className="text-[10px] font-bold text-pv-text-muted">In Progress</span> )} </div> </div> ); })} </div> )} </div> );
+import { PlayerGoalItem, GoalCategory } from '../types';
+import { Target, CheckCircle2, Zap, Coins, Flame, Trophy, Compass, Sparkles } from 'lucide-react';
+import { toast } from '../services/toast';
+import { PageHeader, Card } from '../components/ui/Card';
+
+export const GoalsPage: React.FC = () => {
+  const { user, addXPAndCoins } = useStore();
+  const [goals, setGoals] = useState<PlayerGoalItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'ALL' | 'daily' | 'weekly' | 'personal' | 'CLAIMABLE'>('ALL');
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadGoals();
+  }, [user]);
+
+  const loadGoals = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const data = await fetchUserGoals(user.uid);
+      setGoals(data);
+    } catch (err) {
+      console.error('Failed to load player goals:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClaim = async (goal: PlayerGoalItem) => {
+    if (!user || goal.claimed || goal.status !== 'COMPLETED') return;
+    setClaimingId(goal.id);
+    try {
+      const { xpAwarded, coinsAwarded } = await claimGoalReward(
+        user.uid,
+        goal.id,
+        goal.rewardXP,
+        goal.rewardCoins
+      );
+      await addXPAndCoins(xpAwarded, coinsAwarded, 0, true);
+      setGoals((prev) =>
+        prev.map((g) => (g.id === goal.id ? { ...g, claimed: true } : g))
+      );
+      toast.success(`Claimed +${xpAwarded} XP and +${coinsAwarded} coins.`);
+    } catch (err) {
+      console.error('Claim reward error:', err);
+      toast.error('Failed to claim goal reward.');
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
+  const completedCount = goals.filter((g) => g.status === 'COMPLETED').length;
+  const claimableCount = goals.filter((g) => g.status === 'COMPLETED' && !g.claimed).length;
+
+  const filteredGoals = goals.filter((g) => {
+    if (activeTab === 'CLAIMABLE') return g.status === 'COMPLETED' && !g.claimed;
+    if (activeTab === 'daily') return g.type === 'daily';
+    if (activeTab === 'weekly') return g.type === 'weekly';
+    if (activeTab === 'personal') return g.type === 'personal';
+    return true;
+  });
+
+  const getCategoryIcon = (category: GoalCategory) => {
+    switch (category) {
+      case 'games':
+        return <Flame className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+      case 'score':
+        return <Trophy className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+      case 'speed':
+        return <Zap className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+      case 'challenges':
+        return <Sparkles className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+      case 'variety':
+        return <Compass className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+      default:
+        return <Target className="w-3.5 h-3.5 text-pv-dragon-fruit" />;
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto animate-fade-in">
+      {/* Header */}
+      <PageHeader
+        title="Goals & Objectives"
+        description="Track gameplay targets across daily, weekly, and personal milestone tracks."
+        action={
+          claimableCount > 0 ? (
+            <span className="px-3 py-1 rounded-md bg-pv-surface-soft border border-pv-border-strong text-pv-dragon-fruit text-xs font-medium shrink-0">
+              {claimableCount} reward{claimableCount > 1 ? 's' : ''} ready to claim
+            </span>
+          ) : undefined
+        }
+      />
+
+      {/* KPI Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Card className="p-3.5">
+          <p className="text-[11px] text-pv-text-muted font-medium uppercase tracking-wider">Total Goals</p>
+          <p className="text-xl font-semibold text-pv-text-primary font-tabular mt-1">{goals.length}</p>
+        </Card>
+        <Card className="p-3.5">
+          <p className="text-[11px] text-pv-text-muted font-medium uppercase tracking-wider">Completed</p>
+          <p className="text-xl font-semibold text-emerald-400 font-tabular mt-1">{completedCount}</p>
+        </Card>
+        <Card className="p-3.5">
+          <p className="text-[11px] text-pv-text-muted font-medium uppercase tracking-wider">Claimable</p>
+          <p className="text-xl font-semibold text-pv-dragon-fruit font-tabular mt-1">{claimableCount}</p>
+        </Card>
+        <Card className="p-3.5">
+          <p className="text-[11px] text-pv-text-muted font-medium uppercase tracking-wider">Completion</p>
+          <p className="text-xl font-semibold text-pv-text-primary font-tabular mt-1">
+            {goals.length > 0 ? `${Math.round((completedCount / goals.length) * 100)}%` : '0%'}
+          </p>
+        </Card>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-pv-border">
+        {(['ALL', 'daily', 'weekly', 'personal', 'CLAIMABLE'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-3.5 h-8 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+              activeTab === tab
+                ? 'bg-pv-surface-soft text-pv-text-primary border border-pv-border-strong'
+                : 'text-pv-text-secondary hover:text-pv-text-primary hover:bg-pv-surface-primary'
+            }`}
+          >
+            {tab === 'daily'
+              ? 'Daily'
+              : tab === 'weekly'
+              ? 'Weekly'
+              : tab === 'personal'
+              ? 'Milestones'
+              : tab === 'CLAIMABLE'
+              ? `Claimable (${claimableCount})`
+              : 'All Goals'}
+          </button>
+        ))}
+      </div>
+
+      {/* Goals Grid */}
+      {loading ? (
+        <Card className="py-16 text-center">
+          <div className="w-6 h-6 border-2 border-pv-dragon-fruit border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs text-pv-text-secondary font-medium">Loading goals...</p>
+        </Card>
+      ) : filteredGoals.length === 0 ? (
+        <Card className="p-12 text-center space-y-3">
+          <div className="w-12 h-12 bg-pv-surface-secondary rounded-lg flex items-center justify-center text-pv-text-muted mx-auto border border-pv-border">
+            <Target className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-semibold text-pv-text-primary">No goals in this category</h3>
+          <p className="text-xs text-pv-text-secondary max-w-sm mx-auto">
+            {activeTab === 'CLAIMABLE'
+              ? 'All completed rewards have been claimed. Continue playing to complete more goals.'
+              : 'No active goals matching this filter.'}
+          </p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredGoals.map((g) => {
+            const percent = Math.min(100, Math.round((g.currentValue / g.targetValue) * 100));
+            const isDone = g.status === 'COMPLETED';
+
+            return (
+              <Card
+                key={g.id}
+                className={`p-4 space-y-3 transition-colors ${
+                  g.claimed ? 'opacity-60' : isDone ? 'border-pv-dragon-fruit/40' : ''
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-pv-surface-secondary border border-pv-border shrink-0 mt-0.5">
+                      {getCategoryIcon(g.category)}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-semibold text-pv-text-primary">{g.title}</h4>
+                      <p className="text-[11px] text-pv-text-secondary mt-0.5">{g.description}</p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider bg-pv-surface-secondary border border-pv-border text-pv-text-muted shrink-0">
+                    {g.type}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-[10px] font-mono">
+                    <span className="text-pv-text-muted">Progress</span>
+                    <span className="text-pv-text-primary font-tabular">
+                      {g.currentValue} / {g.targetValue} ({percent}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-pv-surface-secondary h-1.5 rounded-full overflow-hidden border border-pv-border">
+                    <div
+                      className={`h-full transition-all duration-300 rounded-full ${
+                        isDone ? 'bg-emerald-500' : 'bg-pv-dragon-fruit'
+                      }`}
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-pv-border pt-3 text-xs">
+                  <div className="flex items-center gap-3 text-pv-text-secondary font-mono text-[11px]">
+                    <span className="flex items-center gap-1">
+                      <Zap className="w-3 h-3 text-pv-dragon-fruit" /> +{g.rewardXP} XP
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Coins className="w-3 h-3 text-pv-dragon-fruit" /> +{g.rewardCoins} coins
+                    </span>
+                  </div>
+
+                  {g.claimed ? (
+                    <span className="text-[11px] font-medium text-pv-text-muted flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Claimed
+                    </span>
+                  ) : isDone ? (
+                    <button
+                      onClick={() => handleClaim(g)}
+                      disabled={claimingId === g.id}
+                      className="h-8 px-3.5 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] font-semibold text-xs font-medium rounded-lg transition-colors disabled:opacity-40"
+                    >
+                      {claimingId === g.id ? 'Claiming...' : 'Claim Reward'}
+                    </button>
+                  ) : (
+                    <span className="text-[11px] text-pv-text-muted">In Progress</span>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 };

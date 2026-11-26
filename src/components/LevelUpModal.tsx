@@ -1,5 +1,65 @@
 import React, { useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import confetti from 'canvas-confetti';
-import { Sparkles, Trophy, Star } from 'lucide-react'; export const LevelUpModal: React.FC = () => { const { levelUpModal, closeLevelUpModal } = useStore(); useEffect(() => { if (levelUpModal?.show) { try { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); } catch {} } }, [levelUpModal]); if (!levelUpModal?.show) return null; return ( <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-pv-surface-primary animate-fade-in"> <div className="bg-pv-surface-secondary border-2 border-pv-dragon-fruit/50 rounded-3xl p-8 max-w-sm w-full text-center shadow-sm relative overflow-hidden"> <div className="absolute -top-12 -right-12 w-32 h-32 bg-gradient-primary-btn/20 rounded-full pointer-events-none" /> <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-pv-surface-secondary p-1 shadow-sm shadow-pv-dragon-fruit/30 flex items-center justify-center"> <Trophy className="w-10 h-10 text-pv-bg-primary animate-bounce" /> </div> <h2 className="text-3xl font-black text-white tracking-wider mb-1">LEVEL UP!</h2> <p className="text-pv-dragon-fruit-light font-extrabold text-xl mb-4">Level {levelUpModal.newLevel}</p> <p className="text-xs text-pv-text-secondary mb-6"> Congratulations! You unlocked a new level badge and bonus coins! </p> <div className="bg-gradient-primary-btn/10 border border-pv-border-strong rounded-2xl p-4 mb-6 flex items-center justify-center gap-2 text-pv-dragon-fruit-light font-bold text-sm"> <Star className="w-5 h-5 fill-pv-dragon-fruit text-pv-dragon-fruit-light" /> <span>+100 Bonus Coins Awarded!</span> </div> <button onClick={closeLevelUpModal} className="w-full bg-pv-surface-secondary hover:from-amber-400 hover:to-orange-400 text-pv-bg-primary font-black py-3.5 rounded-xl shadow-sm shadow-sm uppercase tracking-widest text-sm transition active:scale-95" > Claim Reward </button> </div> </div> );
+import { Award, Coins } from 'lucide-react';
+
+export const LevelUpModal: React.FC = () => {
+  const { levelUpModal, closeLevelUpModal } = useStore();
+
+  useEffect(() => {
+    if (levelUpModal?.show) {
+      import('canvas-confetti')
+        .then((mod) => {
+          mod.default({ particleCount: 60, spread: 55, origin: { y: 0.6 } });
+        })
+        .catch(() => {});
+    }
+  }, [levelUpModal]);
+
+  useEffect(() => {
+    if (!levelUpModal?.show) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLevelUpModal();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [levelUpModal, closeLevelUpModal]);
+
+  if (!levelUpModal?.show) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="level-up-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+    >
+      <div className="bg-pv-surface-primary border border-pv-border rounded-xl p-6 max-w-sm w-full text-center shadow-lg relative">
+        <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-pv-surface-secondary border border-pv-border flex items-center justify-center">
+          <Award className="w-7 h-7 text-pv-dragon-fruit" />
+        </div>
+
+        <p className="text-xs uppercase tracking-wider text-pv-text-muted font-medium mb-1">
+          Account Progression
+        </p>
+        <h2 id="level-up-title" className="text-2xl font-semibold text-pv-text-primary mb-1">
+          Level {levelUpModal.newLevel} Reached
+        </h2>
+        <p className="text-xs text-pv-text-secondary mb-5">
+          You have achieved a new account tier. Bonus coins have been deposited into your balance.
+        </p>
+
+        <div className="bg-pv-surface-secondary border border-pv-border rounded-lg p-3 mb-5 flex items-center justify-center gap-2 text-pv-text-primary text-xs font-medium">
+          <Coins className="w-4 h-4 text-pv-dragon-fruit" />
+          <span>+100 bonus coins awarded</span>
+        </div>
+
+        <button
+          onClick={closeLevelUpModal}
+          className="w-full h-10 bg-pv-dragon-fruit hover:bg-pv-dragon-fruit-hover text-[#110F15] text-sm font-semibold rounded-lg transition-colors"
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
 };

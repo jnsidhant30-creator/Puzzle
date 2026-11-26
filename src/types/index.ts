@@ -39,7 +39,7 @@ export type GoalStatus = 'ACTIVE' | 'COMPLETED' | 'EXPIRED'; export interface Pl
 } export interface UserMasteryProfile { userId: string; overallMasteryLevel: number; /* 1 to 6 */ overallMasteryPercent: number; /* 0 to 100 */ totalMasteryPoints: number; records: Partial<Record<PuzzleType, PuzzleMasteryRecord>>; strongestPuzzleTypes: PuzzleType[]; developingPuzzleTypes: PuzzleType[]; recommendedMasteryTarget?: PuzzleType; updatedAt: string;
 } export type PracticeChallengeType = | 'SPEED' | 'ACCURACY' | 'NO_HINT' | 'DIFFICULTY' | 'PERSONAL_BEST' | 'CONSISTENCY' | 'MASTERY'; export interface PracticeChallenge { id: string; puzzleType: PuzzleType; title: string; description: string; type: PracticeChallengeType; difficulty: Difficulty; targetValue: number; /* target metric (seconds, score, moves, or 1 for no hint) */ targetLabel: string; rewardXP: number; rewardCoins: number; seed?: number; isCustom?: boolean;
 } export interface UserPracticeProgress { id?: string; userId: string; completedChallengeIds: string[]; updatedAt: string;
-} /* Phase 77 & 78 — Clubs & Team Competitions Types */
+} /* Phase 77 & 78 - Clubs & Team Competitions Types */
 export  type ClubRole = 'OWNER' | 'ADMIN' | 'CONTRIBUTOR' | 'MEMBER';
 export type ClubPrivacy = 'public' | 'invite_only' | 'private'; export interface Club { id: string; name: string; tag: string; /* 2-5 uppercase chars e.g. "LOGIC" */ description: string; icon: string; ownerUid: string; ownerName: string; adminUids: string[]; primaryFocus: PuzzleType | 'all'; level: number; weeklyPoints: number; memberCount: number; maxMembers: number; privacy: ClubPrivacy; themeColor: string; totalClubXP: number; totalPuzzlesSolved: number; activeCompetitionId?: string; createdAt: string; updatedAt: string;
 
@@ -50,35 +50,35 @@ export type ClubPrivacy = 'public' | 'invite_only' | 'private'; export interface
 
 } export interface ClubCompetitionScore { id: string; /* `${competitionId}_${clubId}` */ competitionId: string; clubId: string; clubName: string; clubTag: string; clubIcon: string; totalPoints: number; memberContributionsCount: number; milestoneCompleted: boolean; updatedAt: string;
 } export interface ClubDuelChallenge { id: string; challengerClubId: string; challengerClubName: string; challengerClubTag: string; targetClubId: string; targetClubName: string; targetClubTag: string; puzzleTypes: PuzzleType[]; durationDays: number; challengerScore: number; targetScore: number; status: 'PENDING' | 'ACTIVE' | 'COMPLETED' | 'DECLINED'; winnerClubId?: string; startAt?: string; endAt?: string; createdAt: string;
-} /* Phase 79 & 80 — Club Events, Calendar & Community Progress Types */
+} /* Phase 79 & 80 - Club Events, Calendar & Community Progress Types */
 export  type ClubEventType = | 'puzzle_night' | 'practice_session' | 'club_challenge' | 'mastery_practice' | 'competition' | 'meetup' | 'custom'; export type ClubEventStatus = 'scheduled' | 'active' | 'completed' | 'cancelled'; export interface ClubEvent { id: string; clubId: string; title: string; description: string; eventType: ClubEventType; puzzleFocus: PuzzleType | 'all'; startAt: string; endAt: string; createdBy: string; createdByName: string; status: ClubEventStatus; participantCount?: number; interestedCount?: number; linkedActivityType?: 'game' | 'challenge' | 'competition' | 'mastery' | 'journey' | 'goals'; linkedActivityId?: string; createdAt?: string; updatedAt?: string;
 } export interface ClubEventParticipant { id: string; /* `${eventId}_${userId}` */ eventId: string; clubId: string; userId: string; displayName: string; avatarUrl: string; status: 'participating' | 'interested'; createdAt: string;
 } export interface ClubMilestone { id: string; clubId: string; title: string; description: string; targetPuzzles: number; achievedPuzzles: number; isCompleted: boolean; completedAt?: string; rewardXP: number;
 } export interface ClubProgressStats { totalPuzzlesCompleted: number; activeContributorsCount: number; weeklyActivityPercent: number; monthlyPuzzlesCompleted: number; eventsHeldCount: number; reputationLabel: 'Emerging Club' | 'Established Club' | 'Thriving Community' | 'Elite Syndicate';
-} /* Phase 81 — Club Communication & Discussion Types */
+} /* Phase 81 - Club Communication & Discussion Types */
 export  type ClubDiscussionCategory = | 'strategy' | 'technique' | 'competition' | 'event' | 'mastery' | 'recommendation' | 'announcement'; export interface ClubDiscussion { id: string; clubId: string; title: string; content: string; authorId: string; authorName: string; authorAvatar: string; authorRole?: ClubRole; category: ClubDiscussionCategory; tags: string[]; linkedPuzzleType?: PuzzleType; isPinned: boolean; isAnnouncement: boolean; replyCount: number; upvotesCount: number; upvotedBy: string[]; lastReplyAt: string; createdAt: string; updatedAt: string;
 } export interface ClubDiscussionReply { id: string; discussionId: string; clubId: string; authorId: string; authorName: string; authorAvatar: string; authorRole?: ClubRole; content: string; upvotesCount: number; upvotedBy: string[]; createdAt: string; updatedAt: string;
-} /* Phase 82 — Club Knowledge, Resources & Community Guides Types */
+} /* Phase 82 - Club Knowledge, Resources & Community Guides Types */
 export  type ClubGuideCategory = | 'strategy' | 'pattern' | 'speed' | 'beginner' | 'game_specific' | 'training'; export interface ClubGuide { id: string; clubId: string; title: string; summary: string; content: string; authorId: string; authorName: string; authorAvatar: string; authorRole?: ClubRole; category: ClubGuideCategory; puzzleType?: PuzzleType | 'all'; difficultyLevel?: Difficulty | 'all'; isOfficial: boolean; isFeatured: boolean; likesCount: number; likedBy: string[]; viewsCount: number; bookmarksCount: number; bookmarkedBy?: string[]; createdAt: string; updatedAt: string;
-} /* Phase 83 — Community Safety & Moderation Types */
+} /* Phase 83 - Community Safety & Moderation Types */
 export  type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'cheating' | 'other';
 export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
 export type ReportTargetType = 'discussion' | 'guide' | 'comment' | 'wall' | 'profile' | 'user'; export interface ContentReport { id: string; reporterId: string; reporterName: string; targetType: ReportTargetType; targetId: string; targetAuthorId?: string; targetTitle?: string; reason: ReportReason; description?: string; status: ReportStatus; actionTaken?: string; createdAt: string; resolvedAt?: string;
 } export interface UserBlock { id: string; userId: string; blockedUserId: string; createdAt: string;
 } export interface UserMute { id: string; userId: string; mutedUserId: string; createdAt: string;
 } export interface ModerationAction { id: string; adminId: string; adminName: string; actionType: 'approve' | 'remove_content' | 'warning' | 'mute_user' | 'ban_user'; targetUserId?: string; targetId?: string; details: string; createdAt: string;
-} /* Phase 84 — Advanced Player Social Experience Types */
+} /* Phase 84 - Advanced Player Social Experience Types */
 export  interface PlayerWallPost { id: string; profileUserId: string; authorId: string; authorName: string; authorAvatar: string; authorTitle?: string; authorFlair?: string; content: string; isPinned?: boolean; likesCount: number; likedBy: string[]; createdAt: string;
 } export interface SocialFeedItem { id: string; userId: string; userName: string; userAvatar: string; titleFlair?: string; activityType: 'pb' | 'level' | 'badge' | 'club_join' | 'event_completed' | 'mastery_tier' | 'challenge_won' | 'announcement'; details: string; puzzleType?: PuzzleType; score?: number; timeSeconds?: number; likesCount: number; likedBy: string[]; createdAt: string;
 } export interface HeadToHeadStats { userId: string; opponentId: string; totalMatches: number; wins: number; losses: number; draws: number; bestScoreDiff: number; bestTimeDiff: number;
 } export interface KudosGift { id: string; senderId: string; senderName: string; receiverId: string; giftType: 'kudos' | 'stars' | 'energy' | 'applause'; message?: string; xpValue: number; createdAt: string;
-} /* Phase 85 — Advanced Analytics & Insights 2.0 Types */
+} /* Phase 85 - Advanced Analytics & Insights 2.0 Types */
 export interface RadarSkillPoint { category: string; score: number; /* 0 to 100 */ label: string;
 
 } export interface HeatmapDay { date: string; /* YYYY-MM-DD */ count: number; level: 0 | 1 | 2 | 3 | 4;
 
 } export interface SpeedTrendItem { date: string; puzzleType: PuzzleType; avgTimeSeconds: number; avgScore: number; accuracyPercent: number;
 } export interface WeaknessAnalysis { weakCategories: PuzzleType[]; recommendedDrills: { puzzleType: PuzzleType; difficulty: Difficulty; title: string; reason: string; }[];
-} /* Phase 86 — Accessibility & i18n Types */
+} /* Phase 86 - Accessibility & i18n Types */
 export  type SupportedLanguage = 'en' | 'es' | 'fr' | 'de' | 'ja'; export interface AccessibilitySettings { highContrast: boolean; dyslexicFont: boolean; fontSizeScale: 'sm' | 'md' | 'lg' | 'xl'; reducedMotion: boolean; screenReaderOptimized: boolean; language: SupportedLanguage;
 } 

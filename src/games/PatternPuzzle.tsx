@@ -1,38 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import { Difficulty } from '../types';
 import { sound } from '../services/sound';
-import { HelpCircle, Sparkles } from 'lucide-react';
+import { GameHudBar } from '../components/ui/GameHudBar';
+import { useGameTimer } from '../hooks/useGameTimer';
+import {
+  Lightbulb,
+  Circle,
+  Square,
+  Triangle,
+  Diamond,
+  Hexagon,
+  Star,
+  Plus
+} from 'lucide-react';
 
 interface Props {
   difficulty: Difficulty;
   onComplete: (score: number, timeSeconds: number, won: boolean) => void;
   useHint: () => boolean;
   hintsLeft: number;
+  isPaused?: boolean;
 }
 
-const SHAPES = ['🔴', '🟦', '⭐', '🔺', '🟩', '💎', '🟡', '🟣'];
+const SHAPES = [
+  'circle',
+  'square',
+  'triangle',
+  'diamond',
+  'hexagon',
+  'star'
+] as const;
+
+type ShapeId = typeof SHAPES[number];
+
+const renderShape = (id: ShapeId, className = 'w-6 h-6 sm:w-7 sm:h-7') => {
+  switch (id) {
+    case 'circle': return <Circle className={className} />;
+    case 'square': return <Square className={className} />;
+    case 'triangle': return <Triangle className={className} />;
+    case 'diamond': return <Diamond className={className} />;
+    case 'hexagon': return <Hexagon className={className} />;
+    case 'star': return <Star className={className} />;
+  }
+};
 
 interface PatternState {
-  grid: (string | null)[];
-  answer: string;
-  options: string[];
+  grid: (ShapeId | null)[];
+  answer: ShapeId;
+  options: ShapeId[];
   missingIndex: number;
 }
 
-export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft }) => {
+export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft, isPaused = false }) => {
   const [round, setRound] = useState(1);
   const totalRounds = 3;
   const [score, setScore] = useState(0);
-  const [timer, setTimer] = useState(0);
   const [pattern, setPattern] = useState<PatternState | null>(null);
-  const [selectedOpt, setSelectedOpt] = useState<string | null>(null);
+  const [selectedOpt, setSelectedOpt] = useState<ShapeId | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [hintMsg, setHintMessage] = useState<string | null>(null);
+  const [timer] = useGameTimer(isPaused, round === totalRounds && isAnswered, [difficulty]);
 
   useEffect(() => {
     generatePattern();
-    const interval = setInterval(() => setTimer(t => t + 1), 1000);
-    return () => clearInterval(interval);
   }, [round, difficulty]);
 
   const generatePattern = () => {
@@ -40,34 +70,22 @@ export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint
     setIsAnswered(false);
     setHintMessage(null);
 
-    // Shuffle shapes pool
     const pool = [...SHAPES].sort(() => Math.random() - 0.5);
     const [s1, s2, s3] = pool.slice(0, 3);
 
-    // 3x3 Latin square variations:
-    // Variation A:
-    // [s1, s2, s3]
-    // [s2, s3, s1]
-    // [s3, s1, s2]
-    // Variation B:
-    // [s1, s2, s3]
-    // [s3, s1, s2]
-    // [s2, s3, s1]
     const useVariationB = Math.random() > 0.5;
-    const fullGrid = useVariationB
+    const fullGrid: ShapeId[] = useVariationB
       ? [s1, s2, s3, s3, s1, s2, s2, s3, s1]
       : [s1, s2, s3, s2, s3, s1, s3, s1, s2];
 
-    // Pick a missing position from valid test cells: 4, 6, 7, 8
     const candidateMissing = [4, 6, 7, 8];
     const missingIndex = candidateMissing[Math.floor(Math.random() * candidateMissing.length)];
     const target = fullGrid[missingIndex];
 
-    const gridArr: (string | null)[] = [...fullGrid];
+    const gridArr: (ShapeId | null)[] = [...fullGrid];
     gridArr[missingIndex] = null;
 
-    // Distractor options
-    const optsSet = new Set<string>();
+    const optsSet = new Set<ShapeId>();
     optsSet.add(target);
     while (optsSet.size < 4) {
       const wrong = SHAPES[Math.floor(Math.random() * SHAPES.length)];
@@ -78,7 +96,7 @@ export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint
     setPattern({ grid: gridArr, answer: target, options, missingIndex });
   };
 
-  const handleSelectOption = (opt: string) => {
+  const handleSelectOption = (opt: ShapeId) => {
     if (isAnswered || !pattern) return;
     setSelectedOpt(opt);
     setIsAnswered(true);
@@ -112,53 +130,50 @@ export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint
     if (!pattern || isAnswered || hintsLeft <= 0) return;
     if (useHint()) {
       sound.playClick();
-      setHintMessage(`Rule: Each shape appears exactly once in every row and every column.`);
+      setHintMessage('Latin Square: Each shape occurs exactly once per row and column.');
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 max-w-xl mx-auto w-full">
-      {/* Top Header */}
-      <div className="flex items-center justify-between w-full mb-6 bg-pv-surface-primary/80 p-4 rounded-xl border border-pv-border-strong shadow-sm">
-        <div className="text-center">
-          <p className="text-xs text-pv-text-secondary font-semibold uppercase">Pattern</p>
-          <p className="text-xl font-bold text-violet-400">{round} / {totalRounds}</p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-pv-text-secondary font-semibold uppercase">Timer</p>
-          <p className="text-xl font-bold text-cyan-400">{timer}s</p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-pv-text-secondary font-semibold uppercase">Score</p>
-          <p className="text-xl font-bold text-emerald-400">{score}</p>
-        </div>
-      </div>
+    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+      <GameHudBar
+        items={[
+          { label: 'Round', value: `${round} / ${totalRounds}`, tone: 'accent' },
+          { label: 'Timer', value: `${timer}s` },
+          { label: 'Score', value: score, tone: 'success' },
+        ]}
+      />
 
       {/* Pattern Matrix 3x3 */}
       {pattern && (
-        <div className="w-full bg-pv-bg-secondary/90 border-2 border-violet-500/30 rounded-2xl p-6 mb-6 shadow-sm flex flex-col items-center">
-          <p className="text-xs font-semibold text-violet-300 uppercase tracking-widest mb-6">
-            Complete The 3x3 Pattern Matrix
+        <div className="w-full bg-[#110F15]/90 border border-[#342D3D] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+          <p className="text-xs text-[#C5BFD0] mb-4 text-center">
+            Determine the missing shape to complete the 3 × 3 matrix pattern.
           </p>
-          <div className="grid grid-cols-3 gap-3 w-full max-w-[320px] aspect-square">
-            {pattern.grid.map((symbol, idx) => (
-              <div
-                key={idx}
-                className={`aspect-square rounded-2xl flex items-center justify-center text-4xl border-2 transition-all shadow-inner ${
-                  symbol === null
-                    ? 'bg-violet-500/20 border-violet-400 text-violet-300 animate-pulse ring-2 ring-violet-400'
-                    : 'bg-pv-surface-primary border-pv-border-strong text-white'
-                }`}
-              >
-                {symbol || '?'}
-              </div>
-            ))}
+
+          <div className="grid grid-cols-3 gap-2.5 w-full max-w-[280px] aspect-square">
+            {pattern.grid.map((shapeId, idx) => {
+              const isMissing = shapeId === null;
+
+              return (
+                <div
+                  key={idx}
+                  className={`aspect-square rounded-lg flex items-center justify-center border transition-colors select-none ${
+                    isMissing
+                      ? 'bg-pv-surface-soft border-pv-dragon-fruit text-pv-dragon-fruit font-bold text-xl'
+                      : 'bg-pv-surface-secondary border-pv-border text-pv-text-primary'
+                  }`}
+                >
+                  {isMissing ? '?' : renderShape(shapeId!)}
+                </div>
+              );
+            })}
           </div>
 
           {hintMsg && (
-            <div className="mt-6 bg-violet-500/20 border border-violet-500/40 text-violet-200 px-4 py-2 rounded-lg text-sm flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-violet-300" />
-              {hintMsg}
+            <div className="mt-4 p-2.5 bg-pv-surface-secondary border border-pv-dragon-fruit/40 text-pv-dragon-fruit-light rounded-md text-xs flex items-center gap-2">
+              <Lightbulb className="w-3.5 h-3.5 text-pv-dragon-fruit shrink-0" />
+              <span>{hintMsg}</span>
             </div>
           )}
         </div>
@@ -166,16 +181,16 @@ export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint
 
       {/* Answer Options */}
       {pattern && (
-        <div className="grid grid-cols-4 gap-3 w-full mb-6">
+        <div className="grid grid-cols-4 gap-2.5 w-full mb-5">
           {pattern.options.map((opt, idx) => {
-            let style = "bg-pv-surface-primary hover:bg-pv-surface-soft text-white border-pv-border-strong";
+            let itemStyle = 'bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-primary border-pv-border';
             if (isAnswered) {
               if (opt === pattern.answer) {
-                style = "bg-emerald-600 text-white border-emerald-400 scale-105 shadow-sm shadow-emerald-600/30";
+                itemStyle = 'bg-emerald-950/40 border-emerald-500 text-emerald-300';
               } else if (opt === selectedOpt) {
-                style = "bg-rose-600 text-white border-rose-400";
+                itemStyle = 'bg-rose-950/40 border-rose-500 text-rose-300';
               } else {
-                style = "bg-pv-surface-primary/40 text-pv-text-muted border-pv-border-violet opacity-50";
+                itemStyle = 'bg-pv-surface-primary border-pv-border text-pv-text-muted opacity-40';
               }
             }
 
@@ -184,9 +199,10 @@ export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint
                 key={idx}
                 onClick={() => handleSelectOption(opt)}
                 disabled={isAnswered}
-                className={`p-4 rounded-xl border-2 text-3xl font-bold flex items-center justify-center transition-all duration-200 shadow-md ${style}`}
+                className={`h-14 rounded-lg border flex items-center justify-center transition-colors active:translate-y-px select-none ${itemStyle}`}
+                aria-label={`Select ${opt}`}
               >
-                {opt}
+                {renderShape(opt)}
               </button>
             );
           })}
@@ -197,9 +213,9 @@ export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint
       <button
         onClick={handleHint}
         disabled={isAnswered || hintsLeft <= 0}
-        className="w-full bg-pv-dragon-fruit/20 hover:bg-pv-dragon-fruit/30 text-pv-dragon-fruit-light border border-pv-dragon-fruit/40 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition disabled:opacity-40"
+        className="w-full h-9 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        <HelpCircle className="w-4 h-4" /> Hint ({hintsLeft})
+        <Lightbulb className="w-3.5 h-3.5" /> Hint ({hintsLeft})
       </button>
     </div>
   );
