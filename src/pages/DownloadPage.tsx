@@ -71,8 +71,8 @@ const FAQS = [
     a: 'The NSIS Installer sets up PuzzleVerse per-user (no Administrator prompt needed) with Desktop and Start Menu shortcuts plus a standard Uninstaller. The Portable .exe runs standalone from any folder or USB drive.',
   },
   {
-    q: 'Why are some desktop or mobile packages marked "Pending CI / Requires Signing" instead of showing a download button?',
-    a: 'This portal strictly enables downloads only for build targets actually compiled, verified, and uploaded publicly with real SHA-256 checksums. Targets requiring a macOS Xcode runner, Apple Developer notarization, Ubuntu runner, or Android keystore stay disabled cleanly until built and verified.',
+    q: 'Why are some desktop or mobile packages marked "Pending CI / Signing" instead of showing a download button?',
+    a: 'This portal strictly enables downloads only for build targets actually compiled, verified, and uploaded publicly with real SHA-256 checksums. Windows x64/ARM64 EXEs and the signed Android Universal APK are available now, while macOS, Linux, and iOS binaries stay disabled cleanly until built on their target toolchains.',
   },
   {
     q: 'How can ChromeOS, macOS, Linux, Android, and iPhone/iPad users install PuzzleVerse right now?',
@@ -231,40 +231,58 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({ onPlayWeb, embedded 
               </div>
 
               {/* Primary Recommended Action + Web / PWA Actions */}
-              <div className="flex flex-wrap items-center gap-3">
-                {recommendedPackage.id !== 'pwa_install' && recommendedPackage.id !== 'web_play' && recommendedPackage.available ? (
-                  <a
-                    href={recommendedPackage.downloadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-11 px-5 rounded-lg bg-[#087F8C] hover:bg-[#066B75] text-white text-sm font-bold inline-flex items-center gap-2 transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>{recommendedPackage.title}</span>
-                  </a>
-                ) : (
-                  <Button variant="primary" size="lg" onClick={handleInstallPwa}>
-                    <Globe className="w-4 h-4" />
-                    <span>{detected.isPwaInstalled ? 'Web App Installed' : 'Install Web App (PWA)'}</span>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-3">
+                  {recommendedPackage.id !== 'pwa_install' && recommendedPackage.id !== 'web_play' && recommendedPackage.available ? (
+                    <a
+                      href={recommendedPackage.downloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-11 px-5 rounded-lg bg-[#087F8C] hover:bg-[#066B75] text-white text-sm font-bold inline-flex items-center gap-2 transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>{recommendedPackage.title}</span>
+                    </a>
+                  ) : (
+                    <Button variant="primary" size="lg" onClick={handleInstallPwa}>
+                      <Globe className="w-4 h-4" />
+                      <span>{detected.isPwaInstalled ? 'Web App Installed' : 'Install Web App (PWA)'}</span>
+                    </Button>
+                  )}
+
+                  {recommendedPackage.id !== 'pwa_install' && (
+                    <Button variant="outlineLight" size="lg" onClick={handleInstallPwa}>
+                      <Globe className="w-4 h-4 text-[#087F8C]" />
+                      <span>{detected.isPwaInstalled ? 'Web App Installed' : 'Install Web App (PWA)'}</span>
+                    </Button>
+                  )}
+
+                  {effectiveOs !== 'android' &&
+                    effectiveOs !== 'ios' &&
+                    primaryWinInstaller.available &&
+                    recommendedPackage.id !== primaryWinInstaller.id && (
+                      <a
+                        href={primaryWinInstaller.downloadUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-11 px-4 rounded-lg bg-white hover:bg-[#E9EEE8] text-[#142331] border border-[#C3D0CB] text-sm font-bold inline-flex items-center gap-2 transition-colors"
+                      >
+                        <Download className="w-4 h-4 text-[#087F8C]" />
+                        <span>Windows x64</span>
+                      </a>
+                    )}
+
+                  <Button variant="outlineLight" size="lg" onClick={handleOpenWebPlay}>
+                    <Play className="w-4 h-4 fill-current text-[#087F8C]" />
+                    <span>Play in Browser</span>
                   </Button>
-                )}
+                </div>
 
-                {primaryWinInstaller.available && recommendedPackage.id !== primaryWinInstaller.id && (
-                  <a
-                    href={primaryWinInstaller.downloadUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-11 px-4 rounded-lg bg-white hover:bg-[#E9EEE8] text-[#142331] border border-[#C3D0CB] text-sm font-bold inline-flex items-center gap-2 transition-colors"
-                  >
-                    <Download className="w-4 h-4 text-[#087F8C]" />
-                    <span>Windows x64</span>
-                  </a>
+                {recommendedPackage.id === 'android_apk' && (
+                  <p className="text-xs font-semibold text-[#3B5263]">
+                    Version {recommendedPackage.version ?? RELEASE_VERSION} · {recommendedPackage.sizeLabel} · {recommendedPackage.requirements}
+                  </p>
                 )}
-
-                <Button variant="outlineLight" size="lg" onClick={handleOpenWebPlay}>
-                  <Play className="w-4 h-4 fill-current text-[#087F8C]" />
-                  <span>Play in Browser</span>
-                </Button>
               </div>
             </div>
 
@@ -404,12 +422,16 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({ onPlayWeb, embedded 
                       <div>
                         <span className="text-[#98AAB8] block text-[10px]">Version · Date</span>
                         <span className="font-bold text-[#F5F7F8] font-tabular">
-                          {RELEASE_VERSION} · {RELEASE_DATE}
+                          {pkg.version ?? RELEASE_VERSION} · {RELEASE_DATE}
                         </span>
                       </div>
                       <div>
                         <span className="text-[#98AAB8] block text-[10px]">Size</span>
                         <span className="font-bold text-[#F5F7F8] font-tabular">{pkg.sizeLabel}</span>
+                      </div>
+                      <div className="col-span-2 pt-1.5 border-t border-[#36515F]/70">
+                        <span className="text-[#98AAB8] block text-[10px]">Supported Platforms &amp; Versions</span>
+                        <span className="font-semibold text-[#A8E5D5]">{pkg.requirements}</span>
                       </div>
                     </div>
 
@@ -526,7 +548,7 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({ onPlayWeb, embedded 
                 <strong className="text-[#F5F7F8]">macOS &amp; Linux:</strong> Install immediately as a Chrome/Edge/Safari Web App, or build `.dmg` / `.AppImage` / `.deb` / `.rpm` via the GitHub Actions macOS/Linux workflows.
               </li>
               <li>
-                <strong className="text-[#F5F7F8]">Android &amp; ChromeOS:</strong> Click <strong>Install Web App</strong> above for instant offline PWA support, or build signed APK/AAB via Capacitor CI secrets.
+                <strong className="text-[#F5F7F8]">Android &amp; ChromeOS:</strong> Download <strong>PuzzleVerse-v1.0.0-Android.apk</strong> directly (Android 7.0+ / API 24+, signed release keystore), or click <strong>Install Web App (PWA)</strong> for instant browser installation.
               </li>
               <li>
                 <strong className="text-[#F5F7F8]">iPhone &amp; iPad:</strong> Open in Safari → tap <strong>Share</strong> → <strong>Add to Home Screen</strong> for full-screen standalone play.

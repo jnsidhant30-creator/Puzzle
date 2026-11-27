@@ -3,12 +3,13 @@ apply plugin: 'com.android.application'
 android {
     namespace = "com.puzzleverse.app"
     compileSdk = rootProject.ext.compileSdkVersion
+    buildToolsVersion = "36.0.0"
     defaultConfig {
         applicationId "com.puzzleverse.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 100
+        versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +17,30 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            def ksPropsFile = rootProject.file("keystore.properties")
+            def ksProps = new Properties()
+            if (ksPropsFile.exists()) {
+                ksProps.load(new FileInputStream(ksPropsFile))
+            }
+            def ksPath = System.getenv("ANDROID_KEYSTORE_PATH") ?: ksProps.getProperty("storeFile")
+            if (ksPath != null && !ksPath.trim().isEmpty()) {
+                storeFile file(ksPath)
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD") ?: ksProps.getProperty("storePassword")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: ksProps.getProperty("keyAlias")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: ksProps.getProperty("keyPassword")
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            def ksPropsFile = rootProject.file("keystore.properties")
+            if (System.getenv("ANDROID_KEYSTORE_PATH") || ksPropsFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

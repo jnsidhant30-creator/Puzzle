@@ -14,6 +14,10 @@ All notable releases of **PuzzleVerse** (Web, PWA, Desktop, and Mobile) are docu
 - **Windows x64 & ARM64 Desktop Releases + Multi-OS Electron Config:**
   - Built Windows `x64` Setup (`122,371,946` B), Windows `x64` Portable (`111,403,405` B), Windows `ARM64` Setup (`116,363,966` B), and Windows `ARM64` Portable (`106,075,894` B).
   - Expanded [electron-builder.json](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron-builder.json), [main.cjs](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/main.cjs), and [entitlements.mac.plist](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/entitlements.mac.plist) for macOS (`arm64`, `x64`, `universal` `.dmg`/`.zip`, Dock `activate`, `Ctrl+Cmd+F`) and Linux (`x64`/`arm64` `.AppImage`, `.deb`, `.rpm`, freedesktop icons in `build/icons/`), plus cross-OS release update asset resolution.
+- **Capacitor 8 Signed Android Release (`PuzzleVerse-v1.0.0-Android.apk` & `.aab`):**
+  - Built and signed the Universal Android APK (`3,970,575` B, `versionCode 100`, `versionName "1.0.0"`, `minSdkVersion 24` / Android 7.0+, `targetSdkVersion 36`, APK Signature Scheme v2 verified) and Google Play Store AAB (`3,789,930` B) alongside `ANDROID_SHA256SUMS.txt` on GitHub Release `v1.1.0`.
+  - Configured `#142331` Ocean Navy system bars (`styles.xml`), adaptive launcher icons & splash assets, Chrome Custom Tab Google OAuth (`@capacitor/browser` + `com.puzzleverse.app://auth`), `allowBackup="false"`, `usesCleartextTraffic="false"`, hardware Back pause handling, and offline Guest launch.
+  - Added [ANDROID_RELEASE_REPORT.md](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/ANDROID_RELEASE_REPORT.md) and updated `/download` automatic Android detection with direct APK link, real size, version `1.0.0`, supported Android versions, and PWA fallback.
 - **Capacitor 8 Android & iOS Native Mobile Projects (`android/`, `ios/`):**
   - Scaffolded Capacitor 8 native Android and Universal iPhone/iPad Xcode projects sharing `dist/`, wired with `@capacitor/app` hardware back handling, `@capacitor/browser`, `@capacitor/haptics`, `@capacitor/network`, `@capacitor/share`, `@capacitor/status-bar`, `@capacitor/splash-screen`, `@capacitor/toast`, HTTPS-only manifest rules (`usesCleartextTraffic="false"`), minimal permissions, safe-area inset CSS utilities, and native icons.
 - **Universal `/download` Portal & Cross-Platform CI Workflow:**
@@ -23,7 +27,8 @@ All notable releases of **PuzzleVerse** (Web, PWA, Desktop, and Mobile) are docu
 
 ### Known Limitations (`v1.1.0`)
 - Windows `x64` & `ARM64` desktop binaries remain unsigned (`NotSigned`); Windows `ARM64` execution was not run on ARM64 hardware (cross-compiled on `x64`).
-- macOS, Linux, Android `.apk`/`.aab`, and iOS `.ipa` binaries require macOS/Ubuntu/Android SDK runners in CI (`universal-release.yml`) and remain disabled on `/download` until compiled and uploaded publicly.
+- `PuzzleVerse-v1.0.0-Android.apk` & `.aab` are signed with the PuzzleVerse developer release keystore (`apksigner` v2 verified) and tested on Android 14 emulator; physical Android device sideload and Google Play Store / Play App Signing publication remain pending membership.
+- macOS, Linux, and iOS `.ipa` binaries require macOS/Ubuntu runners in CI (`universal-release.yml`) and remain disabled on `/download` until compiled and uploaded publicly.
 
 ---
 

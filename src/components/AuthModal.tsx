@@ -13,6 +13,7 @@ import { auth, syncUserProfile, googleProvider } from '../services/firebase';
 import { Mail, Lock, EyeOff, Eye, WifiOff, RefreshCw, Compass, Download } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Capacitor } from '@capacitor/core';
+import { startMobileGoogleAuth } from '../platform/adapter';
 
 interface Props {
   onClose?: () => void;
@@ -104,9 +105,17 @@ export const AuthModal: React.FC<Props> = ({ onOpenDownload }) => {
       }
 
       if (Capacitor.isNativePlatform()) {
-        setError(
-          'Google blocks OAuth inside embedded Android/iOS WebViews. Sign in with Email & Password or Guest Practice here, or use Google Sign-In on the Web App until a native Google Sign-In client is linked.'
+        const mobileRes = await startMobileGoogleAuth();
+        if (!mobileRes.ok || (!mobileRes.idToken && !mobileRes.accessToken)) {
+          throw new Error(mobileRes.error || 'Google sign-in in system browser did not complete.');
+        }
+        const credential = GoogleAuthProvider.credential(
+          mobileRes.idToken || null,
+          mobileRes.accessToken || null
         );
+        const res = await signInWithCredential(auth, credential);
+        const profile = await syncUserProfile(res.user);
+        setUser(profile, false);
         setLoading(false);
         return;
       }

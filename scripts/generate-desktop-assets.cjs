@@ -71,6 +71,40 @@ const MASKABLE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 
   </g>
 </svg>`;
 
+const ADAPTIVE_FOREGROUND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" fill="none">
+  <g transform="translate(22, 22)">
+    <rect x="2" y="2" width="60" height="60" rx="12" fill="#1C2D3B" stroke="#38C6BA" stroke-width="2.5" />
+    <path d="M18 22H26C26 19.2 28.2 17 31 17C33.8 17 36 19.2 36 22H44C45.7 22 47 23.3 47 25V33C49.8 33 52 35.2 52 38C52 40.8 49.8 43 47 43V47C47 48.7 45.7 50 44 50H18C16.3 50 15 48.7 15 47V25C15 23.3 16.3 22 18 22Z" fill="#38C6BA" />
+    <rect x="21" y="29" width="8" height="8" rx="2" fill="#F5F2E9" />
+    <rect x="33" y="29" width="8" height="8" rx="2" fill="#142331" />
+    <rect x="21" y="40" width="8" height="5" rx="1.5" fill="#A8E5D5" />
+  </g>
+</svg>`;
+
+function buildAndroidSplashSvg(width, height) {
+  const shortSide = Math.min(width, height);
+  const logoSize = Math.round(shortSide * 0.24);
+  const titleSize = Math.round(shortSide * 0.065);
+  const tagSize = Math.round(shortSide * 0.032);
+  const cx = Math.round(width / 2);
+  const cy = Math.round(height / 2);
+  const lx = cx - Math.round(logoSize / 2);
+  const ly = cy - Math.round(logoSize * 0.85);
+  const scale = logoSize / 64;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <rect width="${width}" height="${height}" fill="#142331" />
+    <g transform="translate(${lx}, ${ly}) scale(${scale})">
+      <rect width="64" height="64" rx="14" fill="#1C2D3B" stroke="#38C6BA" stroke-width="2.5" />
+      <path d="M18 22H26C26 19.2 28.2 17 31 17C33.8 17 36 19.2 36 22H44C45.7 22 47 23.3 47 25V33C49.8 33 52 35.2 52 38C52 40.8 49.8 43 47 43V47C47 48.7 45.7 50 44 50H18C16.3 50 15 48.7 15 47V25C15 23.3 16.3 22 18 22Z" fill="#38C6BA" />
+      <rect x="21" y="29" width="8" height="8" rx="2" fill="#F5F2E9" />
+      <rect x="33" y="29" width="8" height="8" rx="2" fill="#142331" />
+      <rect x="21" y="40" width="8" height="5" rx="1.5" fill="#A8E5D5" />
+    </g>
+    <text x="${cx}" y="${ly + logoSize + Math.round(titleSize * 1.45)}" text-anchor="middle" fill="#F5F7F8" font-family="Segoe UI, sans-serif" font-size="${titleSize}" font-weight="800">PuzzleVerse</text>
+    <text x="${cx}" y="${ly + logoSize + Math.round(titleSize * 1.45) + Math.round(tagSize * 1.7)}" text-anchor="middle" fill="#A8E5D5" font-family="Segoe UI, sans-serif" font-size="${tagSize}" font-weight="600">Challenge Your Mind. Beat Your Best.</text>
+  </svg>`;
+}
+
 const HEADER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 57">
   <rect width="150" height="57" fill="#142331" />
   <rect x="0" y="54" width="150" height="3" fill="#38C6BA" />
@@ -180,6 +214,45 @@ app.whenReady().then(async () => {
   const sidebarRender = await renderSvgToRgbaAndPng(SIDEBAR_SVG, 164, 314);
   fs.writeFileSync(path.join(buildDir, 'installerSidebar.bmp'), encodeBmp24(sidebarRender.rgba, 164, 314));
 
-  console.log('Generated desktop, Linux, and PWA icons cleanly in build/ and public/icons/');
+  const androidResDir = path.join(rootDir, 'android', 'app', 'src', 'main', 'res');
+  if (fs.existsSync(androidResDir)) {
+    const adaptiveSizes = [
+      ['mipmap-mdpi', 108],
+      ['mipmap-hdpi', 162],
+      ['mipmap-xhdpi', 216],
+      ['mipmap-xxhdpi', 324],
+      ['mipmap-xxxhdpi', 432],
+    ];
+    for (const [folder, size] of adaptiveSizes) {
+      const targetDir = path.join(androidResDir, folder);
+      if (fs.existsSync(targetDir)) {
+        const { png } = await renderSvgToRgbaAndPng(ADAPTIVE_FOREGROUND_SVG, size, size);
+        fs.writeFileSync(path.join(targetDir, 'ic_launcher_foreground.png'), png);
+      }
+    }
+
+    const splashSpecs = [
+      ['drawable', 480, 320],
+      ['drawable-port-mdpi', 320, 480],
+      ['drawable-port-hdpi', 480, 800],
+      ['drawable-port-xhdpi', 720, 1280],
+      ['drawable-port-xxhdpi', 960, 1600],
+      ['drawable-port-xxxhdpi', 1280, 1920],
+      ['drawable-land-mdpi', 480, 320],
+      ['drawable-land-hdpi', 800, 480],
+      ['drawable-land-xhdpi', 1280, 720],
+      ['drawable-land-xxhdpi', 1600, 960],
+      ['drawable-land-xxxhdpi', 1920, 1280],
+    ];
+    for (const [folder, w, h] of splashSpecs) {
+      const targetDir = path.join(androidResDir, folder);
+      if (fs.existsSync(targetDir)) {
+        const { png } = await renderSvgToRgbaAndPng(buildAndroidSplashSvg(w, h), w, h);
+        fs.writeFileSync(path.join(targetDir, 'splash.png'), png);
+      }
+    }
+  }
+
+  console.log('Generated desktop, Linux, PWA, and Android icons/splash assets cleanly');
   app.quit();
 });

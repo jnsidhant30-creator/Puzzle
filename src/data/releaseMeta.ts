@@ -16,6 +16,7 @@ export interface UniversalPackageMeta {
   title: string;
   badge: string;
   format: string;
+  version?: string;
   fileName: string;
   sizeBytes: number;
   sizeLabel: string;
@@ -44,12 +45,12 @@ export const DESKTOP_RELEASE_META = {
     'Windows 10 / 11 (x64 & ARM64 desktop packages available for direct download)',
     'macOS 12+ (Apple Silicon & Intel via CI runner or Safari/Chrome Web App)',
     'Linux x64 & ARM64 (AppImage, DEB, RPM via CI runner or Chrome/Firefox PWA)',
-    'Android 8+ (Capacitor APK/AAB via CI runner or Chrome Installable Web App)',
+    'Android 7.0+ (API 24+ · Signed Universal APK ready for direct download + Play AAB + Chrome PWA)',
     'iOS / iPadOS 15+ (Capacitor Xcode project; Safari Share → Add to Home Screen PWA)',
     'ChromeOS & Modern Browsers (Installable offline-capable Vite PWA)',
   ],
   signedStatus:
-    'Open-source unsigned native installers — no paid Authenticode, Apple Developer ID, or Play Upload certificate is purchased yet. Verify SHA-256 checksums before launching desktop binaries.',
+    'Windows desktop binaries remain unsigned (NotSigned; no paid Authenticode cert purchased). Android APK (PuzzleVerse-v1.0.0-Android.apk) and Google Play AAB (PuzzleVerse-v1.0.0-Android.aab) are signed with the PuzzleVerse developer release keystore (RSA-2048 SHA256withRSA; direct sideload today, Play Store submission pending membership). Verify SHA-256 checksums before running installers.',
   releasePageUrl: RELEASE_TAG_URL,
   installer: {
     fileName: `PuzzleVerse-Setup-${RELEASE_VERSION}-x64.exe`,
@@ -72,7 +73,7 @@ export const DESKTOP_RELEASE_META = {
     'New centralized platform detection (OS, CPU architecture, desktop/mobile container, PWA install status) and modular Web / Electron / Capacitor platform adapters.',
     'Full offline-capable Vite PWA with Workbox precaching, 192px/512px/maskable PNG app icons, ChromeOS install prompt, and non-disruptive update banners.',
     'Expanded Electron Builder packaging configuration for Windows x64 + ARM64, macOS Intel + Apple Silicon + Universal DMG, and Linux AppImage/DEB/RPM.',
-    'Scaffolded Capacitor 8 native Android and iOS projects with safe-area UI spacing, native haptics, hardware Back handling, and native share sheets.',
+    'Published signed Capacitor 8 Universal Android APK (PuzzleVerse-v1.0.0-Android.apk, Android 7.0+ / API 24+) and Google Play AAB (PuzzleVerse-v1.0.0-Android.aab) with offline launch, Chrome Custom Tab Google OAuth, and hardware Back handling.',
   ],
 };
 
@@ -278,20 +279,23 @@ export const UNIVERSAL_PACKAGES: UniversalPackageMeta[] = [
   {
     id: 'android_apk',
     os: 'android',
-    arch: 'any',
-    title: 'Download for Android (APK / AAB)',
-    badge: 'Capacitor Android Project Ready',
-    format: 'Android APK / Play AAB',
-    fileName: `PuzzleVerse-${RELEASE_VERSION}-android.apk`,
-    sizeBytes: 0,
-    sizeLabel: 'Requires Android SDK / Keystore CI',
-    sha256: 'Not yet built (Android SDK not installed locally)',
-    downloadUrl: `${RELEASE_DOWNLOAD_BASE}/PuzzleVerse-${RELEASE_VERSION}-android.apk`,
-    available: false,
-    signed: false,
-    signingNote: 'Capacitor Android native project generated in android/. Signed release APK & AAB build on Ubuntu CI once release keystore secrets are provided; Install Web App (PWA) works immediately on Android Chrome.',
-    description: 'Native Android APK and Google Play AAB built from the shared Capacitor 8 project supporting armeabi-v7a, arm64-v8a, and x86_64.',
-    requirements: 'Android 8.0+ · Chrome PWA available immediately',
+    arch: 'universal',
+    title: 'Download for Android (APK)',
+    badge: 'Recommended · Signed Universal APK',
+    format: 'Android APK (Universal)',
+    version: '1.0.0',
+    fileName: 'PuzzleVerse-v1.0.0-Android.apk',
+    sizeBytes: 3970575,
+    sizeLabel: '3.79 MB (3,970,575 bytes)',
+    sha256: '16e863e0fcfc919ed666784ff3c3b752bf46c5786811477414250f7dc00daff3',
+    downloadUrl: `${RELEASE_DOWNLOAD_BASE}/PuzzleVerse-v1.0.0-Android.apk`,
+    available: true,
+    signed: true,
+    signingNote:
+      'Signed via APK Signature Scheme v2 with PuzzleVerse release keystore (cert SHA-256 38ecc6bd...f7). Google Play Store AAB (PuzzleVerse-v1.0.0-Android.aab, 3.61 MB) also published in release v1.1.0.',
+    description:
+      'Universal Android APK for smartphones & tablets supporting arm64-v8a, armeabi-v7a, x86, and x86_64 with all 16 games, offline launch, and Chrome Custom Tab Google OAuth.',
+    requirements: 'Android 7.0+ (API 24 – 36) · Smartphones & Tablets',
   },
   {
     id: 'ios_ipa',

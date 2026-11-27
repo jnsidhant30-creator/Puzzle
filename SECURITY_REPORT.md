@@ -43,10 +43,10 @@
   - `allowNavigation` explicitly restricts in-app WebView navigation to official PuzzleVerse Hosting domains and Google auth domains.
 - **Minimum Permissions:**
   - Android declares only `INTERNET`, `ACCESS_NETWORK_STATE`, and `VIBRATE` (no camera, microphone, contacts, coarse/fine location, or external storage permissions) and sets `android:allowBackup="false"`.
-- **Embedded WebView OAuth Compliance:**
-  - Because Google OAuth rejects embedded mobile WebViews (`disallowed_useragent`), [AuthModal.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/components/AuthModal.tsx) explicitly detects `Capacitor.isNativePlatform()` and avoids triggering broken WebView popups, guiding mobile users to native Email/Password or Guest Practice cleanly.
+- **Chrome Custom Tab Google OAuth & WebView Compliance:**
+  - Because Google OAuth rejects embedded mobile WebViews (`disallowed_useragent`), [AuthModal.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/components/AuthModal.tsx), [adapter.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/platform/adapter.ts), and [DesktopAuthPage.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/pages/DesktopAuthPage.tsx) detect native Capacitor Android and open a system Chrome Custom Tab (`@capacitor/browser` → `/desktop-auth?mobile=1`) with cryptographic `state` validation, returning cleanly to `com.puzzleverse.app://auth` (`Intent.ACTION_VIEW` in `AndroidManifest.xml`), alongside native Email/Password and Guest Practice.
 - **Signing Secret Hygiene:**
-  - [android/app/build.gradle](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/android/app/build.gradle) reads keystore paths and passwords solely from environment variables (`ANDROID_KEYSTORE_*`), and `.gitignore` excludes `*.keystore`, `*.jks`, and `.env*`.
+  - [android/app/build.gradle](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/android/app/build.gradle) reads keystore paths and passwords solely from environment variables (`ANDROID_KEYSTORE_*`) or gitignored `android/keystore.properties`, and `.gitignore` excludes `*.keystore`, `*.jks`, `keystore.properties`, and `.env*`. The release keystore itself lives outside the repository (`C:\Users\jnsid\.puzzleverse-keys\puzzleverse-android-release.jks`).
 
 ---
 
@@ -62,4 +62,4 @@
 
 ## 4. Transparent Unsigned Status Notice (OS Trust Mechanisms Respected)
 
-PuzzleVerse **never** disables, bypasses, or tampers with Windows SmartScreen, macOS Gatekeeper, Android Play Protect, or Apple iOS App Store code-signing requirements. Because no paid certificates or developer memberships were purchased without approval, published desktop `v1.1.0` `.exe` binaries report `Status: NotSigned` (`Get-AuthenticodeSignature`), and macOS/iOS CI release signing remains optional until valid organization certificates are supplied via CI secrets.
+PuzzleVerse **never** disables, bypasses, or tampers with Windows SmartScreen, macOS Gatekeeper, Android Play Protect, or Apple iOS App Store code-signing requirements. Published desktop `v1.1.0` `.exe` binaries report `Status: NotSigned` (`Get-AuthenticodeSignature`), while the Android release APK & AAB are validly signed with the PuzzleVerse developer release keystore (`apksigner verify` v2 verified, cert SHA-256 `38ecc6bd...f7`; Play Console / Play App Signing remains pending until a Google Play Developer account is registered). macOS and iOS CI release signing remains optional until valid organization certificates are supplied.
