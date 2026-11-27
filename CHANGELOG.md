@@ -1,6 +1,31 @@
 # Changelog
 
-All notable releases of **PuzzleVerse** (Web, PWA, and Windows Desktop) are documented in this file.
+All notable releases of **PuzzleVerse** (Web, PWA, Desktop, and Mobile) are documented in this file.
+
+## [1.1.0] - 2026-11-27 — Universal Cross-Platform Edition
+
+### Added
+- **Universal Platform Detection & Modular Adapters (`src/platform/`):**
+  - Added [detectPlatform.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/platform/detectPlatform.ts) to detect operating system (`windows`, `macos`, `linux`, `android`, `ios` including iPadOS, `chromeos`, `unknown`), CPU architecture (`x64`, `arm64`, `arm`, `unknown`), container runtime (`electron`, `capacitor`, `pwa`, `web`), touchscreen support, PWA installability (`beforeinstallprompt`), and offline state without blind architecture assumptions.
+  - Added [adapter.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/platform/adapter.ts) unifying version lookup, local storage, network monitoring, notifications, fullscreen, external links, updates, app exit, native sharing, PWA installation prompts, haptic feedback, and active-game tracking behind Electron, Capacitor, and Web adapters.
+- **Installable Vite PWA (`vite-plugin-pwa@2.0.0`):**
+  - Configured offline Workbox precaching (`dist/sw.js`, `84` entries / `1725.92 KiB`), `manifest.json` with raster PNG icons (`64x64`, `192x192`, `512x512`, maskable `512x512`, iOS `apple-touch-icon-180x180.png`), Chrome/ChromeOS install trigger, and safe non-disruptive web update prompt banner.
+  - Service worker registration cleanly skipped inside Electron (`app://`) and Capacitor native mobile WebViews.
+- **Windows x64 & ARM64 Desktop Releases + Multi-OS Electron Config:**
+  - Built Windows `x64` Setup (`122,371,946` B), Windows `x64` Portable (`111,403,405` B), Windows `ARM64` Setup (`116,363,966` B), and Windows `ARM64` Portable (`106,075,894` B).
+  - Expanded [electron-builder.json](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron-builder.json), [main.cjs](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/main.cjs), and [entitlements.mac.plist](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/entitlements.mac.plist) for macOS (`arm64`, `x64`, `universal` `.dmg`/`.zip`, Dock `activate`, `Ctrl+Cmd+F`) and Linux (`x64`/`arm64` `.AppImage`, `.deb`, `.rpm`, freedesktop icons in `build/icons/`), plus cross-OS release update asset resolution.
+- **Capacitor 8 Android & iOS Native Mobile Projects (`android/`, `ios/`):**
+  - Scaffolded Capacitor 8 native Android and Universal iPhone/iPad Xcode projects sharing `dist/`, wired with `@capacitor/app` hardware back handling, `@capacitor/browser`, `@capacitor/haptics`, `@capacitor/network`, `@capacitor/share`, `@capacitor/status-bar`, `@capacitor/splash-screen`, `@capacitor/toast`, HTTPS-only manifest rules (`usesCleartextTraffic="false"`), minimal permissions, safe-area inset CSS utilities, and native icons.
+- **Universal `/download` Portal & Cross-Platform CI Workflow:**
+  - Updated [DownloadPage.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/pages/DownloadPage.tsx) with auto-detection, manual OS/CPU architecture selectors, Install Web App CTA, verified package checksum cards, and strict disabled-until-published gating for CI-pending builds.
+  - Added [universal-release.yml](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/.github/workflows/universal-release.yml) GitHub Actions build matrix across Windows, macOS, Linux, Android, and iOS runners.
+  - Added [UNIVERSAL_PLATFORM_GUIDE.md](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/UNIVERSAL_PLATFORM_GUIDE.md), [SECURITY_REPORT.md](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/SECURITY_REPORT.md), and [PLATFORM_COMPATIBILITY_REPORT.md](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/PLATFORM_COMPATIBILITY_REPORT.md).
+
+### Known Limitations (`v1.1.0`)
+- Windows `x64` & `ARM64` desktop binaries remain unsigned (`NotSigned`); Windows `ARM64` execution was not run on ARM64 hardware (cross-compiled on `x64`).
+- macOS, Linux, Android `.apk`/`.aab`, and iOS `.ipa` binaries require macOS/Ubuntu/Android SDK runners in CI (`universal-release.yml`) and remain disabled on `/download` until compiled and uploaded publicly.
+
+---
 
 ## [1.0.0] - 2026-11-26 — Initial Windows Desktop Release & Website Download Portal
 

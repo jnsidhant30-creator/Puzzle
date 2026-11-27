@@ -7,6 +7,7 @@ import { getRedirectResult } from 'firebase/auth';
 import { ToastContainer } from './components/ToastContainer';
 import { BottomNavigation } from './components/BottomNavigation';
 import { PUZZLE_MODES } from './data/puzzles';
+import { getPlatformAdapter, initPlatformBridge } from './platform/adapter';
 
 const AuthLayout = lazy(() => import('./components/AuthLayout').then((m) => ({ default: m.AuthLayout })));
 const DownloadPage = lazy(() => import('./pages/DownloadPage').then((m) => ({ default: m.DownloadPage })));
@@ -90,6 +91,7 @@ export default function App() {
   } = useStore();
   const [targetShowcaseId, setTargetShowcaseId] = React.useState<string | undefined>(undefined);
   const [publicRoute, setPublicRoute] = React.useState<'download' | 'desktop_auth' | null>(getInitialPathRoute);
+  const [pwaUpdateAction, setPwaUpdateAction] = React.useState<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     document.documentElement.classList.remove('theme-dark', 'theme-light', 'theme-cyberpunk', 'theme-neon');
@@ -97,9 +99,11 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
+    const adapter = getPlatformAdapter();
     const syncNet = () => setOnlineStatus(navigator.onLine);
     window.addEventListener('online', syncNet);
     window.addEventListener('offline', syncNet);
+    const unsubNet = adapter.network.subscribe((online) => setOnlineStatus(online));
     syncNet();
 
     const unsubNav = window.puzzleverseDesktop?.onNavigate
@@ -107,6 +111,36 @@ export default function App() {
           setActiveTab(tab as any);
         })
       : () => {};
+
+    let cleanupPlatform: () => void = () => {};
+    initPlatformBridge({
+      onBackButton: () => {
+        const state = useStore.getState();
+        if (state.isMobileMenuOpen) {
+          state.setIsMobileMenuOpen(false);
+          return true;
+        }
+        if (state.activeTab === 'game_play') {
+          window.dispatchEvent(new CustomEvent('pv:escape-game'));
+          return true;
+        }
+        if (state.activeTab !== 'dashboard') {
+          state.setActiveTab('dashboard');
+          return true;
+        }
+        return false;
+      },
+    }).then((fn) => {
+      cleanupPlatform = fn;
+    });
+
+    const handlePwaUpdate = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ apply?: () => Promise<void> }>).detail;
+      if (detail?.apply) {
+        setPwaUpdateAction(() => detail.apply!);
+      }
+    };
+    window.addEventListener('pv:pwa-update-available', handlePwaUpdate);
 
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -121,17 +155,20 @@ export default function App() {
     return () => {
       window.removeEventListener('online', syncNet);
       window.removeEventListener('offline', syncNet);
+      window.removeEventListener('pv:pwa-update-available', handlePwaUpdate);
       window.removeEventListener('keydown', handleGlobalKeyDown);
+      unsubNet();
       unsubNav();
+      cleanupPlatform();
     };
   }, [setOnlineStatus, setActiveTab]);
 
   useEffect(() => {
     const pName = selectedPuzzle ? PUZZLE_MODES.find((p) => p.id === selectedPuzzle)?.name : '';
-    window.puzzleverseDesktop?.setActiveGameState({
-      inActiveGame: activeTab === 'game_play' && Boolean(selectedPuzzle),
-      gameName: pName || '',
-    });
+    getPlatformAdapter().setActiveGameState(
+      activeTab === 'game_play' && Boolean(selectedPuzzle),
+      pName || ''
+    );
   }, [activeTab, selectedPuzzle]);
 
   useEffect(() => {
@@ -382,8 +419,29 @@ export default function App() {
   return (
     <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#142331] text-[#F5F7F8] font-sans selection:bg-[#38C6BA]/30 selection:text-[#F5F7F8]">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 pb-[env(safe-area-inset-bottom)] lg:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] lg:pt-0 lg:pb-0">
         <Navbar />
+        {pwaUpdateAction && activeTab !== 'game_play' && (
+          <div className="bg-[#087F8C] text-white px-4 py-2 text-xs font-semibold flex items-center justify-between gap-3 border-b border-[#38C6BA]">
+            <span>A newer version of PuzzleVerse Web App is cached and ready.</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => pwaUpdateAction()}
+                className="px-2.5 py-1 rounded bg-white text-[#142331] font-bold hover:bg-[#E9EEE8]"
+              >
+                Reload to Update
+              </button>
+              <button
+                type="button"
+                onClick={() => setPwaUpdateAction(null)}
+                className="px-2 py-1 rounded bg-[#142331]/30 hover:bg-[#142331]/50"
+              >
+                Later
+              </button>
+            </div>
+          </div>
+        )}
         <main className="flex-1 pb-[88px] lg:pb-10 pt-5 px-4 sm:px-6 lg:px-8 relative w-full max-w-[1440px] mx-auto">
           <Suspense fallback={<PageLoader />}>{renderActiveTab()}</Suspense>
         </main>

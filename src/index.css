@@ -64,7 +64,15 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
     overflow-x: hidden;
+  }
+
+  button,
+  a,
+  [role="button"],
+  select {
+    touch-action: manipulation;
   }
 
   .font-tabular {

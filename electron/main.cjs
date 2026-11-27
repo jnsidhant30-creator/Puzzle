@@ -241,9 +241,29 @@ function setupProtocolAndCsp() {
 }
 
 function setupApplicationMenu() {
+  const isMac = process.platform === 'darwin';
+  const fsAccelerator = isMac ? 'Ctrl+Command+F' : 'F11';
   const template = [
+    ...(isMac
+      ? [
+          {
+            label: APP_NAME,
+            submenu: [
+              { role: 'about' },
+              { type: 'separator' },
+              { role: 'services' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'hideOthers' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' },
+            ],
+          },
+        ]
+      : []),
     {
-      label: 'PuzzleVerse',
+      label: isMac ? 'Navigate' : 'PuzzleVerse',
       submenu: [
         {
           label: 'Home',
@@ -254,12 +274,19 @@ function setupApplicationMenu() {
           },
         },
         {
+          label: 'Settings',
+          click: () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('desktop:navigate', 'settings');
+            }
+          },
+        },
+        {
           label: 'Toggle Fullscreen',
-          accelerator: 'F11',
+          accelerator: fsAccelerator,
           click: () => toggleFullscreen(),
         },
-        { type: 'separator' },
-        { role: 'quit', label: 'Exit PuzzleVerse' },
+        ...(isMac ? [] : [{ type: 'separator' }, { role: 'quit', label: 'Exit PuzzleVerse' }]),
       ],
     },
     {
@@ -283,7 +310,7 @@ function setupApplicationMenu() {
         { type: 'separator' },
         {
           label: 'Toggle Fullscreen',
-          accelerator: 'F11',
+          accelerator: fsAccelerator,
           click: () => toggleFullscreen(),
         },
         ...(!app.isPackaged ? [{ role: 'toggleDevTools' }] : []),
@@ -339,8 +366,12 @@ function createSplashWindow(iconPath) {
 }
 
 function resolveWindowIcon() {
-  const icoPath = path.join(app.getAppPath(), 'build', 'icon.ico');
-  if (fs.existsSync(icoPath)) return icoPath;
+  if (process.platform === 'win32') {
+    const icoPath = path.join(app.getAppPath(), 'build', 'icon.ico');
+    if (fs.existsSync(icoPath)) return icoPath;
+  }
+  const png512 = path.join(app.getAppPath(), 'build', 'icon-512.png');
+  if (fs.existsSync(png512)) return png512;
   const pngPath = path.join(app.getAppPath(), 'build', 'icon-256.png');
   if (fs.existsSync(pngPath)) return pngPath;
   return undefined;
@@ -698,6 +729,32 @@ function registerIpcHandlers() {
     });
   });
 
+function selectReleaseAssetsForPlatform(assets) {
+  const plat = process.platform;
+  const arch = process.arch;
+  let primary;
+  let ymlName = 'latest.yml';
+  if (plat === 'win32') {
+    ymlName = 'latest.yml';
+    const setupRe = arch === 'arm64' ? /Setup-.*-arm64\.exe$/i : /Setup-.*-x64\.exe$/i;
+    primary = assets.find((a) => setupRe.test(a.name)) || assets.find((a) => /Setup-.*\.exe$/i.test(a.name));
+  } else if (plat === 'darwin') {
+    ymlName = 'latest-mac.yml';
+    const dmgRe = arch === 'x64' ? /-x64\.dmg$/i : /-arm64\.dmg$/i;
+    primary =
+      assets.find((a) => dmgRe.test(a.name)) ||
+      assets.find((a) => /-universal\.dmg$/i.test(a.name)) ||
+      assets.find((a) => /\.dmg$/i.test(a.name));
+  } else if (plat === 'linux') {
+    ymlName = 'latest-linux.yml';
+    const appImageRe = arch === 'arm64' ? /-arm64\.AppImage$/i : /-(x86_64|x64)\.AppImage$/i;
+    primary = assets.find((a) => appImageRe.test(a.name)) || assets.find((a) => /\.AppImage$/i.test(a.name));
+  }
+  const ymlAsset = assets.find((a) => a.name.toLowerCase() === ymlName) || assets.find((a) => /^latest\.yml$/i.test(a.name));
+  const sumsAsset = assets.find((a) => /SHA256SUMS\.txt$/i.test(a.name));
+  return { setupAsset: primary, ymlAsset, sumsAsset };
+}
+
   ipcMain.handle('desktop:check-updates', async (event) => {
     assertTrustedSender(event);
     const currentVersion = app.getVersion();
@@ -731,11 +788,7 @@ function registerIpcHandlers() {
       const data = await res.json();
       const latestVersion = String(data.tag_name || data.name || currentVersion).replace(/^v/i, '');
       const assets = Array.isArray(data.assets) ? data.assets : [];
-      const setupAsset =
-        assets.find((a) => /Setup-.*-x64\.exe$/i.test(a.name)) ||
-        assets.find((a) => /\.exe$/i.test(a.name));
-      const ymlAsset = assets.find((a) => /^latest\.yml$/i.test(a.name));
-      const sumsAsset = assets.find((a) => /SHA256SUMS\.txt$/i.test(a.name));
+      const { setupAsset, ymlAsset, sumsAsset } = selectReleaseAssetsForPlatform(assets);
 
       let expectedSha512;
       let expectedSha256;
@@ -798,7 +851,7 @@ function registerIpcHandlers() {
       if (!downloadUrl.startsWith('https://github.com/') && !downloadUrl.startsWith('https://objects.githubusercontent.com/') && !downloadUrl.startsWith('https://release-assets.githubusercontent.com/')) {
         throw new Error('Untrusted update download host rejected.');
       }
-      if (!rawName.endsWith('.exe')) {
+      if (!/\.(exe|dmg|AppImage|deb|rpm)$/i.test(rawName)) {
         throw new Error('Invalid installer filename.');
       }
 
@@ -872,7 +925,11 @@ function registerIpcHandlers() {
     }
     const cleanPath = path.resolve(String(filePath || ''));
     const downloadsDir = path.resolve(app.getPath('downloads'));
-    if (!cleanPath.startsWith(downloadsDir + path.sep) || !cleanPath.endsWith('.exe') || !fs.existsSync(cleanPath)) {
+    if (
+      !cleanPath.startsWith(downloadsDir + path.sep) ||
+      !/\.(exe|dmg|AppImage|deb|rpm)$/i.test(cleanPath) ||
+      !fs.existsSync(cleanPath)
+    ) {
       return { ok: false, reason: 'INVALID_PATH' };
     }
     const openErr = await shell.openPath(cleanPath);
@@ -881,6 +938,16 @@ function registerIpcHandlers() {
     }
     forceQuitRequested = true;
     setTimeout(() => app.quit(), 300);
+    return { ok: true };
+  });
+
+  ipcMain.handle('desktop:quit', async (event) => {
+    assertTrustedSender(event);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.close();
+      return { ok: true };
+    }
+    app.quit();
     return { ok: true };
   });
 }
@@ -898,6 +965,12 @@ app.whenReady().then(() => {
   setupApplicationMenu();
   registerIpcHandlers();
   createMainWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createMainWindow();
+    }
+  });
 });
 
 app.on('before-quit', () => {

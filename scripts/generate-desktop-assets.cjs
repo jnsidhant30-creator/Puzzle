@@ -5,7 +5,14 @@ const pngToIco = require('png-to-ico');
 
 const rootDir = process.cwd();
 const buildDir = path.join(rootDir, 'build');
+const linuxIconsDir = path.join(buildDir, 'icons');
+const publicIconsDir = path.join(rootDir, 'public', 'icons');
 fs.mkdirSync(buildDir, { recursive: true });
+fs.mkdirSync(linuxIconsDir, { recursive: true });
+fs.mkdirSync(publicIconsDir, { recursive: true });
+
+const pkg = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
+const appVersion = String(pkg.version || '1.1.0');
 
 function encodeBmp24(rgbaBuffer, width, height) {
   const rowSize = Math.floor((24 * width + 31) / 32) * 4;
@@ -53,6 +60,17 @@ const ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fi
   <rect x="21" y="40" width="8" height="5" rx="1.5" fill="#A8E5D5" />
 </svg>`;
 
+const MASKABLE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" fill="#142331" />
+  <g transform="translate(8, 8) scale(0.75)">
+    <rect x="4" y="4" width="56" height="56" rx="12" fill="#1C2D3B" stroke="#38C6BA" stroke-width="2.5" />
+    <path d="M18 22H26C26 19.2 28.2 17 31 17C33.8 17 36 19.2 36 22H44C45.7 22 47 23.3 47 25V33C49.8 33 52 35.2 52 38C52 40.8 49.8 43 47 43V47C47 48.7 45.7 50 44 50H18C16.3 50 15 48.7 15 47V25C15 23.3 16.3 22 18 22Z" fill="#38C6BA" />
+    <rect x="21" y="29" width="8" height="8" rx="2" fill="#F5F2E9" />
+    <rect x="33" y="29" width="8" height="8" rx="2" fill="#142331" />
+    <rect x="21" y="40" width="8" height="5" rx="1.5" fill="#A8E5D5" />
+  </g>
+</svg>`;
+
 const HEADER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 57">
   <rect width="150" height="57" fill="#142331" />
   <rect x="0" y="54" width="150" height="3" fill="#38C6BA" />
@@ -63,7 +81,7 @@ const HEADER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 57"
     <rect x="18.5" y="16" width="4.5" height="4.5" rx="1" fill="#142331" />
   </g>
   <text x="58" y="28" fill="#F5F7F8" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700">PuzzleVerse</text>
-  <text x="58" y="42" fill="#A8E5D5" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="600">Windows Desktop v1.0.0</text>
+  <text x="58" y="42" fill="#A8E5D5" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="600">Desktop v${appVersion}</text>
 </svg>`;
 
 const SIDEBAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 164 314">
@@ -87,8 +105,8 @@ const SIDEBAR_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 164 31
 
 app.whenReady().then(async () => {
   const win = new BrowserWindow({
-    width: 600,
-    height: 600,
+    width: 1100,
+    height: 1100,
     show: false,
     webPreferences: { nodeIntegration: false, contextIsolation: true },
   });
@@ -120,17 +138,37 @@ app.whenReady().then(async () => {
     };
   }
 
-  const sizes = [16, 24, 32, 48, 64, 128, 256];
+  const icoSizes = [16, 24, 32, 48, 64, 128, 256];
   const pngBuffers = [];
-  for (const s of sizes) {
+  for (const s of icoSizes) {
     const { png } = await renderSvgToRgbaAndPng(ICON_SVG, s, s);
     pngBuffers.push(png);
+    fs.writeFileSync(path.join(linuxIconsDir, `${s}x${s}.png`), png);
     if (s === 256) {
       fs.writeFileSync(path.join(buildDir, 'icon-256.png'), png);
     }
+    if (s === 64) {
+      fs.writeFileSync(path.join(publicIconsDir, 'pwa-64x64.png'), png);
+    }
   }
+
+  const { png: png192 } = await renderSvgToRgbaAndPng(ICON_SVG, 192, 192);
+  fs.writeFileSync(path.join(publicIconsDir, 'pwa-192x192.png'), png192);
+
   const { png: png512 } = await renderSvgToRgbaAndPng(ICON_SVG, 512, 512);
   fs.writeFileSync(path.join(buildDir, 'icon.png'), png512);
+  fs.writeFileSync(path.join(buildDir, 'icon-512.png'), png512);
+  fs.writeFileSync(path.join(linuxIconsDir, '512x512.png'), png512);
+  fs.writeFileSync(path.join(publicIconsDir, 'pwa-512x512.png'), png512);
+
+  const { png: mask512 } = await renderSvgToRgbaAndPng(MASKABLE_ICON_SVG, 512, 512);
+  fs.writeFileSync(path.join(publicIconsDir, 'maskable-icon-512x512.png'), mask512);
+
+  const { png: apple180 } = await renderSvgToRgbaAndPng(MASKABLE_ICON_SVG, 180, 180);
+  fs.writeFileSync(path.join(publicIconsDir, 'apple-touch-icon-180x180.png'), apple180);
+
+  const { png: icon1024 } = await renderSvgToRgbaAndPng(ICON_SVG, 1024, 1024);
+  fs.writeFileSync(path.join(publicIconsDir, 'icon-1024x1024.png'), icon1024);
 
   const icoConverter = typeof pngToIco === 'function' ? pngToIco : pngToIco.default;
   const icoBuf = await icoConverter(pngBuffers);
@@ -142,6 +180,6 @@ app.whenReady().then(async () => {
   const sidebarRender = await renderSvgToRgbaAndPng(SIDEBAR_SVG, 164, 314);
   fs.writeFileSync(path.join(buildDir, 'installerSidebar.bmp'), encodeBmp24(sidebarRender.rgba, 164, 314));
 
-  console.log('Generated desktop icons and NSIS BMP branding assets cleanly in build/');
+  console.log('Generated desktop, Linux, and PWA icons cleanly in build/ and public/icons/');
   app.quit();
 });

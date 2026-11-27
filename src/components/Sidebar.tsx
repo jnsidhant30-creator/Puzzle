@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
+import { Capacitor } from '@capacitor/core';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -295,8 +296,8 @@ export const Sidebar: React.FC = () => {
         {/* Bottom Settings, Download App (Web), Admin & Collapse Controls */}
         {user && (
           <div className="p-3 border-t border-[#36515F] space-y-1 pb-4 lg:pb-3 shrink-0 bg-[#1C2D3B]">
-            {!window.puzzleverseDesktop?.isDesktop &&
-              renderNavButton({ id: 'download', label: 'Download App', icon: Download }, true)}
+            {!window.puzzleverseDesktop?.isDesktop && !Capacitor.isNativePlatform() &&
+              renderNavButton({ id: 'download', label: 'Apps & Downloads', icon: Download }, true)}
 
             {user.role === 'ADMIN' &&
               renderNavButton({ id: 'admin', label: 'Admin', icon: Shield }, true)}

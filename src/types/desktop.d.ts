@@ -68,6 +68,7 @@ export interface PuzzleVerseDesktopAPI {
   checkForUpdates: () => Promise<DesktopUpdateCheckResult>;
   downloadUpdate: (releaseInfo: DesktopUpdateCheckResult) => Promise<DesktopUpdateDownloadResult>;
   installUpdateAndRestart: (filePath: string) => Promise<{ ok: boolean; reason?: string }>;
+  quitApp?: () => Promise<{ ok: boolean; reason?: string }>;
   onUpdateProgress: (callback: (progress: DesktopUpdateProgress) => void) => () => void;
   checkOnline: () => Promise<boolean>;
 }

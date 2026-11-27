@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PuzzleVerse</string>
+    <string name="title_activity_main">PuzzleVerse</string>
+    <string name="package_name">com.puzzleverse.app</string>
+    <string name="custom_url_scheme">com.puzzleverse.app</string>
+</resources>

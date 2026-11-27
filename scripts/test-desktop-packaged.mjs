@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+const pkgMeta = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
+const CURRENT_VERSION = String(pkgMeta.version || '1.1.0');
+
 const ARTIFACT_SCREENSHOTS_DIR =
   process.env.PV_DESKTOP_SHOTS_DIR ||
   path.join(process.cwd(), 'release', 'test-screenshots');
@@ -222,8 +225,9 @@ async function runDesktopSuite(exePath, label, port = 9229) {
       const privacyOk = await openAndCloseModal('Privacy Policy', 'COPPA');
       const termsOk = await openAndCloseModal('Terms of Use', 'global leaderboards');
       return {
-        hasVersion: txt.includes('1.0.0'),
+        hasVersion: txt.includes(${JSON.stringify(CURRENT_VERSION)}),
         hasCheckForUpdatesBtn: txt.includes('Check for Updates'),
+        hasShareBtn: txt.includes('Share PuzzleVerse'),
         hasAboutBtn: txt.includes('About PuzzleVerse'),
         hasPrivacyBtn: txt.includes('Privacy Policy'),
         hasTermsBtn: txt.includes('Terms of Use'),
@@ -335,7 +339,7 @@ async function runDesktopSuite(exePath, label, port = 9229) {
 const mode = process.argv[2] || 'unpacked';
 let targetExe = path.join(process.cwd(), 'release', 'win-unpacked', 'PuzzleVerse.exe');
 if (mode === 'portable') {
-  targetExe = path.join(process.cwd(), 'release', 'PuzzleVerse-Portable-1.0.0-x64.exe');
+  targetExe = path.join(process.cwd(), 'release', `PuzzleVerse-Portable-${CURRENT_VERSION}-x64.exe`);
 } else if (mode === 'installed') {
   targetExe = path.join(process.env.LOCALAPPDATA || '', 'Programs', 'PuzzleVerse', 'PuzzleVerse.exe');
 }

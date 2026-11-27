@@ -3,6 +3,7 @@ import { BrandLogo } from './BrandLogo';
 import { AuthModal } from './AuthModal';
 import { PuzzleCoverArt } from './PuzzleArt';
 import { Download } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 
 const PREVIEW_MODES = [
   { type: 'laser_mirror' as const, title: 'Laser Mirror', tag: 'Spatial' },
@@ -16,22 +17,22 @@ interface AuthLayoutProps {
 }
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ onOpenDownload }) => {
-  const isDesktop = Boolean(window.puzzleverseDesktop?.isDesktop);
+  const isNativeContainer = Boolean(window.puzzleverseDesktop?.isDesktop) || Capacitor.isNativePlatform();
 
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row bg-[#142331] text-[#F5F7F8] font-sans selection:bg-[#38C6BA]/30">
+    <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row bg-[#142331] text-[#F5F7F8] font-sans selection:bg-[#38C6BA]/30 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       {/* Left Column: Puzzle Game Visual Showcase (Desktop) */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#1C2D3B] border-r border-[#36515F] p-10 xl:p-14 flex-col justify-between">
         <div className="flex items-center justify-between">
           <BrandLogo size={34} />
-          {!isDesktop && onOpenDownload && (
+          {!isNativeContainer && onOpenDownload && (
             <button
               type="button"
               onClick={onOpenDownload}
               className="px-3 py-1.5 rounded-lg bg-[#233D4A] hover:bg-[#2C4654] border border-[#36515F] text-xs font-bold text-[#A8E5D5] inline-flex items-center gap-1.5 transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Download Windows App</span>
+              <span>Download Apps</span>
             </button>
           )}
         </div>
@@ -68,7 +69,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ onOpenDownload }) => {
         </div>
 
         <div className="text-xs text-[#B4C3CE]">
-          Save your scores, level progress, and personal bests across Windows Desktop and Web.
+          Save your scores, level progress, and personal bests across Windows, macOS, Linux, Mobile, and Web.
         </div>
       </div>
 
@@ -76,14 +77,14 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ onOpenDownload }) => {
       <div className="flex-1 flex flex-col justify-center items-center p-4 sm:p-8 lg:p-12">
         <div className="lg:hidden mb-6 flex items-center justify-between w-full max-w-[420px]">
           <BrandLogo size={32} />
-          {!isDesktop && onOpenDownload && (
+          {!isNativeContainer && onOpenDownload && (
             <button
               type="button"
               onClick={onOpenDownload}
               className="px-2.5 py-1.5 rounded-lg bg-[#233D4A] border border-[#36515F] text-xs font-bold text-[#A8E5D5] inline-flex items-center gap-1"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Windows App</span>
+              <span>Get Apps</span>
             </button>
           )}
         </div>

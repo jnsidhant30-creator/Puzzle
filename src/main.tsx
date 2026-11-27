@@ -1,7 +1,14 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Capacitor } from '@capacitor/core';
+import { registerSW } from 'virtual:pwa-register';
 import App from './App.tsx';
 import './index.css';
+import { setPwaSwRegistration } from './platform/adapter';
+import { initPwaPromptCapture } from './platform/detectPlatform';
+
+// Capture browser beforeinstallprompt cleanly on web & ChromeOS
+initPwaPromptCapture();
 
 // Load Nunito Sans asynchronously without inline event handlers so strict CSP applies cleanly
 if (typeof document !== 'undefined' && navigator.onLine !== false) {
@@ -15,20 +22,32 @@ if (typeof document !== 'undefined' && navigator.onLine !== false) {
   }
 }
 
-// Keep PWA service worker management strictly scoped to HTTP/HTTPS web builds (skip in packaged Electron)
+// Enable Service Worker PWA offline support strictly on HTTP/HTTPS Web browsers & ChromeOS,
+// skipping packaged Electron (app://) and native Capacitor (Android/iOS WebView) runtimes.
 const isDesktopRuntime =
   Boolean(window.puzzleverseDesktop?.isDesktop) || window.location.protocol === 'app:';
+const isCapacitorNative = Capacitor.isNativePlatform();
 
-if (!isDesktopRuntime && 'serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    let unregisterCount = 0;
-    for (const registration of registrations) {
-      registration.unregister();
-      unregisterCount++;
-    }
-    if (unregisterCount > 0) {
-      window.location.reload();
-    }
+if (!isDesktopRuntime && !isCapacitorNative && typeof window !== 'undefined' && window.location.protocol.startsWith('http')) {
+  let updateServiceWorker: ((reloadPage?: boolean) => Promise<void>) | undefined;
+  updateServiceWorker = registerSW({
+    immediate: true,
+    onRegisteredSW(_swUrl, registration) {
+      if (registration) {
+        setPwaSwRegistration(registration, Boolean(registration.waiting));
+      }
+    },
+    onNeedRefresh() {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        setPwaSwRegistration(reg || null, true);
+      });
+      // Dispatch clean custom UI event so Settings / Banner can offer Reload Update
+      window.dispatchEvent(
+        new CustomEvent('pv:pwa-update-available', {
+          detail: { apply: () => updateServiceWorker?.(true) },
+        })
+      );
+    },
   });
 }
 

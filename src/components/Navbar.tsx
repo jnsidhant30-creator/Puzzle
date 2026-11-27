@@ -30,6 +30,7 @@ import { signOut } from 'firebase/auth';
 import { NotificationItem } from '../types';
 import { PUZZLE_MODES } from '../data/puzzles';
 import { BrandLogo } from './BrandLogo';
+import { Capacitor } from '@capacitor/core';
 
 const ROUTE_TITLES: Record<string, string> = {
   dashboard: 'Home',
@@ -59,7 +60,7 @@ const ROUTE_TITLES: Record<string, string> = {
   showcase: 'Player Showcase',
   profile: 'Profile',
   settings: 'Settings',
-  download: 'Download Windows App',
+  download: 'Apps & Downloads',
   admin: 'Admin',
 };
 
@@ -289,14 +290,14 @@ export const Navbar: React.FC = () => {
           </button>
         )}
 
-        {!window.puzzleverseDesktop?.isDesktop && activeTab !== 'download' && (
+        {!window.puzzleverseDesktop?.isDesktop && !Capacitor.isNativePlatform() && activeTab !== 'download' && (
           <button
             type="button"
             onClick={() => setActiveTab('download')}
             className="hidden xl:inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[#233D4A] hover:bg-[#2C4654] border border-[#36515F] text-xs font-bold text-[#A8E5D5] transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Download App</span>
+            <span>Get Apps</span>
           </button>
         )}
 

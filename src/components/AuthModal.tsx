@@ -12,6 +12,7 @@ import {
 import { auth, syncUserProfile, googleProvider } from '../services/firebase';
 import { Mail, Lock, EyeOff, Eye, WifiOff, RefreshCw, Compass, Download } from 'lucide-react';
 import { Button } from './ui/Button';
+import { Capacitor } from '@capacitor/core';
 
 interface Props {
   onClose?: () => void;
@@ -98,6 +99,14 @@ export const AuthModal: React.FC<Props> = ({ onOpenDownload }) => {
         const res = await signInWithCredential(auth, credential);
         const profile = await syncUserProfile(res.user);
         setUser(profile, false);
+        setLoading(false);
+        return;
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        setError(
+          'Google blocks OAuth inside embedded Android/iOS WebViews. Sign in with Email & Password or Guest Practice here, or use Google Sign-In on the Web App until a native Google Sign-In client is linked.'
+        );
         setLoading(false);
         return;
       }
@@ -326,16 +335,16 @@ export const AuthModal: React.FC<Props> = ({ onOpenDownload }) => {
         )}
       </form>
 
-      {!window.puzzleverseDesktop?.isDesktop && onOpenDownload && (
+      {!window.puzzleverseDesktop?.isDesktop && !Capacitor.isNativePlatform() && onOpenDownload && (
         <div className="mt-4 pt-3 border-t border-[#D5DEDB] flex items-center justify-between text-xs">
-          <span className="text-[#526575] font-medium">Windows 10/11 PC?</span>
+          <span className="text-[#526575] font-medium">Desktop, Mobile, or PWA?</span>
           <button
             type="button"
             onClick={onOpenDownload}
             className="font-bold text-[#066B75] hover:text-[#142331] inline-flex items-center gap-1"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Download Desktop App</span>
+            <span>Download / Install App</span>
           </button>
         </div>
       )}

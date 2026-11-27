@@ -9,6 +9,15 @@ import {
   DesktopUpdateProgress,
 } from '../types/desktop';
 import {
+  getPlatformAdapter,
+  subscribePwaUpdate,
+} from '../platform/adapter';
+import {
+  DetectedPlatformInfo,
+  detectPlatformSync,
+  subscribePwaInstallPrompt,
+} from '../platform/detectPlatform';
+import {
   Settings,
   Monitor,
   Volume2,
@@ -28,6 +37,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   ExternalLink,
+  Share2,
+  LogOut,
   X,
 } from 'lucide-react';
 
@@ -55,6 +66,10 @@ export const SettingsPage: React.FC = () => {
   } = useStore();
 
   const isDesktop = Boolean(window.puzzleverseDesktop?.isDesktop);
+  const [platformInfo, setPlatformInfo] = useState<DetectedPlatformInfo>(() => detectPlatformSync());
+  const [pwaInstallReady, setPwaInstallReady] = useState(false);
+  const [pwaUpdateReady, setPwaUpdateReady] = useState(false);
+  const [shareMsg, setShareMsg] = useState<string | null>(null);
   const [appInfo, setAppInfo] = useState<DesktopAppInfo | null>(null);
   const [rememberBounds, setRememberBounds] = useState(true);
   const [defaultFullscreen, setDefaultFullscreen] = useState(false);
@@ -92,7 +107,17 @@ export const SettingsPage: React.FC = () => {
 
   useEffect(() => {
     computeStorageSummary();
-    if (!window.puzzleverseDesktop?.isDesktop) return;
+    const adapter = getPlatformAdapter();
+    adapter.getPlatformInfo().then(setPlatformInfo).catch(() => {});
+    const unsubPwaInstall = subscribePwaInstallPrompt(setPwaInstallReady);
+    const unsubPwaUpdate = subscribePwaUpdate(setPwaUpdateReady);
+
+    if (!window.puzzleverseDesktop?.isDesktop) {
+      return () => {
+        unsubPwaInstall();
+        unsubPwaUpdate();
+      };
+    }
 
     window.puzzleverseDesktop.getAppInfo().then(setAppInfo).catch(() => {});
     window.puzzleverseDesktop
@@ -108,6 +133,8 @@ export const SettingsPage: React.FC = () => {
     const unsubFs = window.puzzleverseDesktop.onFullscreenChange((fs) => setIsFullScreen(fs));
     const unsubProg = window.puzzleverseDesktop.onUpdateProgress((prog) => setDownloadProgress(prog));
     return () => {
+      unsubPwaInstall();
+      unsubPwaUpdate();
       unsubFs();
       unsubProg();
     };
@@ -259,14 +286,16 @@ export const SettingsPage: React.FC = () => {
         <div className="bg-[#1C2D3B] border border-[#36515F] rounded-xl p-4 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <p className="text-xs text-[#98AAB8] font-semibold">Application Version</p>
+              <p className="text-xs text-[#98AAB8] font-semibold">Application Version &amp; Runtime</p>
               <p className="text-sm font-bold text-[#F5F7F8] font-tabular">
-                PuzzleVerse {isDesktop ? 'Windows Desktop' : 'Web'} v{currentVersion} · Publisher: {appInfo?.publisher || DESKTOP_RELEASE_META.publisher}
+                PuzzleVerse ({platformInfo.runtimeLabel}) v{currentVersion} · {platformInfo.osLabel} ({platformInfo.archLabel})
               </p>
               <p className="text-[11px] text-[#B4C3CE] mt-0.5">
                 {isDesktop
-                  ? 'Desktop releases use HTTPS GitHub Releases verification (unsigned build).'
-                  : 'Website updates deploy automatically via Firebase Hosting. Desktop installers use versioned GitHub Releases.'}
+                  ? 'Desktop updates verify SHA-256/SHA-512 against GitHub Releases (unsigned installer).'
+                  : platformInfo.isCapacitor
+                  ? 'Mobile app powered by Capacitor WebView + shared PuzzleVerse engine.'
+                  : 'Web & ChromeOS PWA updates precache via Service Worker when redeployed.'}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -279,10 +308,29 @@ export const SettingsPage: React.FC = () => {
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Check for Updates</span>
               </Button>
-              {!isDesktop && (
+              {pwaUpdateReady && (
+                <Button
+                  variant="accent"
+                  size="sm"
+                  onClick={() => getPlatformAdapter().updates.applyPwaUpdate?.()}
+                >
+                  <span>Reload PWA Update</span>
+                </Button>
+              )}
+              {pwaInstallReady && !isDesktop && !platformInfo.isCapacitor && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => getPlatformAdapter().promptPwaInstall()}
+                >
+                  <Download className="w-3.5 h-3.5 text-[#38C6BA]" />
+                  <span>Install Web App</span>
+                </Button>
+              )}
+              {!isDesktop && !platformInfo.isCapacitor && (
                 <Button variant="outline" size="sm" onClick={() => setActiveTab('download')}>
                   <Download className="w-3.5 h-3.5" />
-                  <span>Desktop Download</span>
+                  <span>All Platforms</span>
                 </Button>
               )}
             </div>
@@ -545,6 +593,7 @@ export const SettingsPage: React.FC = () => {
           <p className="text-xs text-[#B4C3CE]">
             PuzzleVerse v{currentVersion} · Published by {DESKTOP_RELEASE_META.publisher}
           </p>
+          {shareMsg && <p className="text-xs font-semibold text-[#34D399]">{shareMsg}</p>}
           <div className="grid grid-cols-2 gap-2">
             <Button variant="secondary" size="sm" onClick={() => setLegalDoc('about')}>
               <Info className="w-3.5 h-3.5" />
@@ -562,6 +611,32 @@ export const SettingsPage: React.FC = () => {
               <Bug className="w-3.5 h-3.5" />
               <span>Report a Problem</span>
             </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={async () => {
+                const res = await getPlatformAdapter().share({
+                  title: 'PuzzleVerse',
+                  text: 'Challenge Your Mind. Beat Your Best. Play 16 puzzles on PuzzleVerse!',
+                  url: 'https://puzzleverse-e16e4.web.app/',
+                });
+                setShareMsg(res.shared ? (res.method === 'clipboard' ? 'Share link copied to clipboard.' : 'Shared!') : 'Sharing unavailable on this browser.');
+                setTimeout(() => setShareMsg(null), 3000);
+              }}
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>Share PuzzleVerse</span>
+            </Button>
+            {platformInfo.capabilities.appExit && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => getPlatformAdapter().exitApp()}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Exit Application</span>
+              </Button>
+            )}
           </div>
         </Card>
       </div>

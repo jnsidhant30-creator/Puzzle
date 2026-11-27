@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('puzzleverseDesktop', Object.freeze({
   checkForUpdates: () => ipcRenderer.invoke('desktop:check-updates'),
   downloadUpdate: (releaseInfo) => ipcRenderer.invoke('desktop:download-update', releaseInfo),
   installUpdateAndRestart: (filePath) => ipcRenderer.invoke('desktop:install-update', filePath),
+  quitApp: () => ipcRenderer.invoke('desktop:quit'),
 
   onUpdateProgress: (callback) => {
     if (typeof callback !== 'function') return () => {};

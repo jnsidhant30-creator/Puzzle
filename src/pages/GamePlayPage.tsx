@@ -40,8 +40,10 @@ import {
   Target,
   Pause,
   Play,
+  Share2,
   X,
 } from 'lucide-react';
+import { getPlatformAdapter } from '../platform/adapter';
 import { Button } from '../components/ui/Button';
 import { Badge, Card } from '../components/ui/Card';
 import { PuzzleCoverArt } from '../components/PuzzleArt';
@@ -287,6 +289,8 @@ export const GamePlayPage: React.FC = () => {
           }
         }
       }
+
+      getPlatformAdapter().haptics(won ? 'medium' : 'light').catch(() => {});
 
       setWinResult({
         score,
@@ -740,6 +744,27 @@ export const GamePlayPage: React.FC = () => {
                   <span>Back to Games</span>
                 </Button>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={async () => {
+                  const res = await getPlatformAdapter().share({
+                    title: `PuzzleVerse — ${puzzleInfo?.name || 'Puzzle'}`,
+                    text: `I scored ${winResult.score} pts in ${winResult.timeSeconds}s on ${puzzleInfo?.name || 'PuzzleVerse'}!`,
+                    url: 'https://puzzleverse-e16e4.web.app/',
+                  });
+                  if (res.shared) {
+                    getPlatformAdapter().notifications.notify(
+                      'Score Shared',
+                      res.method === 'clipboard' ? 'Score summary copied to clipboard.' : 'Shared!'
+                    );
+                  }
+                }}
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Share Result</span>
+              </Button>
             </div>
           </div>
         </div>
