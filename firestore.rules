@@ -1,137 +1,418 @@
 rules_version = '2';
+
+/*
+ * Assumed Data Model (PuzzleVerse — Firebase Spark Plan Client-Validated Architecture)
+ * ------------------------------------------------------------------------------------
+ * - users/{userId}: Private player profile & progression (owner/admin only; contains email, coins, hints, preferences, privacy, adaptiveProfiles).
+ *   - wall/{postId}: Public/community notes left on a player's wall (authored by authenticated users; deletable by post author, profile owner, or admin).
+ *   - favorites/{gameId}: Private bookmarked puzzle types (owner only).
+ * - publicProfiles/{userId}: Public sanitized player card for Leaderboards & Showcase (NO email, role, coins, hints, privacy, or preferences).
+ * - gameSessions/{sessionId}: Private per-player completed session logs (readable/creatable by owner; admin can read/moderate).
+ * - personalBestHistory/{historyId}: Private per-player PB milestone logs (readable/creatable by owner; admin can read/moderate).
+ * - leaderboards/{leaderboardId}: Public ranked scores keyed by player + period + puzzleType + difficulty (monotonic score progression).
+ * - dailyRewards/{userId}: Idempotent daily streak claim ledger (owner only; enforced 1 claim per UTC date & bounded streak increment).
+ * - notifications/{notificationId}: Per-user notifications (recipient reads/marks read; system notifications restricted to admin).
+ * - friendRequests/{requestId}: Sender/receiver friend invitations (status transitions guarded).
+ * - friendChallenges/{challengeId}: Shareable duel room invites (creator-owned writes; get-by-ID allowed for invitees).
+ * - challenges/{challengeId}: Challenges 2.0 match state (participants & open-room joiner only; immutable creator/seed/puzzleType).
+ * - userBlocks/{blockId} & userMutes/{muteId}: Strictly private per-user safety lists (owner/admin only; deterministic doc ID).
+ * - reports/{reportId} & moderationActions/{actionId}: Safety moderation queues (authenticated create pending reports; admin-only read/resolve).
+ * - clubs/{clubId} (+ members, messages, events, participants, milestones, discussions, replies, guides), clubMembers, clubScores, clubDuels: Role-scoped social clubs.
+ * - communityPuzzles/{puzzleId}: Public user-created puzzles (creator-owned edits, bounded play/like counter increments, admin moderation).
+ * - showcaseConfigs, journeyProgress, masteryProgress, practiceProgress, playerGoals, userCollectionProgress, userEventProgress, userAchievements: Owner-scoped progression.
+ * - puzzleEvents, puzzleCollections, puzzleGuides, puzzles, achievements, clubCompetitions, socialFeed: Public/community catalog & admin-managed tables.
+ */
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isAuthenticated() {
       return request.auth != null;
     }
+
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return isAuthenticated() && request.auth.uid == userId;
     }
+
+    function isVerifiedEmailAdmin() {
+      return isAuthenticated() &&
+        'email' in request.auth.token &&
+        request.auth.token.email == 'jambujain1975@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+
     function isAdmin() {
+      return isVerifiedEmailAdmin() || (
+        isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'PLAYER') == 'ADMIN'
+      );
+    }
+
+    function validStr(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function optionalStr(data, field, maxLen) {
+      return !(field in data) || data[field] == null || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function validPuzzleType(val) {
+      return val in [
+        'number', 'word', 'memory', 'sliding', 'logic', 'pattern',
+        'pipe', 'color_path', 'block_escape', 'number_path', 'rotating_tiles',
+        'word_grid', 'arrow_path', 'maze_escape', 'laser_mirror', 'challenge_mode'
+      ];
+    }
+
+    function validDifficulty(val) {
+      return val in ['easy', 'medium', 'hard'];
+    }
+
+    function validScore(val) {
+      return val is number && val >= 0 && val <= 100000;
+    }
+
+    function validUserCreate(userId, data) {
+      return data.keys().hasAll(['uid', 'username', 'role', 'level', 'xp']) &&
+        data.keys().hasOnly([
+          'uid', 'username', 'displayName', 'email', 'avatarUrl', 'role',
+          'level', 'xp', 'totalGames', 'totalWins', 'bestScore', 'bestTime',
+          'currentStreak', 'longestStreak', 'coins', 'hints', 'selectedTitle',
+          'unlockedTitles', 'favoriteGameTypes', 'bio', 'preferences', 'privacy',
+          'personalBests', 'adaptiveProfiles', 'achievements', 'createdAt', 'updatedAt'
+        ]) &&
+        data.uid == userId &&
+        validStr(data.username, 1, 50) &&
+        optionalStr(data, 'displayName', 80) &&
+        optionalStr(data, 'email', 160) &&
+        optionalStr(data, 'avatarUrl', 4000) &&
+        optionalStr(data, 'bio', 150) &&
+        optionalStr(data, 'selectedTitle', 60) &&
+        data.role in ['PLAYER', 'ADMIN'] &&
+        (data.role == 'PLAYER' || isVerifiedEmailAdmin()) &&
+        data.level is number && data.level >= 1 && data.level <= 5 &&
+        data.xp is number && data.xp >= 0 && data.xp <= 100 &&
+        (!('coins' in data) || (data.coins is number && data.coins >= 0 && data.coins <= 200)) &&
+        (!('hints' in data) || (data.hints is number && data.hints >= 0 && data.hints <= 10)) &&
+        (!('totalGames' in data) || (data.totalGames is number && data.totalGames >= 0 && data.totalGames <= 10)) &&
+        (!('totalWins' in data) || (data.totalWins is number && data.totalWins >= 0 && data.totalWins <= 10)) &&
+        (!('bestScore' in data) || (data.bestScore is number && data.bestScore >= 0 && data.bestScore <= 1000)) &&
+        (!('bestTime' in data) || (data.bestTime is number && data.bestTime >= 0 && data.bestTime <= 86400));
+    }
+
+    function validUserUpdate(userId, prev, next) {
+      return next.keys().hasOnly([
+          'uid', 'username', 'displayName', 'email', 'avatarUrl', 'role',
+          'level', 'xp', 'totalGames', 'totalWins', 'bestScore', 'bestTime',
+          'currentStreak', 'longestStreak', 'coins', 'hints', 'selectedTitle',
+          'unlockedTitles', 'favoriteGameTypes', 'bio', 'preferences', 'privacy',
+          'personalBests', 'adaptiveProfiles', 'achievements', 'createdAt', 'updatedAt'
+        ]) &&
+        (!('uid' in next) || next.uid == userId) &&
+        (!('createdAt' in prev) || !('createdAt' in next) || next.createdAt == prev.createdAt) &&
+        (!('email' in prev) || !('email' in next) || next.email == prev.email || isVerifiedEmailAdmin()) &&
+        (!('role' in next) || next.role == prev.role || (next.role == 'ADMIN' && isVerifiedEmailAdmin())) &&
+        (!('xp' in next) || (next.xp is number && next.xp >= 0 && (!('xp' in prev) || (next.xp >= prev.xp && next.xp <= prev.xp + 1000)))) &&
+        (!('level' in next) || (next.level is number && next.level >= 1 && next.level <= 10000 && (!('level' in prev) || (next.level >= prev.level && next.level <= prev.level + 5)))) &&
+        (!('coins' in next) || (next.coins is number && next.coins >= 0 && (!('coins' in prev) || next.coins <= prev.coins + 500))) &&
+        (!('hints' in next) || (next.hints is number && next.hints >= 0 && (!('hints' in prev) || next.hints <= prev.hints + 20))) &&
+        (!('totalGames' in next) || (next.totalGames is number && next.totalGames >= 0 && (!('totalGames' in prev) || (next.totalGames >= prev.totalGames && next.totalGames <= prev.totalGames + 5)))) &&
+        (!('totalWins' in next) || (next.totalWins is number && next.totalWins >= 0 && (!('totalWins' in prev) || (next.totalWins >= prev.totalWins && next.totalWins <= prev.totalWins + 5)))) &&
+        (!('bestScore' in next) || validScore(next.bestScore)) &&
+        (!('bestTime' in next) || (next.bestTime is number && next.bestTime >= 0 && next.bestTime <= 86400)) &&
+        optionalStr(next, 'username', 50) &&
+        optionalStr(next, 'displayName', 80) &&
+        optionalStr(next, 'avatarUrl', 4000) &&
+        optionalStr(next, 'bio', 150) &&
+        optionalStr(next, 'selectedTitle', 60);
+    }
+
+    function validPublicProfile(userId, data) {
+      return data.keys().hasOnly([
+          'uid', 'username', 'displayName', 'avatarUrl', 'level', 'xp',
+          'totalWins', 'totalGames', 'bestScore', 'bestTime', 'currentStreak',
+          'longestStreak', 'selectedTitle', 'unlockedTitles', 'favoriteGameTypes',
+          'bio', 'personalBests', 'updatedAt'
+        ]) &&
+        data.uid == userId &&
+        !('email' in data) &&
+        !('role' in data) &&
+        !('coins' in data) &&
+        !('hints' in data) &&
+        !('privacy' in data) &&
+        !('preferences' in data) &&
+        !('adaptiveProfiles' in data) &&
+        optionalStr(data, 'username', 50) &&
+        optionalStr(data, 'displayName', 80) &&
+        optionalStr(data, 'avatarUrl', 4000) &&
+        optionalStr(data, 'bio', 150) &&
+        optionalStr(data, 'selectedTitle', 60) &&
+        (!('xp' in data) || (data.xp is number && data.xp >= 0)) &&
+        (!('level' in data) || (data.level is number && data.level >= 1)) &&
+        (!('bestScore' in data) || validScore(data.bestScore));
+    }
+
+    function isClubOwner(clubId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/clubs/$(clubId)) &&
+        get(/databases/$(database)/documents/clubs/$(clubId)).data.ownerUid == request.auth.uid;
+    }
+
+    function isClubMember(clubId) {
       return isAuthenticated() && (
-        request.auth.token.email == 'jambujain1975@gmail.com' ||
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN')
+        isClubOwner(clubId) ||
+        exists(/databases/$(database)/documents/clubs/$(clubId)/members/$(clubId + '_' + request.auth.uid))
+      );
+    }
+
+    function isClubAdmin(clubId) {
+      return isClubOwner(clubId) || (
+        isAuthenticated() &&
+        exists(/databases/$(database)/documents/clubs/$(clubId)/members/$(clubId + '_' + request.auth.uid)) &&
+        get(/databases/$(database)/documents/clubs/$(clubId)/members/$(clubId + '_' + request.auth.uid)).data.role in ['OWNER', 'ADMIN']
       );
     }
 
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role != 'ADMIN' || request.auth.token.email == 'jambujain1975@gmail.com');
-      allow update: if (isOwner(userId) && (
-        // Non-admin user cannot escalate role to ADMIN
-        (!('role' in request.resource.data) || request.resource.data.role == resource.data.role || isAdmin()) &&
-        // Cannot change uid
-        (!('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid) &&
-        // Cannot change email
-        (!('email' in request.resource.data) || request.resource.data.email == resource.data.email) &&
-        // Single update XP cap
-        (!('xp' in request.resource.data) || (request.resource.data.xp >= resource.data.xp && request.resource.data.xp <= resource.data.xp + 1000)) &&
-        // Single update Coins cap
-        (!('coins' in request.resource.data) || (request.resource.data.coins <= resource.data.coins + 500))
-      )) || isAdmin();
-      
+      allow create: if isOwner(userId) && validUserCreate(userId, request.resource.data);
+      allow update: if (isOwner(userId) && validUserUpdate(userId, resource.data, request.resource.data)) || isAdmin();
+      allow delete: if isAdmin();
+
       match /favorites/{gameId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) && validPuzzleType(gameId);
       }
 
       match /wall/{postId} {
         allow read: if true;
-        allow create, update, delete: if isAuthenticated();
+        allow create: if isAuthenticated() &&
+          request.resource.data.keys().hasAll(['profileUserId', 'authorId', 'authorName', 'content', 'likesCount', 'likedBy', 'createdAt']) &&
+          request.resource.data.keys().hasOnly(['id', 'profileUserId', 'authorId', 'authorName', 'authorAvatar', 'authorTitle', 'authorFlair', 'content', 'isPinned', 'likesCount', 'likedBy', 'createdAt']) &&
+          request.resource.data.profileUserId == userId &&
+          request.resource.data.authorId == request.auth.uid &&
+          validStr(request.resource.data.authorName, 1, 80) &&
+          validStr(request.resource.data.content, 1, 500) &&
+          optionalStr(request.resource.data, 'authorAvatar', 4000) &&
+          request.resource.data.likesCount == 0 &&
+          request.resource.data.likedBy is list &&
+          request.resource.data.likedBy.size() == 0;
+        allow update: if (
+          isAuthenticated() &&
+          resource.data.authorId == request.auth.uid &&
+          request.resource.data.authorId == resource.data.authorId &&
+          request.resource.data.profileUserId == userId &&
+          validStr(request.resource.data.content, 1, 500)
+        ) || (
+          isOwner(userId) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isPinned'])
+        ) || isAdmin();
+        allow delete: if isOwner(userId) ||
+          (isAuthenticated() && resource.data.authorId == request.auth.uid) ||
+          isAdmin();
       }
     }
 
+    match /publicProfiles/{userId} {
+      allow read: if true;
+      allow create, update: if (isOwner(userId) || isAdmin()) && validPublicProfile(userId, request.resource.data);
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
     match /reports/{reportId} {
-      allow read: if isAdmin();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAdmin();
+      allow read, update, delete: if isAdmin();
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['reporterId', 'targetType', 'targetId', 'reason', 'status', 'createdAt']) &&
+        request.resource.data.keys().hasOnly(['id', 'reporterId', 'reporterName', 'targetType', 'targetId', 'targetAuthorId', 'targetTitle', 'reason', 'description', 'status', 'createdAt']) &&
+        request.resource.data.reporterId == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.reason in ['spam', 'harassment', 'inappropriate', 'cheating', 'other'] &&
+        request.resource.data.targetType in ['discussion', 'guide', 'comment', 'wall', 'profile', 'user'] &&
+        validStr(request.resource.data.targetId, 1, 128) &&
+        optionalStr(request.resource.data, 'description', 500);
     }
 
     match /socialFeed/{feedId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /kudosGifts/{kudosId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow delete: if isAdmin();
+      allow read: if isAuthenticated() && (
+        resource.data.receiverId == request.auth.uid ||
+        resource.data.senderId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['senderId', 'receiverId', 'giftType', 'xpValue', 'createdAt']) &&
+        request.resource.data.keys().hasOnly(['id', 'senderId', 'senderName', 'receiverId', 'giftType', 'message', 'xpValue', 'createdAt']) &&
+        request.resource.data.senderId == request.auth.uid &&
+        validStr(request.resource.data.receiverId, 1, 128) &&
+        request.resource.data.receiverId != request.auth.uid &&
+        request.resource.data.giftType in ['kudos', 'stars', 'energy', 'applause'] &&
+        request.resource.data.xpValue is int &&
+        request.resource.data.xpValue >= 1 &&
+        request.resource.data.xpValue <= 50 &&
+        optionalStr(request.resource.data, 'message', 200);
+      allow update: if false;
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.senderId == request.auth.uid);
     }
 
     match /userBlocks/{blockId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['userId', 'blockedUserId', 'createdAt']) &&
+        request.resource.data.keys().hasOnly(['id', 'userId', 'blockedUserId', 'createdAt']) &&
+        request.resource.data.userId == request.auth.uid &&
+        validStr(request.resource.data.blockedUserId, 1, 128) &&
+        request.resource.data.blockedUserId != request.auth.uid &&
+        blockId == ('block_' + request.auth.uid + '_' + request.resource.data.blockedUserId);
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     match /userMutes/{muteId} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['userId', 'mutedUserId', 'createdAt']) &&
+        request.resource.data.keys().hasOnly(['id', 'userId', 'mutedUserId', 'createdAt']) &&
+        request.resource.data.userId == request.auth.uid &&
+        validStr(request.resource.data.mutedUserId, 1, 128) &&
+        request.resource.data.mutedUserId != request.auth.uid &&
+        muteId == ('mute_' + request.auth.uid + '_' + request.resource.data.mutedUserId);
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     match /moderationActions/{actionId} {
       allow read, write: if isAdmin();
     }
 
-    match /publicProfiles/{userId} {
-      allow read: if true;
-      allow write: if (isOwner(userId) || isAdmin()) && !('email' in request.resource.data);
-    }
-    
     match /friendRequests/{requestId} {
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.senderId;
-      allow read: if request.auth != null && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
-      allow update: if request.auth != null && (request.auth.uid == resource.data.receiverId || request.auth.uid == resource.data.senderId);
-      allow delete: if request.auth != null && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
-    }
-    
-    match /dailyRewards/{userId} {
-      allow read: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId &&
-        request.resource.data.streak >= 1 && request.resource.data.streak <= 7;
-      allow update: if isOwner(userId) && request.resource.data.userId == userId && (
-        request.resource.data.lastClaimDate != resource.data.lastClaimDate &&
-        request.resource.data.streak >= 1 &&
-        (request.resource.data.streak == 1 || request.resource.data.streak == resource.data.streak + 1)
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['senderId', 'receiverId', 'status']) &&
+        request.resource.data.keys().hasOnly(['id', 'requestId', 'senderId', 'senderName', 'senderAvatar', 'receiverId', 'status', 'createdAt', 'updatedAt']) &&
+        request.resource.data.senderId == request.auth.uid &&
+        validStr(request.resource.data.receiverId, 1, 128) &&
+        request.resource.data.receiverId != request.auth.uid &&
+        request.resource.data.status == 'PENDING';
+      allow read: if isAuthenticated() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid ||
+        isAdmin()
       );
+      allow update: if isAuthenticated() &&
+        request.resource.data.senderId == resource.data.senderId &&
+        request.resource.data.receiverId == resource.data.receiverId &&
+        request.resource.data.status in ['PENDING', 'ACCEPTED', 'REJECTED'] &&
+        (
+          request.auth.uid == resource.data.receiverId ||
+          (request.auth.uid == resource.data.senderId && request.resource.data.status == 'PENDING')
+        );
+      allow delete: if isAuthenticated() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+
+    match /dailyRewards/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) &&
+        request.resource.data.keys().hasOnly(['userId', 'lastClaimDate', 'claimedAt', 'lastClaimedAt', 'streak', 'dayIndex', 'updatedAt']) &&
+        request.resource.data.userId == userId &&
+        validStr(request.resource.data.lastClaimDate, 8, 20) &&
+        request.resource.data.streak is int &&
+        request.resource.data.streak >= 1 &&
+        request.resource.data.streak <= 7;
+      allow update: if isOwner(userId) &&
+        request.resource.data.keys().hasOnly(['userId', 'lastClaimDate', 'claimedAt', 'lastClaimedAt', 'streak', 'dayIndex', 'updatedAt']) &&
+        request.resource.data.userId == userId &&
+        validStr(request.resource.data.lastClaimDate, 8, 20) &&
+        request.resource.data.lastClaimDate != resource.data.lastClaimDate &&
+        request.resource.data.streak is int &&
+        request.resource.data.streak >= 1 &&
+        (request.resource.data.streak == 1 || request.resource.data.streak == resource.data.streak + 1);
       allow delete: if isAdmin();
     }
-    
+
     match /puzzles/{puzzleId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
     match /gameSessions/{sessionId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['userId', 'puzzleType', 'difficulty', 'score', 'timeSeconds', 'won']) &&
+        request.resource.data.keys().hasOnly([
+          'id', 'sessionId', 'userId', 'username', 'puzzleType', 'difficulty',
+          'score', 'timeSeconds', 'moves', 'won', 'isDailyPuzzle', 'dailyPuzzleDate',
+          'isReplay', 'originalSessionId', 'puzzleSeed', 'hintsUsed', 'isPersonalBest',
+          'personalBestDiff', 'createdAt'
+        ]) &&
+        request.resource.data.userId == request.auth.uid &&
+        validPuzzleType(request.resource.data.puzzleType) &&
+        validDifficulty(request.resource.data.difficulty) &&
+        validScore(request.resource.data.score) &&
+        request.resource.data.timeSeconds is number &&
+        request.resource.data.timeSeconds >= 0 &&
+        request.resource.data.timeSeconds <= 86400 &&
+        (!('moves' in request.resource.data) || (request.resource.data.moves is number && request.resource.data.moves >= 0)) &&
+        request.resource.data.won is bool;
       allow update, delete: if isAdmin();
     }
 
-    match /personalBestHistory/{pbId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    match /personalBestHistory/{historyId} {
+      allow read: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasAll(['userId', 'puzzleType', 'score', 'timeSeconds', 'difficulty', 'recordType']) &&
+        request.resource.data.keys().hasOnly([
+          'id', 'userId', 'puzzleType', 'score', 'timeSeconds', 'difficulty',
+          'improvementScore', 'improvementTime', 'recordType', 'createdAt'
+        ]) &&
+        request.resource.data.userId == request.auth.uid &&
+        validPuzzleType(request.resource.data.puzzleType) &&
+        validDifficulty(request.resource.data.difficulty) &&
+        validScore(request.resource.data.score) &&
+        request.resource.data.recordType in ['SCORE', 'TIME', 'DIFFICULTY'];
       allow update, delete: if isAdmin();
     }
 
     match /leaderboards/{leaderboardId} {
       allow read: if true;
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly([
+          'id', 'userId', 'username', 'displayName', 'avatarUrl',
+          'period', 'periodKey', 'puzzleType', 'difficulty', 'score', 'bestTime', 'updatedAt'
+        ]) &&
         request.resource.data.userId == request.auth.uid &&
-        request.resource.data.score is int &&
+        request.resource.data.score is number &&
         request.resource.data.score >= 0 &&
         request.resource.data.score <= 50000 &&
-        request.resource.data.bestTime is int &&
-        request.resource.data.bestTime >= 1 &&
-        request.resource.data.bestTime <= 36000 &&
-        request.resource.data.puzzleType is string &&
-        request.resource.data.difficulty in ['easy', 'medium', 'hard'];
-      allow update: if isAuthenticated() && 
-        resource.data.userId == request.auth.uid && 
+        (!('bestTime' in request.resource.data) || request.resource.data.bestTime == null || (request.resource.data.bestTime is number && request.resource.data.bestTime >= 0 && request.resource.data.bestTime <= 36000)) &&
+        validPuzzleType(request.resource.data.puzzleType) &&
+        request.resource.data.difficulty in ['easy', 'medium', 'hard', 'all'] &&
+        request.resource.data.period in ['ALL_TIME', 'DAILY', 'WEEKLY', 'MONTHLY'] &&
+        optionalStr(request.resource.data, 'username', 50) &&
+        optionalStr(request.resource.data, 'displayName', 80) &&
+        optionalStr(request.resource.data, 'avatarUrl', 4000);
+      allow update: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly([
+          'id', 'userId', 'username', 'displayName', 'avatarUrl',
+          'period', 'periodKey', 'puzzleType', 'difficulty', 'score', 'bestTime', 'updatedAt'
+        ]) &&
+        resource.data.userId == request.auth.uid &&
         request.resource.data.userId == request.auth.uid &&
-        request.resource.data.score is int &&
+        request.resource.data.score is number &&
         request.resource.data.score >= resource.data.score &&
         request.resource.data.score <= 50000 &&
-        request.resource.data.bestTime is int &&
-        request.resource.data.bestTime >= 1 &&
-        request.resource.data.bestTime <= 36000;
+        (!('bestTime' in request.resource.data) || request.resource.data.bestTime == null || (request.resource.data.bestTime is number && request.resource.data.bestTime >= 0 && request.resource.data.bestTime <= 36000));
       allow delete: if isAdmin();
     }
 
@@ -141,49 +422,103 @@ service cloud.firestore {
     }
 
     match /userAchievements/{userAchievementId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid;
+      allow read: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        validStr(request.resource.data.achievementId, 1, 64) &&
+        request.resource.data.unlocked is bool;
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.achievementId == resource.data.achievementId;
       allow delete: if isAdmin();
     }
 
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && 
-        request.resource.data.userId is string &&
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() &&
+        request.resource.data.keys().hasOnly(['id', 'userId', 'title', 'message', 'type', 'isRead', 'metadata', 'createdAt']) &&
+        validStr(request.resource.data.userId, 1, 128) &&
         request.resource.data.type in ['friend', 'reward', 'achievement', 'challenge', 'pb', 'event', 'system'] &&
         (request.resource.data.type != 'system' || isAdmin()) &&
         (request.resource.data.type in ['friend', 'challenge'] || request.resource.data.userId == request.auth.uid || isAdmin()) &&
-        request.resource.data.title is string && request.resource.data.title.size() <= 100 &&
-        request.resource.data.message is string && request.resource.data.message.size() <= 500 &&
+        validStr(request.resource.data.title, 1, 100) &&
+        validStr(request.resource.data.message, 1, 500) &&
         request.resource.data.isRead == false;
-      allow update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'updatedAt']);
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     match /friendChallenges/{challengeId} {
-      allow read: if true;
-      allow create: if isAuthenticated();
-      allow update, delete: if isAdmin();
+      allow get: if true;
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        request.resource.data.creatorUid == request.auth.uid &&
+        validPuzzleType(request.resource.data.puzzleType) &&
+        validDifficulty(request.resource.data.difficulty);
+      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.creatorUid == request.auth.uid);
     }
 
     match /challenges/{challengeId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        request.resource.data.creatorUid == request.auth.uid &&
+        validPuzzleType(request.resource.data.puzzleType) &&
+        validDifficulty(request.resource.data.difficulty) &&
+        request.resource.data.status in ['PENDING', 'IN_PROGRESS'] &&
+        !('winnerUid' in request.resource.data) &&
+        validStr(request.resource.data.creatorName, 1, 80);
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        request.resource.data.creatorUid == resource.data.creatorUid &&
+        request.resource.data.puzzleType == resource.data.puzzleType &&
+        request.resource.data.seed == resource.data.seed &&
+        (
+          resource.data.creatorUid == request.auth.uid ||
+          (('opponentUid' in resource.data) && resource.data.opponentUid == request.auth.uid) ||
+          ((!('opponentUid' in resource.data) || resource.data.opponentUid == null || resource.data.opponentUid == '') &&
+           request.resource.data.opponentUid == request.auth.uid)
+        )
+      );
       allow delete: if isAdmin() || (isAuthenticated() && resource.data.creatorUid == request.auth.uid);
     }
 
     match /playerGoals/{goalId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        validStr(request.resource.data.title, 1, 100) &&
+        validStr(request.resource.data.description, 1, 300);
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     match /showcaseConfigs/{userId} {
       allow read: if true;
-      allow create, update: if isOwner(userId) || isAdmin();
+      allow create, update: if (isOwner(userId) || isAdmin()) && request.resource.data.userId == userId;
       allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    match /puzzleEvents/{eventId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /userEventProgress/{progressId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        validStr(request.resource.data.eventId, 1, 100);
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.eventId == resource.data.eventId;
+      allow delete: if isAdmin();
     }
 
     match /puzzleCollections/{collectionId} {
@@ -192,24 +527,29 @@ service cloud.firestore {
     }
 
     match /userCollectionProgress/{progressId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
     match /journeyProgress/{userId} {
-      allow read, create, update: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && request.resource.data.userId == userId;
       allow delete: if isOwner(userId) || isAdmin();
     }
 
     match /masteryProgress/{userId} {
-      allow read, create, update: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && request.resource.data.userId == userId;
       allow delete: if isOwner(userId) || isAdmin();
     }
 
     match /practiceProgress/{userId} {
-      allow read, create, update: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && request.resource.data.userId == userId;
       allow delete: if isOwner(userId) || isAdmin();
     }
 
@@ -220,62 +560,182 @@ service cloud.firestore {
 
     match /communityPuzzles/{puzzleId} {
       allow read: if true;
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
-      allow delete: if isAdmin();
+      allow create: if isAuthenticated() &&
+        request.resource.data.creatorId == request.auth.uid &&
+        validStr(request.resource.data.title, 1, 60) &&
+        optionalStr(request.resource.data, 'description', 200) &&
+        validPuzzleType(request.resource.data.puzzleType) &&
+        validDifficulty(request.resource.data.difficulty) &&
+        validStr(request.resource.data.puzzleData, 1, 20000) &&
+        request.resource.data.status in ['published', 'draft'] &&
+        request.resource.data.plays == 0 &&
+        request.resource.data.likes == 0;
+      allow update: if isAdmin() || (
+        isAuthenticated() && (
+          (resource.data.creatorId == request.auth.uid && request.resource.data.creatorId == resource.data.creatorId) ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plays', 'likes'])
+        )
+      );
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.creatorId == request.auth.uid);
     }
 
     match /clubs/{clubId} {
       allow read: if true;
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
-      allow delete: if isAdmin();
+      allow create: if isAuthenticated() &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        validStr(request.resource.data.name, 1, 60) &&
+        validStr(request.resource.data.tag, 1, 6) &&
+        optionalStr(request.resource.data, 'description', 400) &&
+        request.resource.data.memberCount == 1;
+      allow update: if isAdmin() ||
+        isClubOwner(clubId) ||
+        (isAuthenticated() &&
+          request.resource.data.ownerUid == resource.data.ownerUid &&
+          request.resource.data.name == resource.data.name &&
+          request.resource.data.tag == resource.data.tag &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'memberCount', 'weeklyPoints', 'totalClubXP', 'totalPuzzlesSolved', 'level', 'updatedAt'
+          ])
+        );
+      allow delete: if isAdmin() || isClubOwner(clubId);
 
       match /members/{memberId} {
         allow read: if true;
-        allow write: if isAuthenticated();
+        allow create: if isAuthenticated() &&
+          memberId == (clubId + '_' + request.auth.uid) &&
+          request.resource.data.userId == request.auth.uid &&
+          request.resource.data.clubId == clubId &&
+          (
+            request.resource.data.role == 'MEMBER' ||
+            (request.resource.data.role == 'OWNER' && isClubOwner(clubId))
+          );
+        allow update: if isAdmin() ||
+          (isAuthenticated() &&
+            resource.data.userId == request.auth.uid &&
+            request.resource.data.userId == resource.data.userId &&
+            request.resource.data.clubId == resource.data.clubId &&
+            request.resource.data.role == resource.data.role
+          ) ||
+          (isClubAdmin(clubId) &&
+            request.resource.data.userId == resource.data.userId &&
+            request.resource.data.clubId == resource.data.clubId &&
+            request.resource.data.role in ['ADMIN', 'CONTRIBUTOR', 'MEMBER']
+          );
+        allow delete: if isAdmin() || isClubOwner(clubId) || (isAuthenticated() && resource.data.userId == request.auth.uid);
       }
 
       match /messages/{messageId} {
         allow read: if true;
-        allow create: if isAuthenticated();
-        allow update, delete: if isAdmin();
+        allow create: if isAuthenticated() &&
+          validStr(request.resource.data.message, 1, 500) &&
+          (
+            request.resource.data.userId == request.auth.uid ||
+            (request.resource.data.userId == 'system' &&
+             request.resource.data.isSystemActivity == true &&
+             isClubMember(clubId))
+          );
+        allow update, delete: if isAdmin() || isClubAdmin(clubId) || (isAuthenticated() && resource.data.userId == request.auth.uid);
       }
 
       match /events/{eventId} {
         allow read: if true;
-        allow write: if isAuthenticated();
+        allow create: if isAuthenticated() &&
+          request.resource.data.createdBy == request.auth.uid &&
+          validStr(request.resource.data.title, 1, 100);
+        allow update: if isAdmin() ||
+          isClubAdmin(clubId) ||
+          (isAuthenticated() && (
+            resource.data.createdBy == request.auth.uid ||
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participantCount', 'interestedCount', 'updatedAt'])
+          ));
+        allow delete: if isAdmin() || isClubAdmin(clubId) || (isAuthenticated() && resource.data.createdBy == request.auth.uid);
 
         match /participants/{participantId} {
           allow read: if true;
-          allow write: if isAuthenticated();
+          allow create, update: if isAuthenticated() &&
+            participantId == (eventId + '_' + request.auth.uid) &&
+            request.resource.data.userId == request.auth.uid &&
+            request.resource.data.status in ['participating', 'interested'];
+          allow delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
         }
       }
 
       match /milestones/{milestoneId} {
         allow read: if true;
-        allow write: if isAuthenticated();
+        allow create, delete: if isAdmin() || isClubAdmin(clubId);
+        allow update: if isAdmin() ||
+          isClubAdmin(clubId) ||
+          (isClubMember(clubId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isCompleted', 'achievedPuzzles', 'completedAt']));
       }
 
       match /discussions/{discussionId} {
         allow read: if true;
-        allow write: if isAuthenticated();
+        allow create: if isAuthenticated() &&
+          request.resource.data.authorId == request.auth.uid &&
+          validStr(request.resource.data.title, 1, 150) &&
+          validStr(request.resource.data.content, 1, 5000);
+        allow update: if isAdmin() ||
+          isClubAdmin(clubId) ||
+          (isAuthenticated() && (
+            (resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId) ||
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotedBy', 'upvotesCount', 'replyCount', 'lastReplyAt', 'updatedAt'])
+          ));
+        allow delete: if isAdmin() || isClubAdmin(clubId) || (isAuthenticated() && resource.data.authorId == request.auth.uid);
 
         match /replies/{replyId} {
           allow read: if true;
-          allow write: if isAuthenticated();
+          allow create: if isAuthenticated() &&
+            request.resource.data.authorId == request.auth.uid &&
+            validStr(request.resource.data.content, 1, 2000);
+          allow update: if isAdmin() ||
+            isClubAdmin(clubId) ||
+            (isAuthenticated() && (
+              (resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId) ||
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotedBy', 'upvotesCount', 'updatedAt'])
+            ));
+          allow delete: if isAdmin() || isClubAdmin(clubId) || (isAuthenticated() && resource.data.authorId == request.auth.uid);
         }
       }
 
       match /guides/{guideId} {
         allow read: if true;
-        allow write: if isAuthenticated();
+        allow create: if isAuthenticated() &&
+          request.resource.data.authorId == request.auth.uid &&
+          validStr(request.resource.data.title, 1, 150) &&
+          validStr(request.resource.data.summary, 1, 300) &&
+          validStr(request.resource.data.content, 1, 10000);
+        allow update: if isAdmin() ||
+          isClubAdmin(clubId) ||
+          (isAuthenticated() && (
+            (resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId) ||
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy', 'likesCount', 'bookmarkedBy', 'bookmarksCount', 'viewsCount', 'updatedAt'])
+          ));
+        allow delete: if isAdmin() || isClubAdmin(clubId) || (isAuthenticated() && resource.data.authorId == request.auth.uid);
       }
     }
 
     match /clubMembers/{memberId} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        memberId == (request.resource.data.clubId + '_' + request.auth.uid) &&
+        (
+          request.resource.data.role == 'MEMBER' ||
+          (request.resource.data.role == 'OWNER' && isClubOwner(request.resource.data.clubId))
+        );
+      allow update: if isAdmin() ||
+        (isAuthenticated() &&
+          resource.data.userId == request.auth.uid &&
+          request.resource.data.userId == resource.data.userId &&
+          request.resource.data.clubId == resource.data.clubId &&
+          (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)
+        ) ||
+        (isClubAdmin(resource.data.clubId) &&
+          request.resource.data.userId == resource.data.userId &&
+          request.resource.data.clubId == resource.data.clubId &&
+          request.resource.data.role in ['ADMIN', 'CONTRIBUTOR', 'MEMBER']
+        );
+      allow delete: if isAdmin() || isClubOwner(resource.data.clubId) || (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
 
     match /clubCompetitions/{competitionId} {
@@ -285,14 +745,27 @@ service cloud.firestore {
 
     match /clubScores/{scoreId} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow create, update: if isAdmin() || (
+        isAuthenticated() &&
+        isClubMember(request.resource.data.clubId) &&
+        request.resource.data.totalPoints is number &&
+        request.resource.data.totalPoints >= 0
+      );
+      allow delete: if isAdmin();
     }
 
     match /clubDuels/{duelId} {
       allow read: if true;
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
+      allow create: if isAdmin() || (isAuthenticated() && isClubMember(request.resource.data.challengerClubId));
+      allow update: if isAdmin() || (isAuthenticated() && (
+        isClubMember(resource.data.challengerClubId) ||
+        isClubMember(resource.data.targetClubId)
+      ));
       allow delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

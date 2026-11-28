@@ -5,7 +5,7 @@ import {
   onAuthStateChanged, indexedDBLocalPersistence, browserLocalPersistence, User as FirebaseUser
 } from 'firebase/auth';
 import { 
-  getFirestore, doc, getDoc, setDoc, updateDoc, collection, 
+  getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, 
   query, where, getDocs, orderBy, limit, addDoc, runTransaction
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -108,7 +108,7 @@ export async function syncUserProfile(user: FirebaseUser): Promise<UserProfile> 
   try {
     const userRef = doc(db, 'users', user.uid);
     const snap = await getDoc(userRef);
-    const isAdminEmail = user.email === 'jambujain1975@gmail.com';
+    const isAdminEmail = user.email === 'jambujain1975@gmail.com' && user.emailVerified === true;
     let profileData: UserProfile;
 
     if (snap.exists()) {
@@ -154,7 +154,7 @@ export async function syncUserProfile(user: FirebaseUser): Promise<UserProfile> 
       displayName: user.displayName || 'Puzzle Master',
       email: user.email || '',
       avatarUrl: getAvatarDataUri(user.uid),
-      role: user.email === 'jambujain1975@gmail.com' ? 'ADMIN' : 'PLAYER',
+      role: user.email === 'jambujain1975@gmail.com' && user.emailVerified === true ? 'ADMIN' : 'PLAYER',
       level: 1,
       xp: 0,
       totalGames: 0,
@@ -805,7 +805,7 @@ const localModActions: ModerationAction[] = []; export async function createRepo
 } export async function updateReportStatus(reportId: string, status: ContentReport['status'], actionTaken?: string): Promise<void> { if (!db) { const rep = localReports.find(r => r.id === reportId); if (rep) { rep.status = status; if (actionTaken) rep.actionTaken = actionTaken; rep.resolvedAt = new Date().toISOString(); } return; } try { const ref = doc(db, 'reports', reportId); await updateDoc(ref, { status, actionTaken: actionTaken || '', resolvedAt: new Date().toISOString() }); } catch (err) { handleFirestoreError(err, OperationType.UPDATE, `reports/${reportId}`); }
 } export async function submitModerationAction(action: Omit<ModerationAction, 'id'>): Promise<ModerationAction> { const newId = `mod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`; const fullAction: ModerationAction = { ...action, id: newId }; if (!db) { localModActions.push(fullAction); return fullAction; } try { await setDoc(doc(db, 'moderationActions', newId), fullAction); return fullAction; } catch (err) { handleFirestoreError(err, OperationType.CREATE, `moderationActions/${newId}`); localModActions.push(fullAction); return fullAction; }
 } export async function blockUser(userId: string, blockedUserId: string): Promise<void> { const newId = `block_${userId}_${blockedUserId}`; const record: UserBlock = { id: newId, userId, blockedUserId, createdAt: new Date().toISOString() }; if (!db) { localBlocks.push(record); return; } try { await setDoc(doc(db, 'userBlocks', newId), record); } catch (err) { handleFirestoreError(err, OperationType.CREATE, `userBlocks/${newId}`); }
-} export async function unblockUser(userId: string, blockedUserId: string): Promise<void> { const newId = `block_${userId}_${blockedUserId}`; if (!db) { const idx = localBlocks.findIndex(b => b.id === newId); if (idx !== -1) localBlocks.splice(idx, 1); return; } try { await setDoc(doc(db, 'userBlocks', newId), { active: false }); } catch (err) { handleFirestoreError(err, OperationType.DELETE, `userBlocks/${newId}`); }
+} export async function unblockUser(userId: string, blockedUserId: string): Promise<void> { const newId = `block_${userId}_${blockedUserId}`; if (!db) { const idx = localBlocks.findIndex(b => b.id === newId); if (idx !== -1) localBlocks.splice(idx, 1); return; } try { await deleteDoc(doc(db, 'userBlocks', newId)); } catch (err) { handleFirestoreError(err, OperationType.DELETE, `userBlocks/${newId}`); }
 } export async function fetchBlockedUsers(userId: string): Promise<string[]> { if (!db) return localBlocks.filter(b => b.userId === userId).map(b => b.blockedUserId); try { const q = query(collection(db, 'userBlocks'), where('userId', '==', userId)); const snap = await getDocs(q); return snap.docs.map(d => (d.data() as UserBlock).blockedUserId); } catch (err) { handleFirestoreError(err, OperationType.LIST, 'userBlocks'); return []; }
 } // ==========================================
 // Phase 84 Services - Player Wall & Social Feed /* ========================================== */
