@@ -41,6 +41,9 @@ export interface UpdateStatusPayload {
   expectedSha256?: string;
   expectedSha512?: string;
   signed: boolean;
+  signingNotice?: string;
+  isPortable?: boolean;
+  manualOnly?: boolean;
   message?: string;
   error?: string;
   releaseNotes?: string;
@@ -92,8 +95,9 @@ export interface PlatformAdapter {
   setActiveGameState(inActiveGame: boolean, gameName?: string): void;
 }
 
-const APP_FALLBACK_VERSION = '1.2.1';
+const APP_FALLBACK_VERSION = '1.3.0';
 const GITHUB_RELEASES_API = 'https://api.github.com/repos/jnsidhant30-creator/Puzzle/releases/latest';
+const CENTRAL_MANIFEST_URL = 'https://puzzleverse-e16e4.web.app/release-manifest.json';
 const DOWNLOAD_PAGE_URL = 'https://puzzleverse-e16e4.web.app/download';
 
 let pwaSwRegistration: ServiceWorkerRegistration | null = null;
@@ -197,33 +201,143 @@ async function copyShareFallback(payload: SharePayload): Promise<ShareResult> {
   return { shared: false, method: 'unsupported' };
 }
 
-async function fetchLatestReleaseStatus(currentVersion: string): Promise<UpdateStatusPayload> {
+async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = 5000): Promise<Response> {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
   try {
-    const res = await fetch(GITHUB_RELEASES_API, {
-      headers: { Accept: 'application/vnd.github+json' },
+    return await fetch(url, {
+      ...init,
+      ...(controller ? { signal: controller.signal } : {}),
     });
-    if (res.status === 404) {
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+async function fetchLatestReleaseStatus(
+  currentVersion: string,
+  runtimeOs: 'android' | 'ios' | 'web' = 'web'
+): Promise<UpdateStatusPayload> {
+  if (runtimeOs === 'ios') {
+    return {
+      status: 'up-to-date',
+      currentVersion,
+      latestVersion: currentVersion,
+      signed: false,
+      manualOnly: true,
+      downloadPageUrl: DOWNLOAD_PAGE_URL,
+      signingNotice: 'iOS updates use authorized Apple App Store / TestFlight distribution mechanisms.',
+      message: 'iOS updates are delivered through Apple App Store / TestFlight when published.',
+    };
+  }
+
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return {
+      status: 'error',
+      currentVersion,
+      signed: false,
+      downloadPageUrl: DOWNLOAD_PAGE_URL,
+      error: 'You appear to be offline. Reconnect to the internet and retry update check.',
+    };
+  }
+
+  try {
+    // 1. Try centralized release manifest on official CDN first, fallback to GitHub Releases API
+    let manifestLatest = '';
+    let manifestReleaseUrl = DOWNLOAD_PAGE_URL;
+    let manifestNotes = '';
+    let androidManifestPkg:
+      | {
+          version?: string;
+          fileName?: string;
+          fileSize?: number;
+          sha256?: string;
+          downloadUrl?: string;
+          signed?: boolean;
+          signingStatus?: string;
+        }
+      | undefined;
+
+    try {
+      const mRes = await fetchWithTimeout(`${CENTRAL_MANIFEST_URL}?ts=${Date.now()}`, { cache: 'no-store' }, 5000);
+      if (mRes.ok) {
+        const mJson = await mRes.json();
+        manifestLatest = String(mJson.version || '').replace(/^v/i, '');
+        manifestReleaseUrl = mJson.releaseTagUrl || DOWNLOAD_PAGE_URL;
+        manifestNotes = Array.isArray(mJson.releaseNotes) ? mJson.releaseNotes.join('\n') : '';
+        if (Array.isArray(mJson.packages)) {
+          androidManifestPkg = mJson.packages.find((p: any) => p.id === 'android_apk' && p.available);
+        }
+      }
+    } catch {
+      // Fall back cleanly to GitHub Releases API below
+    }
+
+    const res = await fetchWithTimeout(
+      GITHUB_RELEASES_API,
+      { headers: { Accept: 'application/vnd.github+json' } },
+      5000
+    );
+    if (res.status === 404 && !manifestLatest) {
       return {
         status: 'up-to-date',
         currentVersion,
         latestVersion: currentVersion,
-        signed: false,
+        signed: runtimeOs === 'android' || runtimeOs === 'web',
         downloadPageUrl: DOWNLOAD_PAGE_URL,
         message: `Running latest available version (v${currentVersion}).`,
       };
     }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const latest = String(data.tag_name || currentVersion).replace(/^v/i, '');
+
+    let latest = manifestLatest || currentVersion;
+    let releaseUrl = manifestReleaseUrl;
+    let releaseNotes = manifestNotes;
+    let downloadUrl = runtimeOs === 'android' ? androidManifestPkg?.downloadUrl : undefined;
+    let fileName = runtimeOs === 'android' ? androidManifestPkg?.fileName : undefined;
+    let fileSize = runtimeOs === 'android' ? androidManifestPkg?.fileSize : undefined;
+    let expectedSha256 = runtimeOs === 'android' ? androidManifestPkg?.sha256 : undefined;
+
+    if (res.ok) {
+      const data = await res.json();
+      const ghLatest = String(data.tag_name || '').replace(/^v/i, '');
+      if (ghLatest && (!manifestLatest || compareSemver(ghLatest, manifestLatest) >= 0)) {
+        latest = ghLatest;
+        releaseUrl = data.html_url || releaseUrl;
+        releaseNotes = typeof data.body === 'string' && data.body ? data.body.slice(0, 1500) : releaseNotes;
+        if (runtimeOs === 'android' && Array.isArray(data.assets)) {
+          const apkAsset = data.assets.find((a: any) => /PuzzleVerse-v.*-Android\.apk$/i.test(a.name || ''));
+          if (apkAsset) {
+            fileName = apkAsset.name;
+            downloadUrl = apkAsset.browser_download_url;
+            fileSize = apkAsset.size;
+            if (typeof apkAsset.digest === 'string' && apkAsset.digest.startsWith('sha256:')) {
+              expectedSha256 = apkAsset.digest.replace(/^sha256:/i, '').toLowerCase();
+            }
+          }
+        }
+      }
+    } else if (!manifestLatest) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
     const newer = compareSemver(latest, currentVersion) > 0;
     return {
       status: newer ? 'available' : 'up-to-date',
       currentVersion,
       latestVersion: latest,
-      signed: false,
-      releaseUrl: data.html_url || DOWNLOAD_PAGE_URL,
+      signed: runtimeOs === 'android' || runtimeOs === 'web',
+      manualOnly: runtimeOs === 'android',
+      signingNotice:
+        runtimeOs === 'android'
+          ? 'Signed APK (com.puzzleverse.app developer keystore). Standard Android confirmation prompt required; existing data preserved.'
+          : 'Web & PWA updates apply via Workbox Service Worker over HTTPS.',
+      releaseUrl,
       downloadPageUrl: DOWNLOAD_PAGE_URL,
-      releaseNotes: typeof data.body === 'string' ? data.body.slice(0, 1500) : '',
+      downloadUrl,
+      fileName,
+      fileSize,
+      expectedSha256,
+      releaseNotes,
       message: newer
         ? `PuzzleVerse v${latest} is available.`
         : `You are running the latest version (v${currentVersion}).`,
@@ -339,6 +453,11 @@ function createElectronAdapter(): PlatformAdapter {
           expectedSha256: res.expectedSha256,
           expectedSha512: res.expectedSha512,
           signed: Boolean(res.signed),
+          isPortable: Boolean(res.isPortable),
+          manualOnly: Boolean(res.manualOnly),
+          signingNotice: res.signed
+            ? 'Code-signed desktop package verified against SHA-256.'
+            : 'Unsigned desktop package (verify SHA-256 checksum; manual approval required before launching).',
           message: res.message,
           error: res.error,
           releaseNotes: res.releaseNotes,
@@ -456,7 +575,7 @@ function createCapacitorAdapter(): PlatformAdapter {
         } catch {
           vInfo = APP_FALLBACK_VERSION;
         }
-        return fetchLatestReleaseStatus(vInfo);
+        return fetchLatestReleaseStatus(vInfo, capOs === 'ios' ? 'ios' : 'android');
       },
     },
     async exitApp() {
@@ -588,14 +707,20 @@ function createWebAdapter(): PlatformAdapter {
     },
     updates: {
       async checkForUpdates() {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+          return fetchLatestReleaseStatus(APP_FALLBACK_VERSION, 'web');
+        }
         if (pwaSwRegistration) {
           try {
-            await pwaSwRegistration.update();
+            await Promise.race([
+              pwaSwRegistration.update(),
+              new Promise((resolve) => setTimeout(resolve, 2500)),
+            ]);
           } catch {
             // Non-fatal SW update check
           }
         }
-        return fetchLatestReleaseStatus(APP_FALLBACK_VERSION);
+        return fetchLatestReleaseStatus(APP_FALLBACK_VERSION, 'web');
       },
       async applyPwaUpdate() {
         if (!pwaSwRegistration?.waiting) return false;

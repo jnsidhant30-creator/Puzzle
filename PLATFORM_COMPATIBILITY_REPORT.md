@@ -1,36 +1,44 @@
-# PuzzleVerse Universal Cross-Platform Compatibility Report (`v1.2.1`)
+# PuzzleVerse Universal Cross-Platform Compatibility Report (`v1.3.0`)
 
 **Application:** PuzzleVerse (`Challenge Your Mind. Beat Your Best.`)  
-**Version:** `1.2.1`  
+**Version:** `1.3.0`  
 **Audit & Test Date:** 2026-11-28 (`RELEASE_DATE: 2026-11-28`)  
 **Website & PWA Production:** https://puzzleverse-e16e4.web.app/ (Mirror: https://puzzzleverse.netlify.app/)  
+**Centralized Release Manifest:** https://puzzleverse-e16e4.web.app/release-manifest.json  
 **Universal Download Portal:** https://puzzleverse-e16e4.web.app/download  
-**Public Release Assets:** https://github.com/jnsidhant30-creator/Puzzle/releases/tag/v1.2.1  
+**Public Release Assets (Only Active Release):** https://github.com/jnsidhant30-creator/Puzzle/releases/tag/v1.3.0
 
 ---
 
 ## 1. Platform Matrix (`PASS` / `FAIL` / `NOT TESTED`)
 
-| Platform / Target | Package / Artifact | Build Status | Runtime Test Status | Honest Scope & Notes |
+| Platform / Target | Package / Artifact | Build Status | Runtime / Integrity Status | Honest Scope & Notes |
 |---|---|---|---|---|
-| **Windows 10/11 (x64)** | `PuzzleVerse-Setup-1.2.1-x64.exe` (`122,377,604` B) & `PuzzleVerse-Portable-1.2.1-x64.exe` (`111,410,021` B) | **PASS** | **PASS** | Tested `win-unpacked\PuzzleVerse.exe` (`singleInstanceBlocked: true`), `PuzzleVerse-Portable-1.2.1-x64.exe`, and `test-desktop-extra.mjs`: `version: "1.2.1"`, all 16 games `true`, desktop gaming sidebar, `noDownloadPromotionsInDesktop: true`, `/download` blocked (`downloadRouteRedirected: true`), `exitConfirmWorked: true`, `escapePauseWorked: true`, `mazeArrowWorked: true`, Firestore REST read `200`, offline Leaderboard guard + online recovery (`onlineLeaderboardLoaded: true`), `reloadMounted: true`, `consoleErrors: []`, anonymous HTTP `206` (`bytes 0-15/122377604`) verified (`NotSigned`). *(Note: portable self-extracting wrapper timed out on 8s `secondRun` single-instance check, whereas unpacked EXE passed `singleInstanceBlocked: true`. Interactive human Google login round-trip inside external browser + loopback remains `NOT TESTED`.)* |
-| **Windows 11 (ARM64)** | `PuzzleVerse-Setup-1.2.1-arm64.exe` (`116,369,498` B) & `PuzzleVerse-Portable-1.2.1-arm64.exe` (`106,078,004` B) | **PASS** | **NOT TESTED** | Cross-compiled on Windows x64, SHA-256 verified, published on GitHub Release `v1.2.1` (`NotSigned`); ARM64 Windows hardware unavailable locally. |
-| **Android (Capacitor 8 APK & AAB)** | `PuzzleVerse-v1.2.1-Android.apk` (`4,913,100` B) & `PuzzleVerse-v1.2.1-Android.aab` (`4,586,902` B) | **PASS** | **PASS** (Emulator + Live Android Web + Shared 16/16 E2E) | Signed (`apksigner` v2 verified, `minSdk 24` / `targetSdk 36`, `versionCode 121`), registered Firebase Android app & SHA-1/SHA-256 fingerprints, published to GitHub Release `v1.2.1` (HTTP `206`: `bytes 0-15/4913100`), verified in-place upgrade (`1.2.0` -> `1.2.1`) and **Portrait -> Landscape -> Portrait** rotation on Android 14 API 34 emulator (`pid 4717` zero restart, timer `1s -> 6s -> 10s`, mirror preserved, white status-bar icons preserved, `overflowX: false`; compact `364px` landscape requires vertical scroll to bottom buttons) + ColorPath `Connect Pair` hint fix, alongside `16/16` individual game lifecycle tests on live shared bundle. Physical phone sideload & interactive Google account selection remain `NOT TESTED`. |
-| **iPhone & iPad (iOS / iPadOS)** | `ios/` Xcode project (`MARKETING_VERSION = 1.2.1`, `CURRENT_PROJECT_VERSION = 121`, Firebase iOS app + `GoogleService-Info.plist` + `Info.plist`) | **SYNCED** | **NOT TESTED** | Configured `com.puzzleverse.app`, `@capawesome/capacitor-google-sign-in@0.1.4`, `GIDClientID`, `GIDServerClientID`, and URL scheme in `ios/App/App/Info.plist`; native Xcode compile & `.ipa` signing require macOS + Apple Developer membership (`NOT TESTED` on Windows). Safari PWA remains playable immediately. |
-| **macOS (Apple Silicon / Intel / Universal)** | `electron-builder.json` & `.github/workflows/universal-release.yml` | **CI CONFIGURED ONLY** | **NOT TESTED** | Requires macOS CI runner (`macos-latest`) and Apple Developer ID for `.dmg` Gatekeeper notarization; Web/PWA playable today. |
-| **Linux (`x64` & `ARM64`)** | `.AppImage`, `.deb`, `.rpm` + icons in `build/icons/` | **CI CONFIGURED ONLY** | **NOT TESTED** | Configured for Ubuntu CI runner; kept disabled on `/download` until built and published. Web/PWA playable today. |
-| **Web & Installed PWA (`ChromeOS` / Desktop / Mobile)** | `dist/` (`sw.js`, `manifest.json`, `87` Workbox precache entries / `1746.30 KiB`) | **PASS** | **PASS** | Deployed `v1.2.1` to Firebase Hosting (`https://puzzleverse-e16e4.web.app`) & Netlify (`https://puzzzleverse.netlify.app`); headless Chrome CDP verified desktop & Android `/download` detection (`1.2.1`, `116.71 MB`, `4.69 MB`), valid `/desktop-auth` (`Continue with Google` visible, `overflowX: false`), `16/16` individual interactive game completions (`consoleErrors: []`), live `workbox-precache-v2` registration, and emulated `display-mode: standalone` Installed PWA redirecting `/download` -> `/login` with zero download promotions (`hasAnyDownloadPromo: false`). Interactive human Google OAuth consent remains `NOT TESTED`. |
+| **Windows 10/11 (x64)** | `PuzzleVerse-Setup-1.3.0-x64.exe` (`122,328,814` B, SHA-256 `dbe2ac1c...540`) & `PuzzleVerse-Portable-1.3.0-x64.exe` (`111,360,703` B, SHA-256 `f094b3c9...a76`) | **PASS** | **PASS** (`unpacked`, `portable`, `extra`, `v1.2.1 -> v1.3.0` auto-updater & migration) | Full HTTP `200` unauthenticated download + SHA-256 verified. Tested `win-unpacked` (`secondRunElapsedMs: 96`), `Portable` (`singleInstanceBlocked: true`, `secondRunElapsedMs: 23523`, `isPortableFlag: true`, `secondInstanceStateCheck.sentinelPreserved: true`), `test-desktop-extra.mjs`, and real `v1.2.1 -> v1.3.0` auto-updater download/SHA-256 verify/safety-gate/silent-upgrade preserving XP (`780`), settings, and sentinels (`consoleErrors: []`). Unsigned (`NotSigned`). Interactive `v1.3.0` Google OAuth consent on Desktop remains `NOT TESTED`. |
+| **Windows 11 (ARM64)** | `PuzzleVerse-Setup-1.3.0-arm64.exe` (`116,320,841` B, SHA-256 `f4abd990...df`) & `PuzzleVerse-Portable-1.3.0-arm64.exe` (`106,028,867` B, SHA-256 `f34fe4b5...0a3`) | **PASS** | **NOT TESTED** (Full download & SHA-256 **PASS**) | Cross-compiled on Windows x64, full HTTP `200` download + SHA-256 verified, published on GitHub Release `v1.3.0` (`NotSigned`); Windows ARM64 hardware unavailable locally. |
+| **Android (Capacitor 8 APK & AAB)** | `PuzzleVerse-v1.3.0-Android.apk` (`4,856,365` B, SHA-256 `c64cf334...3c4`) & `PuzzleVerse-v1.3.0-Android.aab` (`4,539,876` B, SHA-256 `0b9560c7...72`) | **PASS** | **PASS** (Emulator `v1.2.1 -> v1.3.0` + Landscape + Live 16/16 E2E) | Signed (`apksigner` v2 verified, `minSdk 24` / `targetSdk 36`, `versionCode 130`), full HTTP `200` download + SHA-256 + `apksigner` verified. On Android 14 API 34 emulator: `v1.2.1` detected `v1.3.0` update -> `adb install -r` upgraded cleanly preserving seeded XP (`450`), sound setting & sentinel -> PID `4355` preserved across rotation -> `controlsBottom: 211`, `boardBottom: 337` (`<= 364`), `backPaused: true`, `offlineColdStart.mounted: true`, `fatalCount: 0`. Physical phone sideload & interactive Google account consent on `v1.3.0` remain `NOT TESTED`. |
+| **iPhone & iPad (iOS / iPadOS)** | `ios/` Xcode project (`MARKETING_VERSION = 1.3.0`, `CURRENT_PROJECT_VERSION = 130`) | **SYNCED** | **NOT TESTED** | Synced with Capacitor plugins (`capawesome/capacitor-google-sign-in`, Firebase config); `.ipa` signing & compilation require macOS CI runner / Apple Developer membership. Safari PWA remains playable today. |
+| **macOS (Apple Silicon / Intel / Universal)** | `electron-builder.json` & `.github/workflows/universal-release.yml` | **CI CONFIGURED ONLY** | **NOT TESTED** | Requires `macos-latest` CI runner & Apple Developer ID for Gatekeeper notarization; disabled on `/download` until published. |
+| **Linux (`x64` & `ARM64`)** | `.AppImage`, `.deb`, `.rpm` (`universal-release.yml`) | **CI CONFIGURED ONLY** | **NOT TESTED** | Configured for `ubuntu-latest` CI runner (`AppImage`, `deb`, `rpm`, verification & release publishing); disabled on `/download` until published. |
+| **Web & Installed PWA (`ChromeOS` / Desktop / Mobile)** | `dist/` (`1,786,395` B / `84` files, `sw.js` `85` Workbox precache entries / `1693.05 KiB`, `release-manifest.json` `15` entries) | **PASS** | **PASS** | Deployed live `v1.3.0` to Firebase Hosting (`https://puzzleverse-e16e4.web.app`) & Netlify (`https://puzzzleverse.netlify.app`). Verified `release-manifest.json` (`200 OK`, `1.3.0`), `16/16` compact `866x364` landscape + `412x842` portrait layouts, `16/16` live E2E solves (`consoleErrors: []`), PWA non-interruptive banner hidden in gameplay & shown on exit, offline update-check error fast-fail + `Retry Update Check` recovery, and standalone PWA `/download -> /login` isolation. |
 
 ---
 
-## 2. Verified Firebase Auth Config (`puzzleverse-e16e4`)
+## 2. Bundle Optimization & Lifecycle Metrics
 
-- **Registered Apps (`firebase_list_apps`):** Android (`1:473636983543:android:3a790666582f4f808eb9f2`, `com.puzzleverse.app`), iOS (`1:473636983543:ios:afce5358441e728d8eb9f2`, `com.puzzleverse.app`), Web (`1:473636983543:web:e1859d1e939e80e68eb9f2`).
-- **Authorized Domains (`identitytoolkit` `getProjectConfig` `200 OK`):** `localhost`, `puzzleverse-e16e4.firebaseapp.com`, `puzzleverse-e16e4.web.app`, `puzzleverse-e16e4--test-0nn9a615.web.app`, `puzzzleverse.netlify.app`.
-- **Android Release Certificate Fingerprints (`firebase apps:android:sha:list`):** SHA-1 `9319cb1bb11df0f29e66f1262534b20bab5cd109` & SHA-256 `38ecc6bd01f992e93a75e721fb9364182ef72c0b1e28f2ed81d54d7b912c73f7`.
+| Metric | `v1.2.1` Baseline | `v1.3.0` Final | Delta |
+|---|---|---|---|
+| `dist/` Total Bytes (`84` files) | `1,817,323 B` (`1774.73 KiB`) | `1,786,395 B` (`1744.53 KiB`) | `-30,928 B` (while adding `release-manifest.json`) |
+| `public/icons/` Total Bytes | `119,020 B` | `57,692 B` | `-61,328 B` (`icon-1024x1024.png` relocated to `build/`) |
+| Workbox Precache Entries | `87` (`1746.30 KiB`) | `85` (`1693.05 KiB`) | `-2` entries (`-53.25 KiB`, manifest excluded from precache) |
+| Signed Android APK Size | `4,913,100 B` | `4,856,365 B` | `-56,735 B` |
+| Signed Play Store AAB Size | `4,586,902 B` | `4,539,876 B` | `-47,026 B` |
+| Live Cold Load (`verify_updater_and_perf.mjs`) | — | `downloadReadyMs: 1175` · `domContentLoadedMs: 761` · `loadEventMs: 1069` · `jsHeapMB: 5.05` | Measured on live CDN |
 
 ---
 
-## 3. Repository Build Scope Note (`root dist/` vs legacy `client/`)
+## 3. Obsolete Release Cleanup & Future Automation
 
-Firebase Hosting (`firebase.json` -> `"public": "dist"`) and Netlify (`netlify.toml` -> `publish = "dist"`) deploy directly from the root React 19 + TypeScript + Vite 8 workspace (`src/` -> `dist/`), which powers the Electron desktop builds, Capacitor Android/iOS bundles, PWA service worker, authentication adapters, and public `/download` portal. The older `client/` folder predates project flattening and was left untouched.
+- Verified only `v1.3.0` (`10` assets) remains publicly listed on GitHub Releases (`PUBLIC_RELEASES_REMAINING: [{"tag":"v1.3.0","assets":10}]`) and `releases/latest` resolves to `v1.3.0`.
+- Archived private recovery backups outside the repository (`~/.puzzleverse-backups/releases/`): full binaries & checksums for `v1.2.1` plus metadata/checksums/`latest.yml` for `v1.2.0`, `v1.1.0`, and `v1.0.0`. All Git tags (`v1.0.0`–`v1.3.0`) remain intact.
+- Automated verification & cleanup in [manage-releases.mjs](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/scripts/manage-releases.mjs) and [.github/workflows/universal-release.yml](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/.github/workflows/universal-release.yml).

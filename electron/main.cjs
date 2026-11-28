@@ -56,6 +56,7 @@ let splashWindow = null;
 let oauthServer = null;
 let forceQuitRequested = false;
 let activeGameState = { inActiveGame: false, gameName: '' };
+const IS_PORTABLE = Boolean(process.env.PORTABLE_EXECUTABLE_FILE);
 
 function getDistDir() {
   return path.resolve(app.getAppPath(), 'dist');
@@ -498,7 +499,7 @@ function createMainWindow() {
           splashWindow.close();
           splashWindow = null;
         }
-      }, 220);
+      }, 120);
     }
     mainWindow?.show();
     mainWindow?.focus();
@@ -548,6 +549,7 @@ function registerIpcHandlers() {
       version: app.getVersion(),
       publisher: PUBLISHER_NAME,
       isPackaged: app.isPackaged,
+      isPortable: IS_PORTABLE,
       platform: process.platform,
       arch: process.arch,
       signed: false,
@@ -768,12 +770,20 @@ function selectReleaseAssetsForPlatform(assets) {
   const arch = process.arch;
   let primary;
   let ymlName = 'latest.yml';
+  let manualOnly = false;
   if (plat === 'win32') {
     ymlName = 'latest.yml';
-    const setupRe = arch === 'arm64' ? /Setup-.*-arm64\.exe$/i : /Setup-.*-x64\.exe$/i;
-    primary = assets.find((a) => setupRe.test(a.name)) || assets.find((a) => /Setup-.*\.exe$/i.test(a.name));
+    if (IS_PORTABLE) {
+      manualOnly = true;
+      const portableRe = arch === 'arm64' ? /Portable-.*-arm64\.exe$/i : /Portable-.*-x64\.exe$/i;
+      primary = assets.find((a) => portableRe.test(a.name)) || assets.find((a) => /Portable-.*\.exe$/i.test(a.name));
+    } else {
+      const setupRe = arch === 'arm64' ? /Setup-.*-arm64\.exe$/i : /Setup-.*-x64\.exe$/i;
+      primary = assets.find((a) => setupRe.test(a.name)) || assets.find((a) => /Setup-.*\.exe$/i.test(a.name));
+    }
   } else if (plat === 'darwin') {
     ymlName = 'latest-mac.yml';
+    manualOnly = true;
     const dmgRe = arch === 'x64' ? /-x64\.dmg$/i : /-arm64\.dmg$/i;
     primary =
       assets.find((a) => dmgRe.test(a.name)) ||
@@ -781,12 +791,13 @@ function selectReleaseAssetsForPlatform(assets) {
       assets.find((a) => /\.dmg$/i.test(a.name));
   } else if (plat === 'linux') {
     ymlName = 'latest-linux.yml';
+    manualOnly = true;
     const appImageRe = arch === 'arm64' ? /-arm64\.AppImage$/i : /-(x86_64|x64)\.AppImage$/i;
     primary = assets.find((a) => appImageRe.test(a.name)) || assets.find((a) => /\.AppImage$/i.test(a.name));
   }
   const ymlAsset = assets.find((a) => a.name.toLowerCase() === ymlName) || assets.find((a) => /^latest\.yml$/i.test(a.name));
   const sumsAsset = assets.find((a) => /SHA256SUMS\.txt$/i.test(a.name));
-  return { setupAsset: primary, ymlAsset, sumsAsset };
+  return { setupAsset: primary, ymlAsset, sumsAsset, manualOnly };
 }
 
   ipcMain.handle('desktop:check-updates', async (event) => {
@@ -811,6 +822,8 @@ function selectReleaseAssetsForPlatform(assets) {
           currentVersion,
           latestVersion: currentVersion,
           signed: false,
+          isPortable: IS_PORTABLE,
+          manualOnly: IS_PORTABLE,
           downloadPageUrl: `${OFFICIAL_WEB_ORIGIN}/download`,
           message: 'No newer published release found yet.',
         };
@@ -822,14 +835,14 @@ function selectReleaseAssetsForPlatform(assets) {
       const data = await res.json();
       const latestVersion = String(data.tag_name || data.name || currentVersion).replace(/^v/i, '');
       const assets = Array.isArray(data.assets) ? data.assets : [];
-      const { setupAsset, ymlAsset, sumsAsset } = selectReleaseAssetsForPlatform(assets);
+      const { setupAsset, ymlAsset, sumsAsset, manualOnly } = selectReleaseAssetsForPlatform(assets);
 
       let expectedSha512;
       let expectedSha256;
       if (setupAsset && typeof setupAsset.digest === 'string' && setupAsset.digest.startsWith('sha256:')) {
         expectedSha256 = setupAsset.digest.replace(/^sha256:/i, '').toLowerCase();
       }
-      if (!expectedSha512 && ymlAsset?.browser_download_url) {
+      if (!expectedSha512 && !IS_PORTABLE && ymlAsset?.browser_download_url) {
         try {
           const yRes = await net.fetch(ymlAsset.browser_download_url);
           if (yRes.ok) {
@@ -857,6 +870,8 @@ function selectReleaseAssetsForPlatform(assets) {
         currentVersion,
         latestVersion,
         signed: false,
+        isPortable: IS_PORTABLE,
+        manualOnly,
         releaseUrl: data.html_url || `${OFFICIAL_WEB_ORIGIN}/download`,
         downloadPageUrl: `${OFFICIAL_WEB_ORIGIN}/download`,
         downloadUrl: setupAsset?.browser_download_url || '',
@@ -871,6 +886,8 @@ function selectReleaseAssetsForPlatform(assets) {
         status: 'error',
         currentVersion,
         signed: false,
+        isPortable: IS_PORTABLE,
+        manualOnly: IS_PORTABLE,
         downloadPageUrl: `${OFFICIAL_WEB_ORIGIN}/download`,
         error: err instanceof Error ? err.message : 'Unable to check for updates.',
       };
@@ -975,6 +992,17 @@ function selectReleaseAssetsForPlatform(assets) {
     return { ok: true };
   });
 
+  ipcMain.handle('desktop:reveal-downloaded', (event, filePath) => {
+    assertTrustedSender(event);
+    const cleanPath = path.resolve(String(filePath || ''));
+    const downloadsDir = path.resolve(app.getPath('downloads'));
+    if (!cleanPath.startsWith(downloadsDir + path.sep) || !fs.existsSync(cleanPath)) {
+      return false;
+    }
+    shell.showItemInFolder(cleanPath);
+    return true;
+  });
+
   ipcMain.handle('desktop:quit', async (event) => {
     assertTrustedSender(event);
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -989,8 +1017,16 @@ function selectReleaseAssetsForPlatform(assets) {
 app.on('second-instance', () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     if (mainWindow.isMinimized()) mainWindow.restore();
-    mainWindow.show();
-    mainWindow.focus();
+    if (!mainWindow.isVisible()) mainWindow.show();
+    if (process.platform === 'win32') {
+      mainWindow.setAlwaysOnTop(true);
+      mainWindow.focus();
+      app.focus({ steal: true });
+      mainWindow.setAlwaysOnTop(false);
+    } else {
+      mainWindow.focus();
+    }
+    mainWindow.webContents.send('desktop:second-instance');
   }
 });
 

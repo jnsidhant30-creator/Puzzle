@@ -4,6 +4,7 @@ export interface DesktopAppInfo {
   version: string;
   publisher: string;
   isPackaged: boolean;
+  isPortable: boolean;
   platform: string;
   arch: string;
   signed: boolean;
@@ -25,6 +26,8 @@ export interface DesktopUpdateCheckResult {
   currentVersion: string;
   latestVersion?: string;
   signed: boolean;
+  isPortable?: boolean;
+  manualOnly?: boolean;
   releaseUrl?: string;
   downloadPageUrl: string;
   downloadUrl?: string;
@@ -68,6 +71,8 @@ export interface PuzzleVerseDesktopAPI {
   checkForUpdates: () => Promise<DesktopUpdateCheckResult>;
   downloadUpdate: (releaseInfo: DesktopUpdateCheckResult) => Promise<DesktopUpdateDownloadResult>;
   installUpdateAndRestart: (filePath: string) => Promise<{ ok: boolean; reason?: string }>;
+  revealDownloadedFile?: (filePath: string) => Promise<boolean>;
+  onSecondInstance?: (callback: () => void) => () => void;
   quitApp?: () => Promise<{ ok: boolean; reason?: string }>;
   onUpdateProgress: (callback: (progress: DesktopUpdateProgress) => void) => () => void;
   checkOnline: () => Promise<boolean>;

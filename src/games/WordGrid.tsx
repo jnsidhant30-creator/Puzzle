@@ -109,7 +109,7 @@ export const WordGrid: React.FC<Props> = ({ difficulty, onComplete, useHint, hin
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+    <div className="pv-game-grid flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
       <GameHudBar
         items={[
           { label: 'Found', value: `${foundWords.length} / ${wordsToFind.length}`, tone: 'success' },
@@ -138,7 +138,7 @@ export const WordGrid: React.FC<Props> = ({ difficulty, onComplete, useHint, hin
       </div>
 
       {/* Board */}
-      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+      <div className="pv-game-board w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
         <p className="text-xs text-pv-text-secondary mb-4 text-center">
           Select adjacent letters to find each target word.
         </p>

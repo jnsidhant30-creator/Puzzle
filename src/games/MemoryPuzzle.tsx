@@ -157,7 +157,7 @@ export const MemoryPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint,
       : 'grid-cols-4';
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+    <div className="pv-game-grid flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
       <GameHudBar
         items={[
           { label: 'Moves', value: moves },
@@ -167,33 +167,35 @@ export const MemoryPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint,
       />
 
       {/* Cards Grid */}
-      <div className={`grid ${gridCols} gap-2.5 w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5`}>
-        {cards.map((card, idx) => {
-          const isRevealed = card.isFlipped || card.isMatched;
+      <div className="pv-game-board w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+        <div className={`grid ${gridCols} gap-2.5 w-full max-w-[340px]`}>
+          {cards.map((card, idx) => {
+            const isRevealed = card.isFlipped || card.isMatched;
 
-          let cardStyle = 'bg-[#233D4A] border-[#36515F] hover:border-[#4A6A7B] text-[#98AAB8] pv-keycap';
-          if (card.isMatched) {
-            cardStyle = 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300';
-          } else if (card.isFlipped) {
-            cardStyle = 'bg-[#1C2D3B] border-[#38C6BA] text-[#A8E5D5]';
-          }
+            let cardStyle = 'bg-[#233D4A] border-[#36515F] hover:border-[#4A6A7B] text-[#98AAB8] pv-keycap';
+            if (card.isMatched) {
+              cardStyle = 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300';
+            } else if (card.isFlipped) {
+              cardStyle = 'bg-[#1C2D3B] border-[#38C6BA] text-[#A8E5D5]';
+            }
 
-          return (
-            <button
-              key={idx}
-              onClick={() => handleCardClick(idx)}
-              disabled={card.isMatched || isPeeking}
-              className={`aspect-square rounded-lg flex items-center justify-center border transition-all duration-150 select-none ${cardStyle}`}
-              aria-label={isRevealed ? `Card ${card.symbol}` : 'Hidden Card'}
-            >
-              {isRevealed ? (
-                renderSymbol(card.symbol)
-              ) : (
-                <span className="w-2.5 h-2.5 rounded-full bg-pv-border-strong" />
-              )}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={idx}
+                onClick={() => handleCardClick(idx)}
+                disabled={card.isMatched || isPeeking}
+                className={`aspect-square rounded-lg flex items-center justify-center border transition-all duration-150 select-none ${cardStyle}`}
+                aria-label={isRevealed ? `Card ${card.symbol}` : 'Hidden Card'}
+              >
+                {isRevealed ? (
+                  renderSymbol(card.symbol)
+                ) : (
+                  <span className="w-2.5 h-2.5 rounded-full bg-pv-border-strong" />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Action Controls */}

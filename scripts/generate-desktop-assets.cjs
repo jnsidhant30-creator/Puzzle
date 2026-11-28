@@ -202,7 +202,7 @@ app.whenReady().then(async () => {
   fs.writeFileSync(path.join(publicIconsDir, 'apple-touch-icon-180x180.png'), apple180);
 
   const { png: icon1024 } = await renderSvgToRgbaAndPng(ICON_SVG, 1024, 1024);
-  fs.writeFileSync(path.join(publicIconsDir, 'icon-1024x1024.png'), icon1024);
+  fs.writeFileSync(path.join(buildDir, 'icon-1024x1024.png'), icon1024);
 
   const icoConverter = typeof pngToIco === 'function' ? pngToIco : pngToIco.default;
   const icoBuf = await icoConverter(pngBuffers);

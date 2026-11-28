@@ -176,7 +176,7 @@ export const ArrowPath: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+    <div className="pv-game-grid flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
       <GameHudBar
         items={[
           { label: 'Position', value: `(${currentPos.r}, ${currentPos.c})`, tone: 'accent' },
@@ -186,7 +186,7 @@ export const ArrowPath: React.FC<Props> = ({
       />
 
       {/* Board */}
-      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+      <div className="pv-game-board w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
         <p className="text-xs text-[#B4C3CE] mb-4 text-center">
           Follow arrow directions from top-left (0, 0) to reach the exit at bottom-right.
         </p>

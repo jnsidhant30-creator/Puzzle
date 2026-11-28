@@ -2,6 +2,27 @@
 
 All notable releases of **PuzzleVerse** (Web, PWA, Desktop, and Mobile) are documented in this file.
 
+## [1.3.0] - 2026-11-28 — Stable Universal Platform, Compact Landscape, Auto-Update Verification & Release Lifecycle
+
+### Added & Improved
+- **Compact Phone/Tablet Landscape Layouts Across All 16 Games (`src/index.css`, `src/games/*.tsx`, `src/components/ui/GameHudBar.tsx`, `src/pages/GamePlayPage.tsx`):**
+  - Added 2-column `.pv-game-grid` + `.pv-game-board` responsive layout (`@media (orientation: landscape) and (max-height: 560px)`) and compact HUD styling so metrics, boards, Hint, Pause, Rules, and Reset controls remain above the fold without horizontal or vertical scroll.
+  - Added `max-h-[92dvh] overflow-y-auto` responsive modal containers on pause and completion dialogs so action buttons remain reachable on compact landscape screens.
+- **Centralized Release Manifest & Platform-Aware Updater (`public/release-manifest.json`, `scripts/generate-release-manifest.mjs`, `scripts/verify-release-manifest.mjs`, `src/platform/adapter.ts`, `src/pages/SettingsPage.tsx`, `src/App.tsx`):**
+  - Published centralized `release-manifest.json` (`15` platform entries) with `no-cache, no-store` headers on Firebase Hosting and Netlify, excluded from Workbox precaching.
+  - Added `isPortable`, `manualOnly`, `revealDownloadedFile`, explicit unsigned installer approval checkboxes on Desktop Setup, Downloads-folder reveal for Portable EXEs, verified APK download prompts on Android, non-interruptive PWA Service Worker update banner (suppressed during `activeTab === 'game_play'`), and `navigator.onLine === false` + timeout fast-fail for offline update checks with `Retry Update Check` recovery.
+- **Windows Portable Second-Instance Lock & State Preservation (`electron/main.cjs`, `electron/preload.cjs`, `scripts/test-desktop-packaged.mjs`):**
+  - Diagnosed the prior `8s` portable `secondRun` timeout as NSIS self-extraction latency (`23.5s` observed on `PuzzleVerse-Portable-1.3.0-x64.exe`), raised portable `secondRun` test threshold to `35s`, and added Win32 focus restoration + `desktop:second-instance` event verification (`sentinelPreserved: true`).
+- **Automated Release Management & Obsolete Release Cleanup (`scripts/manage-releases.mjs`, `.github/workflows/universal-release.yml`):**
+  - Added full unauthenticated release stream verification, outside-repo private backup archival, and post-verification cleanup removing obsolete public GitHub Releases (`v1.0.0`–`v1.2.1`) while preserving git history/tags so `v1.3.0` is the sole active public release.
+- **Bundle & Startup Optimization (`vite.config.ts`, `scripts/generate-desktop-assets.cjs`, `electron/main.cjs`):**
+  - Relocated unused build-only `1024x1024` icon out of `public/icons/`, trimmed Workbox precache from `87` (`1746.30 KiB`) to `85` (`1693.05 KiB`), shrank signed APK by `56,735` B (`4,856,365` B), and shortened desktop splash delay (`220ms -> 120ms`).
+
+### Verified
+- **Full Integrity & Migration Matrix (`v1.3.0`):** `100%` unauthenticated HTTP `200` download SHA-256 verification of all `9` release assets (`10` total assets on GitHub Release `v1.3.0`); real `v1.2.1 -> v1.3.0` upgrade migration & auto-updater verification on Windows Desktop (`Setup`) and Android 14 Emulator (`APK`); `unpacked`, `portable`, and `extra` Desktop tests; `16/16` responsive landscape/portrait checks (`landFail: []`, `portFail: []`); and `16/16` live production E2E solves on `https://puzzleverse-e16e4.web.app`.
+
+---
+
 ## [1.2.1] - 2026-11-28 — Android Landscape Rotation Fix, ColorPath Hints & Full E2E Verification
 
 ### Fixed

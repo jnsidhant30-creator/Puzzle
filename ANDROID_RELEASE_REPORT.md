@@ -1,83 +1,79 @@
-# PuzzleVerse Android Release Report (`v1.2.1` Android / `com.puzzleverse.app`)
+# PuzzleVerse Android Release Report (`v1.3.0` Android / `com.puzzleverse.app`)
 
 **Application Name:** PuzzleVerse (`Challenge Your Mind. Beat Your Best.`)  
 **Android Package ID:** `com.puzzleverse.app`  
-**Android Version:** `1.2.1` (`versionCode: 121`, upgraded cleanly in place from `1.2.0` / `versionCode: 120`)  
+**Android Version:** `1.3.0` (`versionCode: 130`, upgraded in place from `1.2.1` / `versionCode: 121`)  
 **Release Date:** 2026-11-28  
-**Direct Public APK Download:** https://github.com/jnsidhant30-creator/Puzzle/releases/download/v1.2.1/PuzzleVerse-v1.2.1-Android.apk  
-**Public Play Store AAB:** https://github.com/jnsidhant30-creator/Puzzle/releases/download/v1.2.1/PuzzleVerse-v1.2.1-Android.aab  
-**Public Android Checksums:** https://github.com/jnsidhant30-creator/Puzzle/releases/download/v1.2.1/ANDROID_SHA256SUMS.txt  
+**Direct Public APK Download:** https://github.com/jnsidhant30-creator/Puzzle/releases/download/v1.3.0/PuzzleVerse-v1.3.0-Android.apk  
+**Public Play Store AAB:** https://github.com/jnsidhant30-creator/Puzzle/releases/download/v1.3.0/PuzzleVerse-v1.3.0-Android.aab  
+**Public Android Checksums:** https://github.com/jnsidhant30-creator/Puzzle/releases/download/v1.3.0/ANDROID_SHA256SUMS.txt  
+**Centralized Release Manifest:** https://puzzleverse-e16e4.web.app/release-manifest.json  
 **Public Download Portal:** https://puzzleverse-e16e4.web.app/download (Mirror: https://puzzzleverse.netlify.app/download)
 
 ---
 
-## 1. Signed Release Artifacts & Checksums
+## 1. Signed Release Artifacts & Full-Download Checksums
 
 | Artifact | Local Path | Size | SHA-256 | Public HTTPS Status |
 |---|---|---|---|---|
-| **Signed Universal APK (`v1.2.1`)** | `release/PuzzleVerse-v1.2.1-Android.apk` | `4,913,100 bytes` (`4.69 MB`) | `b3a7acba7836e145a4d16832b1969a95924c5b23ecfd9786389f18c2be1aa9fd` | **PASS** (GitHub Release `v1.2.1`, HTTP `206` anonymous range `bytes 0-15/4913100`) |
-| **Signed Google Play AAB (`v1.2.1`)** | `release/PuzzleVerse-v1.2.1-Android.aab` | `4,586,902 bytes` (`4.37 MB`) | `1ab8d3be4481633c14913fb46399b4c456fa40bf79d0df6b0638baa2f39a19ff` | **PASS** (GitHub Release `v1.2.1`) |
-| **Android SHA-256 Sums** | `release/ANDROID_SHA256SUMS.txt` | — | Verified | **PASS** (GitHub Release `v1.2.1`) |
+| **Signed Universal APK (`v1.3.0`)** | `release/PuzzleVerse-v1.3.0-Android.apk` | `4,856,365 bytes` (`4.63 MB`) | `c64cf3344aef776366da3edaf1d9a95a245fb41368b78655c365aaca8802f3c4` | **PASS** (100% unauthenticated HTTP `200` download + SHA-256 + manifest + `apksigner` v2 match) |
+| **Signed Google Play AAB (`v1.3.0`)** | `release/PuzzleVerse-v1.3.0-Android.aab` | `4,539,876 bytes` (`4.33 MB`) | `0b9560c79ba44cc937a91c692a112134c9e0b67e0c4ad5441c13ec3ec68ce072` | **PASS** (100% unauthenticated HTTP `200` download + SHA-256 + `jarsigner` verified) |
+| **Android SHA-256 Sums** | `release/ANDROID_SHA256SUMS.txt` | `212 bytes` | Verified | **PASS** (`HTTP 200`) |
 
-*(Baseline `v1.2.0` (`versionCode 120`) and initial `v1.0.0` (`versionCode 100`) remain archived under earlier GitHub releases; `v1.2.1` preserves package ID `com.puzzleverse.app` and the same developer release signing certificate.)*
+*(Previous public releases `v1.0.0`–`v1.2.1` were pruned from GitHub Releases only after full `v1.3.0` verification, with private backups preserved outside the repository at `~/.puzzleverse-backups/releases/` and Git tags kept intact. `v1.3.0` preserves `com.puzzleverse.app` and the same release signing certificate.)*
 
 ### Signing & Firebase Authentication Registration
-- **APK Signature Verification (`apksigner`):** `Verifies` (`Verified using v2 scheme (APK Signature Scheme v2): true`).
+- **APK Signature Verification (`apksigner`):** `Verifies` (`Verified using v2 scheme (APK Signature Scheme v2): true`), confirmed on both the local build and the full anonymous GitHub download copy.
 - **AAB Signature Verification:** `jarsigner -verify` passed cleanly.
-- **Certificate Fingerprints:** SHA-1 `9319cb1bb11df0f29e66f1262534b20bab5cd109` · SHA-256 `38ecc6bd01f992e93a75e721fb9364182ef72c0b1e28f2ed81d54d7b912c73f7`.
-- **Firebase Android App (`puzzleverse-e16e4`):** Verified via Firebase CLI (`firebase apps:android:sha:list 1:473636983543:android:3a790666582f4f808eb9f2`), matching both SHA-1 & SHA-256 fingerprints alongside Android OAuth client (`473636983543-ghvbk3bdo1rovoct38ql39oiadh8q8jt.apps.googleusercontent.com`) and Web Server Client ID (`473636983543-e094a8bra4gf92g6s0pl4hrnmito0f2q.apps.googleusercontent.com`) in [google-services.json](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/android/app/google-services.json).
-- **Native Google Sign-In Flow:** [authService.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/services/authService.ts) invokes `@capawesome/capacitor-google-sign-in@0.1.4` (`GoogleSignIn.initialize({ clientId: GOOGLE_WEB_CLIENT_ID })` -> `GoogleSignIn.signIn()`) and exchanges the returned `idToken` via `GoogleAuthProvider.credential(nativeRes.idToken)` + `signInWithCredential(auth, credential)` with atomic `initializeAuth` persistence (`indexedDBLocalPersistence`, `browserLocalPersistence`).
-- **Keystore Custody:** External developer keystore at `C:\Users\jnsid\.puzzleverse-keys\puzzleverse-android-release.jks` (`android/keystore.properties` gitignored; no Play Protect or security bypasses).
+- **Certificate SHA-256 Digest (`apksigner`):** `38ecc6bd01f992e93a75e721fb9364182ef72c0b1e28f2ed81d54d7b912c73f7` (SHA-1 `9319cb1bb11df0f29e66f1262534b20bab5cd109`).
+- **Native Google Sign-In Flow:** [authService.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/services/authService.ts) preserves `@capawesome/capacitor-google-sign-in@0.1.4` and `initializeAuth` persistence (`indexedDBLocalPersistence`, `browserLocalPersistence`).
+- **Keystore Custody:** External developer keystore outside repo (`android/keystore.properties` gitignored; no security or Play Protect bypasses).
 
 ---
 
-## 2. Android `v1.2.1` Fixes & Capabilities
+## 2. Android `v1.3.0` Changes
 
-- **Landscape Orientation & System Bar Preservation:**
-  - [MainActivity.java](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/android/app/src/main/java/com/puzzleverse/app/MainActivity.java) overrides `onCreate`, `onConfigurationChanged`, and `onWindowFocusChanged` with `applyOceanNavySystemBars()` (`0xFF142331`, `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`, `setAppearanceLightStatusBars(false)`, `setAppearanceLightNavigationBars(false)`) so status and navigation icons remain white across portrait and landscape transitions.
-  - [adapter.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/platform/adapter.ts) adds an `orientationchange` listener re-applying `StatusBar.setStyle({ style: StatusBarStyle.Dark })` + `#142331`.
-  - [index.css](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/index.css), [Navbar.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/components/Navbar.tsx), [App.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/App.tsx), and [GamePlayPage.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/pages/GamePlayPage.tsx) apply display-cutout safe padding (`env(safe-area-inset-left/right)`) and compact landscape sizing (`@media (orientation: landscape) and (max-height: 560px)`).
-- **Color Path Solver & Hint Fix:** [ColorPath.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/games/ColorPath.tsx) replaces heuristic checks with `findPairSolutionPaths(size, pairs)` and adds interactive `Connect Pair ({hintsLeft})` hints.
-- **Version Specs (`aapt2`):** `minSdkVersion 24` (Android 7.0+) through `targetSdkVersion 36`, `versionCode 121`, `versionName 1.2.1`, universal ABIs (`arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`), `android:allowBackup="false"`, `android:usesCleartextTraffic="false"`.
+- **Compact Phone/Tablet Landscape Grid Across All 16 Games ([index.css](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/index.css), `src/games/*.tsx`, [GameHudBar.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/components/ui/GameHudBar.tsx)):** Side-by-side 2-column compact landscape grid (`@media (orientation: landscape) and (max-height: 560px)`) keeps HUD metrics, action/hint controls, and interactive boards above the fold without vertical or horizontal scrolling; pause and completion dialogs in [GamePlayPage.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/pages/GamePlayPage.tsx) constrain height (`max-h-[92dvh] overflow-y-auto`) so buttons never clip in landscape.
+- **Verified APK Update Flow & Offline Fast-Fail ([adapter.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/platform/adapter.ts), [SettingsPage.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/pages/SettingsPage.tsx)):** `Settings -> Check for Updates` queries live centralized [release-manifest.json](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/public/release-manifest.json) with GitHub Releases fallback, surfaces signed APK download CTA + expected SHA-256, and fast-fails cleanly when `navigator.onLine === false` with `Retry Update Check`.
+- **Leaner APK/AAB Bundle:** Excluded build-only `1024x1024` icon from `public/` (`-56,735` B APK vs `v1.2.1`: `4,913,100` B -> `4,856,365` B; `-47,026` B AAB vs `v1.2.1`: `4,586,902` B -> `4,539,876` B).
+- **Version Specs:** `minSdkVersion 24` (Android 7.0+) through `targetSdkVersion 36`, `versionCode 130`, `versionName 1.3.0`.
 
 ---
 
 ## 3. Verification Results (`PASS` / `FAIL` / `NOT TESTED`)
 
-| Check | Status | Observed Evidence & Honest Notes |
+| Check | Status | Observed Evidence & Honest Scope |
 |---|---|---|
-| TypeScript & Vite Bundle (`dist/`) | **PASS** | `npm run lint` (`tsc --noEmit`) & `npm run build` (`vite build`, `87` Workbox precache entries / `1746.30 KiB`) exited `0`. |
-| Gradle Signed APK + AAB Build (`v1.2.1`) | **PASS** | `assembleRelease bundleRelease` exited `0`; `apksigner` (`v2`) & `jarsigner -verify` passed cleanly. |
-| In-Place Upgrade & Cold Launch (Android 14 Emulator) | **PASS** | `adb install -r` upgraded `versionCode 120` (`1.2.0`) -> `versionCode 121` (`1.2.1`) cleanly (`firstInstallTime` preserved); `0` fatal exceptions in `logcat`. |
-| Android Rotation Stability (`Portrait -> Landscape -> Portrait`) | **PASS** | Rotated live inside **Laser Mirror** via `cmd window user-rotation lock 1` -> `lock 0`: app PID stayed `4717` (`stay-alive` sentinel unchanged, zero Activity restart/blank screen), timer preserved (`1s -> 6s -> 10s`), placed mirror preserved (`hasMirrorGlyph: true`), `gridRect.height` resized `309px -> 175px`, `overflowX: false`, white status bar icons preserved (`v121-rot-portrait.png`, `v121-rot-landscape.png`, `v121-rot-back-portrait.png`). *Note: on extreme `364px`-tall phone landscape viewport, bottom hint/reset controls sit below the fold (`y=500`) and require vertical scrolling.* |
-| ColorPath Hint & Board Interaction (Android 14 Emulator) | **PASS** | Tapping `Connect Pair (5)` decremented to `Connect Pair (4)` and visually connected Pair 1 (`v121-colorpath.png`). |
-| Individual 16-Game Lifecycle E2E Suite | **PASS** | Executed against the identical shared production bundle (`https://puzzleverse-e16e4.web.app`) across all 16 games individually: Launch, Puzzle Generation, Real Input, Hint/Action, Timer Advance, Pause Timer-Freeze + Resume, Reset (`0s` / `30s`), Full Completion, Scoring/XP Results Dialog, and `puzzleverse_offline_practice_v1` persistence (`16/16` passed, `consoleErrors: []`). *(Android-specific shell behaviors—in-place APK upgrade, rotation preservation, `KEYCODE_BACK`, offline cold launch, hidden mobile bottom nav, and ColorPath `Connect Pair`—were verified directly on the Android 14 emulator.)* |
-| Download Promotion Removal & `/download` Block | **PASS** | Zero download links or banners in Login, Dashboard, or Settings inside Capacitor APK; `/download` redirects away; Settings reports `v1.2.1`. |
-| Live `/download` Automatic Android Detection | **PASS** | Emulated Android Chrome on `https://puzzleverse-e16e4.web.app/download` auto-selected `Download for Android (APK)` showing `Version 1.2.1`, `4.69 MB (4,913,100 bytes)`, `Android 7.0+ (API 24 – 36)`, PWA fallback, and `overflowX: false`. |
-| Native Google Sign-In Interactive Account Flow | **NOT TESTED** | Registered Firebase Android/iOS/Web apps, verified SHA-1/SHA-256 certificates, verified `authorizedDomains` via Firebase IdentityToolkit (`200`), and verified GMS Credential Manager trigger on emulator (friendly guidance shown when no OS Google account is signed in). End-to-end interactive Google consent & profile load still requires a device logged into a Google account (see step-by-step instructions). |
-| Physical Android Device Sideload & Play Console Upload | **NOT TESTED** | Verified on official Android 14 Google APIs emulator; physical OEM phone sideload & Play Store Console upload remain pending user/Play Console action. |
+| TypeScript & Vite Bundle (`dist/`) | **PASS** | `tsc --noEmit` & `vite build` exited `0`; `dist/` = `1,786,395` B (`85` Workbox precache entries / `1693.05 KiB`). |
+| Gradle Signed APK + AAB Build (`v1.3.0`) | **PASS** | `assembleRelease bundleRelease` exited `0`; `apksigner` (`v2`, SHA-256 `38ecc6bd...f7`) & `jarsigner -verify` passed cleanly. |
+| Full Anonymous Release Download Integrity | **PASS** | Downloaded complete `PuzzleVerse-v1.3.0-Android.apk` (`4,856,365` B) & `.aab` (`4,539,876` B) anonymously (`HTTP 200`), matching SHA-256, `release-manifest.json`, and `apksigner`. |
+| `v1.2.1 -> v1.3.0` Migration & Update Check (Android 14 Emulator) | **PASS** | Installed `v1.2.1` (`versionCode 121`) -> verified `v1.2.1` `Check for Updates` detected `1.3.0` (`v121DetectedUpdate: true`) -> seeded `450` XP, `9` games, sound off pref, and sentinel -> `adb install -r` to `v1.3.0` (`versionCode 130`, `firstInstallTime` preserved) -> `upgradedDataPreserved: true`, `hasVersion130: true`, `updateStatusVisible: true`, `fatalCount: 0`. |
+| Compact Landscape & Rotation Stability (Android 14 Emulator) | **PASS** | Live rotation `412x842 -> 866x364 -> 412x842` kept app PID `4355` (`pidUnchanged: true`), timer & mirror intact, `landscape.controlsBottom: 211`, `landscape.boardBottom: 337` (`<= 364`, `fitsControlsWithinLandscape: true`, `overflowX: false`), `backPaused: true`, `offlineColdStart.mounted: true`. |
+| All 16 Games Responsive Landscape & Live E2E (`dist/`) | **PASS** | `16/16` games passed `866x364` landscape (`maxBottom` `238`–`358/364`, `overflowX: false`) & `412x842` portrait (`546`–`837/842`), and `16/16` solved end-to-end against `https://puzzleverse-e16e4.web.app` (`consoleErrors: []`). |
+| Download Promotion Removal & `/download` Block | **PASS** | `hasDownloadPromo: false`, `hasDownloadPromoOnLogin: false`, `gamesCount: 16`. |
+| Live `/download` Automatic Android Detection | **PASS** | Emulated Android Chrome on `https://puzzleverse-e16e4.web.app/download` auto-selected Android APK (`4.63 MB (4,856,365 bytes)`, `PuzzleVerse-v1.3.0-Android.apk`, `Android 7.0+`, PWA fallback, `overflowX: false`). |
+| Native Google Sign-In Interactive Account Flow (`v1.3.0`) | **NOT TESTED** | Emulator Credential Manager trigger displayed friendly `No Google account is configured on this device yet`; developer previously signed off interactive Google account login on physical device for baseline `v1.2.1`, while `v1.3.0` physical-device login remains `NOT TESTED`. |
+| Physical Android Device Sideload (`v1.3.0`) & Play Console Upload | **NOT TESTED** | Automated verification ran on official Android 14 API 34 emulator; physical phone sideload & Play Store upload remain pending user/Play Console action. |
 
 ---
 
-## 4. Shared 16-Game Individual E2E Matrix (`all16_report.json`)
+## 4. Shared 16-Game Live E2E Verification (`all16_report.json` against `https://puzzleverse-e16e4.web.app`)
 
-Every game below passed all checks independently against the live shared `dist/` production bundle with `0` console errors:
-
-| # | Game | Launch & Gen | Timer Tick | Pause Freeze & Resume | Hint / Action | Reset (`0s`/`30s`) | Real Solve & Results (`pts` / `+50 XP`) | Offline Saved |
-|---|---|---|---|---|---|---|---|---|
-| 1 | Number Puzzle | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`590 pts`) | PASS |
-| 2 | Word Puzzle | PASS | PASS (`1s->3s`) | PASS | PASS | PASS (`0s`) | PASS (`648 pts`) | PASS |
-| 3 | Memory Puzzle | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`780 pts`) | PASS |
-| 4 | Sliding Puzzle | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`937 pts`) | PASS |
-| 5 | Logic Puzzle | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`735 pts`) | PASS |
-| 6 | Pattern Puzzle | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`652 pts`) | PASS |
-| 7 | Pipe Connect | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`1130 pts`) | PASS |
-| 8 | Color Path | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`992 pts`) | PASS |
-| 9 | Block Escape | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`880 pts`) | PASS |
-| 10 | Number Path | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`994 pts`) | PASS |
-| 11 | Rotating Tiles | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`868 pts`) | PASS |
-| 12 | Word Grid | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`995 pts`) | PASS |
-| 13 | Arrow Path | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`1000 pts`) | PASS |
-| 14 | Maze Escape | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`1000 pts`) | PASS |
-| 15 | Laser Mirror | PASS | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`1190 pts`) | PASS |
-| 16 | Challenge Mode | PASS | PASS (`30s->28s`) | N/A (`No Pause` rule) | N/A (Timed Rush) | PASS (`30s`) | PASS (`600 pts`) | PASS |
+| # | Game | Launch & Tick | Pause & Resume | Hint / Action | Reset (`0s`/`30s`) | Real Solve (`pts` / `+50 XP`) | Offline Saved |
+|---|---|---|---|---|---|---|---|
+| 1 | Number Puzzle | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`590 pts`) | PASS |
+| 2 | Word Puzzle | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`648 pts`) | PASS |
+| 3 | Memory Puzzle | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`810 pts`) | PASS |
+| 4 | Sliding Puzzle | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`817 pts`) | PASS |
+| 5 | Logic Puzzle | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`735 pts`) | PASS |
+| 6 | Pattern Puzzle | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`652 pts`) | PASS |
+| 7 | Pipe Connect | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`1035 pts`) | PASS |
+| 8 | Color Path | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`992 pts`) | PASS |
+| 9 | Block Escape | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`875 pts`) | PASS |
+| 10 | Number Path | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`1000 pts`) | PASS |
+| 11 | Rotating Tiles | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`820 pts`) | PASS |
+| 12 | Word Grid | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`995 pts`) | PASS |
+| 13 | Arrow Path | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`1000 pts`) | PASS |
+| 14 | Maze Escape | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`994 pts`) | PASS |
+| 15 | Laser Mirror | PASS (`0s->2s`) | PASS | PASS | PASS (`0s`) | PASS (`1190 pts`) | PASS |
+| 16 | Challenge Mode | PASS (`30s->28s`) | `true` (`No Pause` rule) | PASS | PASS (`30s`) | PASS (`600 pts`) | PASS |

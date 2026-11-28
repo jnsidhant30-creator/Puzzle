@@ -154,7 +154,7 @@ export const WordPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, h
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+    <div className="pv-game-grid flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
       <GameHudBar
         items={[
           { label: 'Round', value: `${round} / ${totalRounds}`, tone: 'accent' },
@@ -196,7 +196,7 @@ export const WordPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, h
       </div>
 
       {/* Scrambled Letter Palette */}
-      <div className="flex flex-wrap justify-center gap-2 w-full mb-5">
+      <div className="pv-game-board flex flex-wrap justify-center gap-2 w-full mb-5">
         {scrambled.map((char, idx) => {
           const isUsed = usedIndices.includes(idx);
           return (

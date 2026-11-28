@@ -115,7 +115,7 @@ export const ChallengeMode: React.FC<Props> = ({ onComplete }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+    <div className="pv-game-grid flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
       <GameHudBar
         items={[
           { label: 'Streak', value: `${streak}x`, tone: streak >= 3 ? 'accent' : 'default' },
@@ -135,7 +135,7 @@ export const ChallengeMode: React.FC<Props> = ({ onComplete }) => {
       </div>
 
       {/* Answer Buttons */}
-      <div className="grid grid-cols-2 gap-3 w-full">
+      <div className="pv-game-board grid grid-cols-2 gap-3 w-full">
         {currentMath.opts.map((opt, idx) => (
           <button
             key={idx}

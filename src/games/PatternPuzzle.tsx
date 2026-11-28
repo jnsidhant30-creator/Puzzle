@@ -135,7 +135,7 @@ export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+    <div className="pv-game-grid flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
       <GameHudBar
         items={[
           { label: 'Round', value: `${round} / ${totalRounds}`, tone: 'accent' },
@@ -146,7 +146,7 @@ export const PatternPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint
 
       {/* Pattern Matrix 3x3 */}
       {pattern && (
-        <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+        <div className="pv-game-board w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
           <p className="text-xs text-[#B4C3CE] mb-4 text-center">
             Determine the missing shape to complete the 3 × 3 matrix pattern.
           </p>

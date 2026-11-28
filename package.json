@@ -1,7 +1,7 @@
 {
   "name": "puzzleverse",
   "private": true,
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Challenge Your Mind. Beat Your Best.",
   "author": "Sidhant Jain <jnsidhu30@gmail.com>",
   "main": "electron/main.cjs",
@@ -12,6 +12,9 @@
     "preview": "vite preview",
     "clean": "rm -rf dist release release-stage server.js",
     "lint": "tsc --noEmit",
+    "manifest:generate": "npx tsx scripts/generate-release-manifest.mjs",
+    "release:verify": "node scripts/manage-releases.mjs --verify",
+    "release:prune": "node scripts/manage-releases.mjs --prune",
     "desktop:icons": "node scripts/run-electron.mjs scripts/generate-desktop-assets.cjs",
     "desktop:dev": "concurrently -k \"npm run dev\" \"wait-on http://localhost:3000 && cross-env PV_DESKTOP_DEV=1 node scripts/run-electron.mjs .\"",
     "desktop:build": "npm run build && npm run desktop:icons && electron-builder --win --x64 --dir",

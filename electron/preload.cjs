@@ -41,6 +41,13 @@ contextBridge.exposeInMainWorld('puzzleverseDesktop', Object.freeze({
   checkForUpdates: () => ipcRenderer.invoke('desktop:check-updates'),
   downloadUpdate: (releaseInfo) => ipcRenderer.invoke('desktop:download-update', releaseInfo),
   installUpdateAndRestart: (filePath) => ipcRenderer.invoke('desktop:install-update', filePath),
+  revealDownloadedFile: (filePath) => ipcRenderer.invoke('desktop:reveal-downloaded', filePath),
+  onSecondInstance: (callback) => {
+    if (typeof callback !== 'function') return () => {};
+    const handler = () => callback();
+    ipcRenderer.on('desktop:second-instance', handler);
+    return () => ipcRenderer.removeListener('desktop:second-instance', handler);
+  },
   quitApp: () => ipcRenderer.invoke('desktop:quit'),
 
   onUpdateProgress: (callback) => {

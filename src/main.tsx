@@ -35,6 +35,13 @@ if (!isDesktopRuntime && !isCapacitorNative && typeof window !== 'undefined' && 
     onRegisteredSW(_swUrl, registration) {
       if (registration) {
         setPwaSwRegistration(registration, Boolean(registration.waiting));
+        const safeCheckUpdate = () => {
+          if (navigator.onLine && document.visibilityState === 'visible') {
+            registration.update().catch(() => {});
+          }
+        };
+        document.addEventListener('visibilitychange', safeCheckUpdate);
+        window.addEventListener('online', safeCheckUpdate);
       }
     },
     onNeedRefresh() {

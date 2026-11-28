@@ -157,7 +157,7 @@ export const NumberPuzzle: React.FC<Props> = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+    <div className="pv-game-grid flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
       <GameHudBar
         items={[
           { label: 'Round', value: `${currentRound} / ${totalRounds}`, tone: 'accent' },
@@ -193,7 +193,7 @@ export const NumberPuzzle: React.FC<Props> = ({
 
       {/* Answer Options */}
       {question && (
-        <div className="grid grid-cols-2 gap-3 w-full mb-5">
+        <div className="pv-game-board grid grid-cols-2 gap-3 w-full mb-5">
           {question.options.map((opt, idx) => {
             let itemStyle = 'bg-pv-surface-secondary hover:bg-pv-surface-soft text-pv-text-primary border-pv-border';
             if (isAnswered) {

@@ -486,7 +486,7 @@ export const GamePlayPage: React.FC = () => {
               role="dialog"
               aria-modal="true"
               aria-label="Match paused"
-              className="absolute inset-0 z-20 bg-[#142331] flex flex-col items-center justify-center gap-4 p-6 text-center"
+              className="absolute inset-0 z-20 bg-[#142331] flex flex-col items-center justify-center gap-2.5 sm:gap-4 p-4 sm:p-6 text-center overflow-y-auto"
             >
               <div className="w-12 h-12 rounded-xl bg-[#233D4A] border border-[#36515F] flex items-center justify-center text-[#38C6BA]">
                 <Pause className="w-5 h-5" />
@@ -620,9 +620,9 @@ export const GamePlayPage: React.FC = () => {
           role="dialog"
           aria-modal="true"
           aria-labelledby="result-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 animate-fade-in"
         >
-          <div className="bg-[#233D4A] border border-[#4A6A7B] rounded-xl p-6 max-w-md w-full space-y-5">
+          <div className="bg-[#233D4A] border border-[#4A6A7B] rounded-xl p-4 sm:p-6 max-w-md w-full max-h-[92dvh] overflow-y-auto space-y-3 sm:space-y-5">
             <div className="flex items-center gap-3">
               <div
                 className={`w-11 h-11 rounded-lg flex items-center justify-center border ${

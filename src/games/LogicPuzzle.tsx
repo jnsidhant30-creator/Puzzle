@@ -115,7 +115,7 @@ export const LogicPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, 
   const OPT_LABELS = ['A', 'B', 'C', 'D'];
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+    <div className="pv-game-grid flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
       <GameHudBar
         items={[
           { label: 'Round', value: `${round} / ${totalRounds}`, tone: 'accent' },
@@ -151,7 +151,7 @@ export const LogicPuzzle: React.FC<Props> = ({ difficulty, onComplete, useHint, 
 
       {/* Answer Options */}
       {currentRiddle && (
-        <div className="flex flex-col gap-2 w-full mb-5">
+        <div className="pv-game-board flex flex-col gap-2 w-full mb-5">
           {currentRiddle.options.map((opt, idx) => {
             let itemStyle = 'bg-pv-surface-primary hover:bg-pv-surface-secondary border-pv-border text-pv-text-primary';
             if (isAnswered) {

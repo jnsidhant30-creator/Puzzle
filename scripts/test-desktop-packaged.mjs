@@ -331,12 +331,28 @@ async function runDesktopSuite(exePath, label, port = 9229) {
       .filter((e) => e.method === 'Runtime.exceptionThrown')
       .map((e) => e.params?.exceptionDetails?.text || 'Exception');
 
-    // Test Single Instance lock: launch a second instance with same userDataDir — it must exit immediately with code 0
+    // Test Single Instance lock: subscribe to desktop:second-instance, mark state sentinel, and launch a second instance with the same userDataDir.
+    // Note: Portable EXE extracts ~300 MB NSIS payload on every run (~9-15s on Windows Defender) before invoking requestSingleInstanceLock(), so allocate 35s timeout for portable.
+    await client.eval(`(() => {
+      window.__pvSentinel = 'keep-state-130';
+      window.__pvSecondInstanceCount = 0;
+      window.puzzleverseDesktop?.onSecondInstance?.(() => {
+        window.__pvSecondInstanceCount = (window.__pvSecondInstanceCount || 0) + 1;
+      });
+    })()`);
+    const t2Start = Date.now();
     const secondRun = spawnSync(exePath, [`--user-data-dir=${userDataDir}`], {
       env: cleanEnv,
-      timeout: 8000,
+      timeout: label === 'portable' ? 35000 : 12000,
     });
+    results.secondRunElapsedMs = Date.now() - t2Start;
     results.singleInstanceBlocked = secondRun.status === 0;
+    await sleep(300);
+    results.secondInstanceStateCheck = await client.eval(`({
+      eventCount: window.__pvSecondInstanceCount || 0,
+      sentinelPreserved: window.__pvSentinel === 'keep-state-130',
+    })`);
+    results.isPortableFlag = Boolean(results.appInfo?.isPortable);
   } finally {
     if (client) client.close();
     try {

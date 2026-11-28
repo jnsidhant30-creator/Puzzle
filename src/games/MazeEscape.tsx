@@ -193,7 +193,7 @@ export const MazeEscape: React.FC<Props> = ({
   const gridColsClass = size === 5 ? 'grid-cols-5' : size === 7 ? 'grid-cols-7' : 'grid-cols-9';
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
+    <div className="pv-game-grid flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
       <GameHudBar
         items={[
           { label: 'Maze Size', value: `${size} × ${size}` },
@@ -203,7 +203,7 @@ export const MazeEscape: React.FC<Props> = ({
       />
 
       {/* Grid */}
-      <div className="w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
+      <div className="pv-game-board w-full bg-[#142331]/90 border border-[#36515F] rounded-xl p-4 sm:p-5 mb-5 flex flex-col items-center">
         <div className={`grid ${gridColsClass} gap-1.5 w-full max-w-[340px] aspect-square`}>
           {Array.from({ length: size }).map((_, r) =>
             Array.from({ length: size }).map((_, c) => {

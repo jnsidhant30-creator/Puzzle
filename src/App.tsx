@@ -99,6 +99,7 @@ export default function App() {
     return initial;
   });
   const [pwaUpdateAction, setPwaUpdateAction] = React.useState<(() => Promise<void>) | null>(null);
+  const [nativeUpdateVersion, setNativeUpdateVersion] = React.useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.classList.remove('theme-dark', 'theme-light', 'theme-cyberpunk', 'theme-neon');
@@ -149,6 +150,21 @@ export default function App() {
     };
     window.addEventListener('pv:pwa-update-available', handlePwaUpdate);
 
+    // Lightweight one-time update check on native desktop / Android when online (never blocks offline launch)
+    let updateCheckTimer: ReturnType<typeof setTimeout> | null = null;
+    if ((platform.isDesktopApp || (platform.isMobileApp && platform.os === 'android')) && navigator.onLine) {
+      updateCheckTimer = setTimeout(() => {
+        adapter.updates
+          .checkForUpdates()
+          .then((res) => {
+            if (res.status === 'available' && res.latestVersion) {
+              setNativeUpdateVersion(res.latestVersion);
+            }
+          })
+          .catch(() => {});
+      }, 2500);
+    }
+
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         const hasDialog = Boolean(document.querySelector('[role="dialog"][aria-modal="true"]'));
@@ -160,6 +176,7 @@ export default function App() {
     window.addEventListener('keydown', handleGlobalKeyDown);
 
     return () => {
+      if (updateCheckTimer) clearTimeout(updateCheckTimer);
       window.removeEventListener('online', syncNet);
       window.removeEventListener('offline', syncNet);
       window.removeEventListener('pv:pwa-update-available', handlePwaUpdate);
@@ -445,6 +462,30 @@ export default function App() {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] lg:pt-0 lg:pb-0">
         <Navbar />
+        {nativeUpdateVersion && activeTab !== 'game_play' && !pwaUpdateAction && (
+          <div className="bg-[#1C2D3B] text-[#F5F7F8] px-4 py-2 text-xs font-semibold flex items-center justify-between gap-3 border-b border-[#36515F]">
+            <span>PuzzleVerse v{nativeUpdateVersion} is available. Open Settings to verify and download.</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setNativeUpdateVersion(null);
+                  setActiveTab('settings');
+                }}
+                className="px-2.5 py-1 rounded bg-[#38C6BA] text-[#142331] font-bold hover:bg-[#5CD4C9]"
+              >
+                Update Settings
+              </button>
+              <button
+                type="button"
+                onClick={() => setNativeUpdateVersion(null)}
+                className="px-2 py-1 rounded bg-[#233D4A] hover:bg-[#2C4654]"
+              >
+                Later
+              </button>
+            </div>
+          </div>
+        )}
         {pwaUpdateAction && activeTab !== 'game_play' && (
           <div className="bg-[#087F8C] text-white px-4 py-2 text-xs font-semibold flex items-center justify-between gap-3 border-b border-[#38C6BA]">
             <span>A newer version of PuzzleVerse Web App is cached and ready.</span>

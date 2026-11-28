@@ -5,10 +5,10 @@ import { PageHeader, Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import {
   DesktopAppInfo,
-  DesktopUpdateCheckResult,
   DesktopUpdateProgress,
 } from '../types/desktop';
 import {
+  UpdateStatusPayload,
   getPlatformAdapter,
   subscribePwaUpdate,
 } from '../platform/adapter';
@@ -77,9 +77,11 @@ export const SettingsPage: React.FC = () => {
   const [windowDims, setWindowDims] = useState<{ width: number; height: number } | null>(null);
 
   const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'up-to-date' | 'available' | 'downloading' | 'downloaded' | 'error'>('idle');
-  const [updateInfo, setUpdateInfo] = useState<DesktopUpdateCheckResult | null>(null);
+  const [updateInfo, setUpdateInfo] = useState<UpdateStatusPayload | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<DesktopUpdateProgress | null>(null);
   const [downloadedPath, setDownloadedPath] = useState<string | null>(null);
+  const [downloadedSha256, setDownloadedSha256] = useState<string | null>(null);
+  const [updateApproved, setUpdateApproved] = useState(false);
   const [updateMsg, setUpdateMsg] = useState<string | null>(null);
   const [remindedLater, setRemindedLater] = useState(false);
 
@@ -140,70 +142,58 @@ export const SettingsPage: React.FC = () => {
 
   const handleCheckUpdates = async () => {
     setRemindedLater(false);
+    setUpdateApproved(false);
     setUpdateMsg(null);
-    if (!isDesktop || !window.puzzleverseDesktop) {
-      setUpdateState('checking');
-      try {
-        const res = await fetch(`https://api.github.com/repos/jnsidhant30-creator/Puzzle/releases/latest`);
-        if (res.status === 404) {
-          setUpdateState('up-to-date');
-          setUpdateMsg(`Latest published version is v${DESKTOP_RELEASE_META.version}.`);
-          return;
-        }
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        const tag = String(json.tag_name || DESKTOP_RELEASE_META.version).replace(/^v/i, '');
-        setUpdateInfo({
-          status: tag === DESKTOP_RELEASE_META.version ? 'up-to-date' : 'available',
-          currentVersion: DESKTOP_RELEASE_META.version,
-          latestVersion: tag,
-          signed: false,
-          downloadPageUrl: '/download',
-          releaseUrl: json.html_url,
-          releaseNotes: json.body,
-        });
-        setUpdateState(tag === DESKTOP_RELEASE_META.version ? 'up-to-date' : 'available');
-      } catch (err) {
-        setUpdateState('error');
-        setUpdateMsg(err instanceof Error ? err.message : 'Unable to reach GitHub Releases.');
-      }
-      return;
-    }
-
     setUpdateState('checking');
-    const result = await window.puzzleverseDesktop.checkForUpdates();
-    setUpdateInfo(result);
-    if (result.status === 'available') {
-      setUpdateState('available');
-      setUpdateMsg(`Version v${result.latestVersion} is available.`);
-    } else if (result.status === 'up-to-date') {
-      setUpdateState('up-to-date');
-      setUpdateMsg(result.message || `You are running the latest version (v${result.currentVersion}).`);
-    } else {
+    try {
+      const result = await getPlatformAdapter().updates.checkForUpdates();
+      setUpdateInfo({
+        ...result,
+        releaseUrl: result.releaseUrl || DESKTOP_RELEASE_META.releasePageUrl,
+      });
+      if (result.status === 'available') {
+        setUpdateState('available');
+        setUpdateMsg(result.message || `Version v${result.latestVersion} is available.`);
+      } else if (result.status === 'up-to-date') {
+        setUpdateState('up-to-date');
+        setUpdateMsg(result.message || `You are running the latest version (v${result.currentVersion}).`);
+      } else {
+        setUpdateState('error');
+        setUpdateMsg(result.error || 'Update check failed. Check your internet connection.');
+      }
+    } catch (err) {
       setUpdateState('error');
-      setUpdateMsg(result.error || 'Update check failed. Check your internet connection.');
+      setUpdateMsg(err instanceof Error ? err.message : 'Unable to check updates cleanly.');
     }
   };
 
   const handleDownloadUpdate = async () => {
-    if (!window.puzzleverseDesktop || !updateInfo) return;
+    if (!window.puzzleverseDesktop || !updateInfo || updateInfo.status === 'unsupported') return;
     setUpdateState('downloading');
+    setUpdateApproved(false);
+    setDownloadedSha256(null);
     setDownloadProgress({ percent: 0, transferred: 0, total: updateInfo.fileSize || 0 });
-    const res = await window.puzzleverseDesktop.downloadUpdate(updateInfo);
+    const res = await window.puzzleverseDesktop.downloadUpdate({
+      ...updateInfo,
+      status: 'available',
+    });
     if (res.status === 'downloaded' && res.filePath) {
       setDownloadedPath(res.filePath);
+      setDownloadedSha256(res.sha256 || updateInfo.expectedSha256 || null);
       setUpdateState('downloaded');
       setUpdateMsg(
-        `Downloaded and verified (${res.sha256?.slice(0, 12)}...). Note: installer is unsigned; Windows SmartScreen may ask before running.`
+        appInfo?.isPortable || updateInfo.isPortable
+          ? `Portable binary verified (${(res.sha256 || '').slice(0, 12)}...). Replace or launch manually from your Downloads folder.`
+          : `Installer verified (${(res.sha256 || '').slice(0, 12)}...). Confirm installation below when ready.`
       );
     } else {
       setUpdateState('error');
-      setUpdateMsg(res.error || 'Download failed.');
+      setUpdateMsg(res.error || 'Download or integrity verification failed. Your existing installation was preserved.');
     }
   };
 
   const handleRestartToInstall = async () => {
-    if (!window.puzzleverseDesktop || !downloadedPath) return;
+    if (!window.puzzleverseDesktop || !downloadedPath || !updateApproved) return;
     const res = await window.puzzleverseDesktop.installUpdateAndRestart(downloadedPath);
     if (!res.ok) {
       setUpdateMsg(
@@ -286,14 +276,18 @@ export const SettingsPage: React.FC = () => {
             <div>
               <p className="text-xs text-[#98AAB8] font-semibold">Application Version &amp; Runtime</p>
               <p className="text-sm font-bold text-[#F5F7F8] font-tabular">
-                PuzzleVerse ({platformInfo.runtimeLabel}) v{currentVersion} · {platformInfo.osLabel} ({platformInfo.archLabel})
+                PuzzleVerse ({platformInfo.runtimeLabel}{appInfo?.isPortable ? ' · Portable' : ''}) v{currentVersion} · {platformInfo.osLabel} ({platformInfo.archLabel})
               </p>
               <p className="text-[11px] text-[#B4C3CE] mt-0.5">
                 {isDesktop
-                  ? 'Desktop updates verify SHA-256/SHA-512 against GitHub Releases (unsigned installer).'
-                  : platformInfo.isCapacitor
-                  ? 'Mobile app powered by Capacitor WebView + shared PuzzleVerse engine.'
-                  : 'Web & ChromeOS PWA updates precache via Service Worker when redeployed.'}
+                  ? appInfo?.isPortable
+                    ? 'Portable updates download & verify SHA-256 for manual replacement without automatic installation.'
+                    : 'Desktop updates verify SHA-256/SHA-512 against GitHub Releases and require manual user approval (unsigned installer).'
+                  : platformInfo.isCapacitor && platformInfo.os === 'android'
+                  ? 'Android APK updates verify version & release checksum and open system package installation confirmation.'
+                  : platformInfo.isCapacitor && platformInfo.os === 'ios'
+                  ? 'iOS updates use authorized Apple App Store / TestFlight distribution.'
+                  : 'Web & ChromeOS PWA updates precache via Service Worker without interrupting active games.'}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -347,6 +341,14 @@ export const SettingsPage: React.FC = () => {
                 </span>
               </div>
               {updateMsg && <p className="text-[#B4C3CE]">{updateMsg}</p>}
+              {updateInfo?.signingNotice && (updateState === 'available' || updateState === 'up-to-date') && (
+                <p className="text-[11px] text-[#98AAB8]">{updateInfo.signingNotice}</p>
+              )}
+              {updateInfo?.expectedSha256 && updateState === 'available' && (
+                <p className="text-[11px] font-mono text-[#93D1F2] break-all">
+                  Expected SHA-256: {updateInfo.expectedSha256}
+                </p>
+              )}
 
               {updateState === 'downloading' && downloadProgress && (
                 <div className="space-y-1">
@@ -362,32 +364,93 @@ export const SettingsPage: React.FC = () => {
                 </div>
               )}
 
+              {updateState === 'downloaded' && (
+                <div className="space-y-2 p-3 rounded-lg bg-[#142331] border border-[#36515F]">
+                  {downloadedSha256 && (
+                    <p className="text-[11px] font-mono text-[#A8E5D5] break-all">
+                      Verified SHA-256: {downloadedSha256}
+                    </p>
+                  )}
+                  <label className="inline-flex items-start gap-2 text-[11px] text-[#F5F7F8] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={updateApproved}
+                      onChange={(e) => setUpdateApproved(e.target.checked)}
+                      className="mt-0.5 rounded border-[#36515F]"
+                    />
+                    <span>
+                      I confirm launching this verified{' '}
+                      {appInfo?.isPortable || updateInfo?.isPortable ? 'portable update package' : 'unsigned update installer'} (v{updateInfo?.latestVersion}).
+                    </span>
+                  </label>
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-2">
                 {updateState === 'available' && isDesktop && updateInfo?.downloadUrl && (
                   <Button variant="accent" size="sm" onClick={handleDownloadUpdate}>
                     <Download className="w-3.5 h-3.5" />
-                    <span>Download v{updateInfo.latestVersion}</span>
+                    <span>
+                      {appInfo?.isPortable || updateInfo.isPortable
+                        ? `Download Portable v${updateInfo.latestVersion}`
+                        : `Download v${updateInfo.latestVersion}`}
+                    </span>
                   </Button>
                 )}
-                {updateState === 'available' && updateInfo?.downloadPageUrl && (platformInfo.canShowDownloadOptions || isDesktop) && (
+                {updateState === 'available' &&
+                  !isDesktop &&
+                  platformInfo.isCapacitor &&
+                  platformInfo.os === 'android' &&
+                  updateInfo?.downloadUrl && (
+                    <Button
+                      variant="accent"
+                      size="sm"
+                      onClick={() => getPlatformAdapter().openExternal(updateInfo.downloadUrl!)}
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download Verified Update APK (v{updateInfo.latestVersion})</span>
+                    </Button>
+                  )}
+                {updateState === 'available' &&
+                  updateInfo?.releaseUrl &&
+                  (isDesktop || platformInfo.canShowDownloadOptions || platformInfo.isCapacitor) && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        getPlatformAdapter().openExternal(
+                          isDesktop || platformInfo.isCapacitor
+                            ? updateInfo.releaseUrl!
+                            : updateInfo.downloadPageUrl
+                        );
+                      }}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>View Release Notes</span>
+                    </Button>
+                  )}
+                {updateState === 'downloaded' && downloadedPath && (appInfo?.isPortable || updateInfo?.isPortable) && (
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => {
-                      if (window.puzzleverseDesktop?.isDesktop) {
-                        window.puzzleverseDesktop.openExternal(updateInfo.downloadPageUrl);
-                      } else if (platformInfo.canShowDownloadOptions) {
-                        setActiveTab('download');
-                      }
-                    }}
+                    onClick={() => window.puzzleverseDesktop?.revealDownloadedFile?.(downloadedPath)}
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    <span>{isDesktop ? 'View Release Notes' : 'Open Download Page'}</span>
+                    <span>Open Downloads Folder</span>
                   </Button>
                 )}
                 {updateState === 'downloaded' && (
-                  <Button variant="primary" size="sm" onClick={handleRestartToInstall}>
-                    <span>Restart &amp; Run Installer</span>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={!updateApproved}
+                    onClick={handleRestartToInstall}
+                  >
+                    <span>
+                      {appInfo?.isPortable || updateInfo?.isPortable
+                        ? 'Close & Launch Portable'
+                        : 'Approve, Restart & Install'}
+                    </span>
                   </Button>
                 )}
                 {(updateState === 'available' || updateState === 'downloaded') && (
