@@ -18,7 +18,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { PuzzleCoverArt } from '../components/PuzzleArt';
 import { formatCount } from '../utils/format';
-import { Capacitor } from '@capacitor/core';
+import { usePlatformInfo } from '../platform/detectPlatform';
 
 export const DashboardPage: React.FC = () => {
   const {
@@ -72,7 +72,7 @@ export const DashboardPage: React.FC = () => {
     PUZZLE_MODES[0];
 
   const firstName = user?.displayName?.split(' ')[0] || 'Player';
-  const isNativeContainer = Boolean(window.puzzleverseDesktop?.isDesktop) || Capacitor.isNativePlatform();
+  const platform = usePlatformInfo();
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -86,7 +86,7 @@ export const DashboardPage: React.FC = () => {
             Challenge Your Mind. Beat Your Best.
           </p>
         </div>
-        {!isNativeContainer && (
+        {platform.canShowDownloadOptions && (
           <Button variant="secondary" size="sm" onClick={() => setActiveTab('download')}>
             <Download className="w-3.5 h-3.5 text-[#38C6BA]" />
             <span>Get Desktop &amp; Mobile Apps</span>

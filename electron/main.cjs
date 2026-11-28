@@ -620,6 +620,8 @@ function registerIpcHandlers() {
     }
 
     const expectedState = crypto.randomBytes(24).toString('hex');
+    const pkceVerifier = crypto.randomBytes(32).toString('base64url');
+    const pkceChallenge = crypto.createHash('sha256').update(pkceVerifier).digest('base64url');
 
     return new Promise((resolve) => {
       let settled = false;
@@ -651,7 +653,10 @@ function registerIpcHandlers() {
           res.setHeader('Access-Control-Allow-Origin', origin);
           res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
           res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+          res.setHeader('Access-Control-Allow-Private-Network', 'true');
+          res.setHeader('Vary', 'Origin, Access-Control-Request-Private-Network');
         }
+        res.setHeader('Cache-Control', 'no-store');
 
         if (req.method === 'OPTIONS') {
           res.writeHead(allowedCors ? 204 : 403);
@@ -678,31 +683,60 @@ function registerIpcHandlers() {
         });
 
         req.on('end', () => {
+          const isFormPost = String(req.headers['content-type'] || '').includes('application/x-www-form-urlencoded');
+          const sendError = (status, msg) => {
+            if (isFormPost) {
+              res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8' });
+              res.end(`<!doctype html><html><body style="font-family:sans-serif;background:#142331;color:#F5F7F8;padding:40px;text-align:center;"><h2>Sign-in could not complete</h2><p>${msg}</p></body></html>`);
+            } else {
+              res.writeHead(status, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ ok: false, error: msg }));
+            }
+          };
+
           try {
-            const payload = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-            if (!payload || payload.state !== expectedState) {
-              res.writeHead(400, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ ok: false, error: 'Invalid OAuth state.' }));
+            const rawBody = Buffer.concat(chunks).toString('utf8');
+            let payload = {};
+            if (isFormPost) {
+              const form = new URLSearchParams(rawBody);
+              payload = {
+                state: form.get('state') || '',
+                cc: form.get('cc') || '',
+                idToken: form.get('idToken') || '',
+                accessToken: form.get('accessToken') || '',
+                error: form.get('error') || '',
+              };
+            } else {
+              payload = JSON.parse(rawBody);
+            }
+
+            if (!payload || payload.state !== expectedState || payload.cc !== pkceChallenge) {
+              sendError(400, 'Invalid OAuth state or PKCE challenge.');
               return;
             }
             if (!payload.idToken && !payload.accessToken) {
-              res.writeHead(400, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ ok: false, error: 'Missing OAuth credentials.' }));
+              sendError(400, 'Missing OAuth credentials.');
               clearTimeout(timeout);
               finish({ ok: false, error: payload.error || 'No OAuth token returned.' });
               return;
             }
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ ok: true }));
+
+            if (isFormPost) {
+              res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+              res.end('<!doctype html><html><body style="font-family:system-ui,sans-serif;background:#142331;color:#F5F7F8;padding:48px;text-align:center;"><h2>Signed in to PuzzleVerse Desktop</h2><p style="color:#A8E5D5;">Authentication complete. You can close this tab and return to PuzzleVerse.</p></body></html>');
+            } else {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ ok: true }));
+            }
+
             clearTimeout(timeout);
             finish({
               ok: true,
-              idToken: typeof payload.idToken === 'string' ? payload.idToken : undefined,
-              accessToken: typeof payload.accessToken === 'string' ? payload.accessToken : undefined,
+              idToken: typeof payload.idToken === 'string' && payload.idToken ? payload.idToken : undefined,
+              accessToken: typeof payload.accessToken === 'string' && payload.accessToken ? payload.accessToken : undefined,
             });
           } catch {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ ok: false, error: 'Malformed payload.' }));
+            sendError(400, 'Malformed payload.');
           }
         });
       });
@@ -720,7 +754,7 @@ function registerIpcHandlers() {
           finish({ ok: false, error: 'Loopback port unavailable.' });
           return;
         }
-        const authUrl = `${OFFICIAL_WEB_ORIGIN}/desktop-auth?port=${port}&state=${expectedState}`;
+        const authUrl = `${OFFICIAL_WEB_ORIGIN}/desktop-auth?port=${port}&state=${expectedState}&cc=${encodeURIComponent(pkceChallenge)}&ccm=S256`;
         shell.openExternal(authUrl).catch((err) => {
           clearTimeout(timeout);
           finish({ ok: false, error: err?.message || 'Could not open system browser.' });

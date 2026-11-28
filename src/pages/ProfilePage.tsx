@@ -25,8 +25,12 @@ import {
   VolumeX,
   Sparkles,
   ShieldCheck,
+  BookOpen,
+  Settings as SettingsIcon,
+  History,
 } from 'lucide-react';
-import { signOut, auth, fetchUserRecentGameSessions, fetchPersonalBestHistory } from '../services/firebase';
+import { fetchUserRecentGameSessions, fetchPersonalBestHistory } from '../services/firebase';
+import { signOutCurrentUser } from '../services/authService';
 import { GameSession, PersonalBestHistoryItem, PuzzleType, Difficulty } from '../types';
 import { calculateUserMasteryProfile } from '../data/masteryData';
 import { PlayerWallSection } from '../components/PlayerWallSection';
@@ -82,6 +86,24 @@ export const ProfilePage: React.FC = () => {
   );
 
   const unlockedTitles = getUnlockedTitles(user);
+
+  useEffect(() => {
+    const handleTabSwitch = (ev: Event) => {
+      const target = (ev as CustomEvent<string>).detail;
+      if (
+        target === 'customization' ||
+        target === 'preferences' ||
+        target === 'preview' ||
+        target === 'pbs' ||
+        target === 'history' ||
+        target === 'wall'
+      ) {
+        setActiveTab(target);
+      }
+    };
+    window.addEventListener('pv:profile-tab', handleTabSwitch);
+    return () => window.removeEventListener('pv:profile-tab', handleTabSwitch);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -161,8 +183,12 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
-    setUser(null, true);
+    if (isGuest) {
+      setUser(null, false);
+      return;
+    }
+    await signOutCurrentUser();
+    setUser(null, false);
   };
 
   const personalBests = user?.personalBests || {};
@@ -211,6 +237,61 @@ export const ProfilePage: React.FC = () => {
               </span>
             </div>
           </div>
+        </div>
+      </Card>
+
+      {/* Mobile & Quick Account Menu (Secondary Destinations) */}
+      <Card surface="primary" padding="md" className="space-y-3">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-[#98AAB8]">Player Menu</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
+          <button
+            type="button"
+            onClick={() => setActiveTabGlobal('achievements')}
+            className="p-2.5 rounded-lg bg-[#1C2D3B] hover:bg-[#2C4654] border border-[#36515F] text-[#F5F7F8] font-semibold flex items-center gap-2 transition-colors"
+          >
+            <Award className="w-3.5 h-3.5 text-[#38C6BA] shrink-0" />
+            <span>Achievements</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('history')}
+            className="p-2.5 rounded-lg bg-[#1C2D3B] hover:bg-[#2C4654] border border-[#36515F] text-[#F5F7F8] font-semibold flex items-center gap-2 transition-colors"
+          >
+            <History className="w-3.5 h-3.5 text-[#93D1F2] shrink-0" />
+            <span>Game History</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTabGlobal('dashboard')}
+            className="p-2.5 rounded-lg bg-[#1C2D3B] hover:bg-[#2C4654] border border-[#36515F] text-[#F5F7F8] font-semibold flex items-center gap-2 transition-colors"
+          >
+            <Flame className="w-3.5 h-3.5 text-[#A8E5D5] shrink-0" />
+            <span>Daily &amp; Home</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTabGlobal('settings')}
+            className="p-2.5 rounded-lg bg-[#1C2D3B] hover:bg-[#2C4654] border border-[#36515F] text-[#F5F7F8] font-semibold flex items-center gap-2 transition-colors"
+          >
+            <SettingsIcon className="w-3.5 h-3.5 text-[#93D1F2] shrink-0" />
+            <span>Settings</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTabGlobal('learn')}
+            className="p-2.5 rounded-lg bg-[#1C2D3B] hover:bg-[#2C4654] border border-[#36515F] text-[#F5F7F8] font-semibold flex items-center gap-2 transition-colors"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-[#38C6BA] shrink-0" />
+            <span>Help &amp; Guides</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="p-2.5 rounded-lg bg-[#1C2D3B] hover:bg-[#EF4444]/15 border border-[#36515F] text-[#FCA5A5] font-semibold flex items-center gap-2 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5 shrink-0" />
+            <span>{isGuest ? 'Exit Guest' : 'Log Out'}</span>
+          </button>
         </div>
       </Card>
 

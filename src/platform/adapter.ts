@@ -92,7 +92,7 @@ export interface PlatformAdapter {
   setActiveGameState(inActiveGame: boolean, gameName?: string): void;
 }
 
-const APP_FALLBACK_VERSION = '1.1.0';
+const APP_FALLBACK_VERSION = '1.2.0';
 const GITHUB_RELEASES_API = 'https://api.github.com/repos/jnsidhant30-creator/Puzzle/releases/latest';
 const DOWNLOAD_PAGE_URL = 'https://puzzleverse-e16e4.web.app/download';
 
@@ -695,69 +695,4 @@ export async function initPlatformBridge(options?: {
   return () => {
     cleanups.forEach((fn) => fn());
   };
-}
-
-export async function startMobileGoogleAuth(): Promise<{
-  ok: boolean;
-  idToken?: string;
-  accessToken?: string;
-  error?: string;
-}> {
-  if (!Capacitor.isNativePlatform()) {
-    return { ok: false, error: 'Not a native mobile container.' };
-  }
-  const bytes = new Uint8Array(24);
-  window.crypto.getRandomValues(bytes);
-  const expectedState = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-
-  return new Promise((resolve) => {
-    let settled = false;
-    let urlListener: { remove: () => Promise<void> } | null = null;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const cleanup = (result: { ok: boolean; idToken?: string; accessToken?: string; error?: string }) => {
-      if (settled) return;
-      settled = true;
-      if (timer) clearTimeout(timer);
-      urlListener?.remove().catch(() => {});
-      CapBrowser.close().catch(() => {});
-      resolve(result);
-    };
-
-    timer = setTimeout(() => {
-      cleanup({ ok: false, error: 'Google sign-in timed out after 3 minutes.' });
-    }, 180000);
-
-    CapApp.addListener('appUrlOpen', ({ url }) => {
-      if (!url || !url.startsWith('com.puzzleverse.app://auth')) return;
-      try {
-        const hashIdx = url.indexOf('#');
-        const qIdx = url.indexOf('?');
-        const paramStr = hashIdx >= 0 ? url.slice(hashIdx + 1) : qIdx >= 0 ? url.slice(qIdx + 1) : '';
-        const params = new URLSearchParams(paramStr);
-        if (params.get('state') !== expectedState) {
-          cleanup({ ok: false, error: 'Invalid OAuth state received.' });
-          return;
-        }
-        const idToken = params.get('idToken') || undefined;
-        const accessToken = params.get('accessToken') || undefined;
-        if (!idToken && !accessToken) {
-          cleanup({ ok: false, error: 'Missing OAuth credentials from callback.' });
-          return;
-        }
-        cleanup({ ok: true, idToken, accessToken });
-      } catch {
-        cleanup({ ok: false, error: 'Malformed mobile OAuth callback.' });
-      }
-    })
-      .then((handle) => {
-        urlListener = handle;
-        return CapBrowser.open({
-          url: `https://puzzleverse-e16e4.web.app/desktop-auth?mobile=1&state=${expectedState}`,
-        });
-      })
-      .catch((err) => {
-        cleanup({ ok: false, error: err instanceof Error ? err.message : 'Unable to open Chrome Custom Tab.' });
-      });
-  });
 }

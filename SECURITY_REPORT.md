@@ -1,65 +1,36 @@
-# PuzzleVerse Cross-Platform Security Audit Report (`v1.1.0`)
+# PuzzleVerse Cross-Platform Security Audit Report (`v1.2.0`)
 
 **Application:** PuzzleVerse  
-**Audit Date:** 2026-11-27  
-**Scope:** Electron Desktop (`electron/`), Capacitor Android/iOS (`android/`, `ios/`), Vite PWA (`vite.config.ts`, `dist/`), Shared Adapter Layer (`src/platform/`), and Firebase Integrations (`src/services/firebase.ts`, `firestore.rules`).
+**Audit Date:** 2026-11-28  
+**Scope:** Centralized Auth Adapters (`src/services/authService.ts`, `src/services/firebase.ts`), Electron Desktop (`electron/`), Capacitor Android/iOS (`android/`, `ios/`), Vite PWA (`vite.config.ts`, `dist/`), Shared Adapter Layer (`src/platform/`), and Firebase Integrations.
 
 ---
 
-## 1. Electron Desktop Security Controls ([main.cjs](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/main.cjs), [preload.cjs](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/preload.cjs))
+## 1. Cross-Platform Google OAuth & Session Hardening (`v1.2.0`)
 
-- **Renderer Process Isolation:**
-  - `nodeIntegration: false`
-  - `contextIsolation: true`
-  - `sandbox: true`
-  - `webSecurity: true`
-  - `webviewTag: false`, `allowRunningInsecureContent: false`
-  - `devTools: !app.isPackaged` (DevTools and DevTools shortcuts disabled in packaged builds)
-  - Automated runtime check on packaged EXEs confirmed `typeof window.require === 'undefined'` and `typeof window.process === 'undefined'`.
-- **Custom Scheme & Path Traversal Protection:**
-  - Static assets are served strictly from `resources/app.asar/dist` under privileged custom scheme `app://puzzleverse/`.
-  - Paths are canonically resolved (`path.resolve`) with explicit directory prefix enforcement (`targetPath.startsWith(distDir + path.sep)`) blocking directory-traversal requests (`403 Forbidden`).
-- **Strict Content Security Policy (CSP):**
-  - Applied dynamically via `session.defaultSession.webRequest.onHeadersReceived`:
-    - `default-src 'self' app://puzzleverse`
-    - `script-src 'self' app://puzzleverse` (zero `'unsafe-inline'` scripts in packaged mode)
-    - `frame-src 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`
-    - `connect-src` limited to official Firebase Auth/Firestore, Google Fonts, and GitHub Releases HTTPS endpoints.
-- **IPC Sender & URL Allowlist Enforcement:**
-  - `assertTrustedSender(event)` validates `event.senderFrame.url` starts with `app://puzzleverse/` (or `http://localhost:3000` in unpacked dev).
-  - `will-navigate` and `setWindowOpenHandler` deny untrusted origins; external links pass through `isApprovedExternalUrl` (`https://` allowlist covering Firebase Hosting, Netlify, GitHub repo, and Google Auth).
-- **Update Integrity & Active Game Guard:**
-  - `check-updates` & `download-update` restrict downloads strictly to `github.com`, `objects.githubusercontent.com`, and `release-assets.githubusercontent.com`, allow only verified installer extensions (`.exe`, `.dmg`, `.AppImage`, `.deb`, `.rpm`), verify SHA-256 and SHA-512 hashes before finalizing in `Downloads`, and block update restarts while a match is active.
-- **Google OAuth Loopback Security:**
-  - Desktop Google Sign-In opens `https://puzzleverse-e16e4.web.app/desktop-auth` in the user's system browser using a cryptographically random 24-byte `state` nonce and a short-lived `127.0.0.1` HTTP callback with exact CORS origin checks and payload size cap (`32 KB`).
+- **Atomic Firebase Auth Persistence ([firebase.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/services/firebase.ts)):**
+  - Uses `initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] })` at module boot rather than async post-init `setPersistence`, preventing login drops after Installed PWA reloads or redirects.
+- **Desktop Loopback OAuth Security ([main.cjs](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/main.cjs), [DesktopAuthPage.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/pages/DesktopAuthPage.tsx)):**
+  - Binds an ephemeral `127.0.0.1` loopback listener with a 24-byte random `state` nonce AND `S256` PKCE `codeChallenge` validation.
+  - Emits exact allowlisted `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods: POST, OPTIONS`, and `Access-Control-Allow-Private-Network: true` preflight headers for Chrome/Edge Private Network Access compliance, alongside a same-payload `application/x-www-form-urlencoded` `<form method="POST">` HTML fallback response and `32 KB` payload size limit.
+  - Never leaks raw OAuth tokens in redirect URLs or logs.
+- **Native Mobile Credential Manager ([authService.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/services/authService.ts)):**
+  - Replaced legacy `com.puzzleverse.app://auth` Chrome Custom Tab fragment redirects with `@capawesome/capacitor-google-sign-in@0.1.4` (`GetSignInWithGoogleOption` / Credential Manager) exchanging the Google ID token via `GoogleAuthProvider.credential(idToken)` against registered Firebase Android (`1:473636983543:android:3a790666582f4f808eb9f2` + release SHA-1/SHA-256) and iOS (`1:473636983543:ios:afce5358441e728d8eb9f2`) apps.
 
 ---
 
-## 2. Mobile Security Controls (Capacitor Android & iOS)
+## 2. Electron Desktop Security Controls ([main.cjs](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/main.cjs), [preload.cjs](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/preload.cjs))
 
-- **Network & WebView Scheme:**
-  - Android enforces `android:usesCleartextTraffic="false"` and `androidScheme: 'https'` ([capacitor.config.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/capacitor.config.ts), [AndroidManifest.xml](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/android/app/src/main/AndroidManifest.xml)).
-  - iOS uses `capacitor` scheme with `ITSAppUsesNonExemptEncryption = false` ([Info.plist](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/ios/App/App/Info.plist)).
-  - `allowNavigation` explicitly restricts in-app WebView navigation to official PuzzleVerse Hosting domains and Google auth domains.
-- **Minimum Permissions:**
-  - Android declares only `INTERNET`, `ACCESS_NETWORK_STATE`, and `VIBRATE` (no camera, microphone, contacts, coarse/fine location, or external storage permissions) and sets `android:allowBackup="false"`.
-- **Chrome Custom Tab Google OAuth & WebView Compliance:**
-  - Because Google OAuth rejects embedded mobile WebViews (`disallowed_useragent`), [AuthModal.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/components/AuthModal.tsx), [adapter.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/platform/adapter.ts), and [DesktopAuthPage.tsx](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/pages/DesktopAuthPage.tsx) detect native Capacitor Android and open a system Chrome Custom Tab (`@capacitor/browser` → `/desktop-auth?mobile=1`) with cryptographic `state` validation, returning cleanly to `com.puzzleverse.app://auth` (`Intent.ACTION_VIEW` in `AndroidManifest.xml`), alongside native Email/Password and Guest Practice.
-- **Signing Secret Hygiene:**
-  - [android/app/build.gradle](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/android/app/build.gradle) reads keystore paths and passwords solely from environment variables (`ANDROID_KEYSTORE_*`) or gitignored `android/keystore.properties`, and `.gitignore` excludes `*.keystore`, `*.jks`, `keystore.properties`, and `.env*`. The release keystore itself lives outside the repository (`C:\Users\jnsid\.puzzleverse-keys\puzzleverse-android-release.jks`).
+- **Renderer Isolation:** `nodeIntegration: false`, `contextIsolation: true`, `sandbox: true`, `webSecurity: true`, `webviewTag: false`, `allowRunningInsecureContent: false`, `devTools: !app.isPackaged`. Runtime tests on `v1.2.0` packaged executables verified `hasNodeRequire: false`, `hasNodeProcess: false`, `hasDesktopBridge: true`.
+- **Custom Scheme & Path Traversal Protection:** Static production assets load strictly from `resources/app.asar/dist` via `app://puzzleverse/` with canonical path enforcement blocking traversal.
+- **CSP & Navigation Controls:** Dynamic `onHeadersReceived` CSP (`script-src 'self' app://puzzleverse`, `frame-src 'none'`, `object-src 'none'`), IPC sender origin checks (`assertTrustedSender`), and allowlisted external HTTPS links (`isApprovedExternalUrl`).
+- **Update Integrity:** Downloads restricted to GitHub Releases domains with SHA-256/SHA-512 hash verification before saving.
 
 ---
 
-## 3. Firebase Backend, PWA & Offline Isolation
+## 3. Mobile, Installed PWA & Signing Hygiene
 
-- **Zero Server Credentials in Clients:** No Firebase Admin SDK credentials, service-account JSON files, private keys, or API signing secrets are bundled into `dist/`, `electron/`, `android/`, or `ios/`.
-- **Firestore Security & Leaderboard Integrity:**
-  - Existing [firestore.rules](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/firestore.rules) and [functions/](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/functions) remain unmodified.
-  - Offline Guest Practice stores data exclusively under local browser storage (`puzzleverse_guest_user`, `puzzleverse_offline_practice_v1`) and explicitly skips global `saveLeaderboardEntry` / `saveGameSession` cloud writes.
-- **PWA Scope Safety:** Service Worker precaching (`sw.js`) registers strictly on `http:` / `https:` web origins and never runs inside packaged Electron (`app://`) or native Capacitor WebViews.
-
----
-
-## 4. Transparent Unsigned Status Notice (OS Trust Mechanisms Respected)
-
-PuzzleVerse **never** disables, bypasses, or tampers with Windows SmartScreen, macOS Gatekeeper, Android Play Protect, or Apple iOS App Store code-signing requirements. Published desktop `v1.1.0` `.exe` binaries report `Status: NotSigned` (`Get-AuthenticodeSignature`), while the Android release APK & AAB are validly signed with the PuzzleVerse developer release keystore (`apksigner verify` v2 verified, cert SHA-256 `38ecc6bd...f7`; Play Console / Play App Signing remains pending until a Google Play Developer account is registered). macOS and iOS CI release signing remains optional until valid organization certificates are supplied.
+- **Android Manifest & Network Security:** Declares `android:allowBackup="false"`, `android:usesCleartextTraffic="false"`, and `androidScheme: 'https'`, verified via `aapt2`.
+- **Installed App Isolation (`detectPlatform.ts`, `App.tsx`):** Strictly hides all download/install promotions inside Electron, Capacitor, and Installed standalone PWA (`canShowDownloadOptions === false`) and redirects direct `/download` visits away from the download portal.
+- **Keystore Custody:** Developer Android release keystore lives strictly outside the repository at `C:\Users\jnsid\.puzzleverse-keys\puzzleverse-android-release.jks` with `android/keystore.properties` gitignored. Zero Admin SDK credentials or private keys exist anywhere in client code.
+- **Code Signing Transparency:** Windows desktop executables (`Setup` & `Portable` `x64`/`arm64`) remain unsigned (`NotSigned`); Android `.apk` and `.aab` are legitimately signed (`apksigner` v2 verified, Cert SHA-256 `38ecc6bd...f7`). OS security prompts (SmartScreen, Gatekeeper, Play Protect) are never bypassed or disabled.

@@ -195,8 +195,8 @@ async function runDesktopSuite(exePath, label, port = 9229) {
     })()`);
     await client.screenshot(path.join(ARTIFACT_SCREENSHOTS_DIR, `${label}-02-dashboard.png`));
 
-    // Test navigating every sidebar / feature route & Settings modal
-    const navTabs = ['Games', 'Daily Puzzle', 'Mastery', 'Achievements', 'Friends', 'Profile', 'Settings'];
+    // Test navigating every sidebar route, hiding download promotions, & Settings modal
+    const navTabs = ['All Games', 'Daily Puzzle', 'Challenge Run', 'Leaderboard', 'Achievements', 'Game History', 'Profile', 'Settings'];
     for (const navName of navTabs) {
       await client.eval(`(() => {
         const btn = Array.from(document.querySelectorAll('aside button, header button')).find(b => b.textContent?.trim() === ${JSON.stringify(navName)});
@@ -205,6 +205,10 @@ async function runDesktopSuite(exePath, label, port = 9229) {
       await sleep(350);
       results.navigationChecks[navName] = await client.eval(`document.body.innerText.length > 80`);
     }
+    results.noDownloadPromotionsInDesktop = await client.eval(`(() => {
+      const links = Array.from(document.querySelectorAll('a[href*="/download"], button')).filter(el => /open download page|get desktop|download for windows|download apk/i.test(el.textContent || ''));
+      return links.length === 0;
+    })()`);
 
     // Settings checks (on Settings page now): Update check + About + Privacy Policy + Terms + Bug report + Fullscreen toggle
     results.settingsChecks = await client.eval(`(async () => {
@@ -253,7 +257,7 @@ async function runDesktopSuite(exePath, label, port = 9229) {
 
     // Verify all 16 games load from Games Library cleanly
     await client.eval(`(() => {
-      const btn = Array.from(document.querySelectorAll('aside button')).find(b => b.textContent?.trim() === 'Games');
+      const btn = Array.from(document.querySelectorAll('aside button')).find(b => b.textContent?.trim() === 'All Games' || b.textContent?.trim() === 'Games');
       if (btn) btn.click();
     })()`);
     await sleep(450);
@@ -301,8 +305,23 @@ async function runDesktopSuite(exePath, label, port = 9229) {
         const back = Array.from(document.querySelectorAll('button')).find(b => b.textContent?.includes('Back to Games'));
         if (back) back.click();
       })()`);
+      await sleep(140);
+      const confirmLeaveClicked = await client.eval(`(() => {
+        const leave = Array.from(document.querySelectorAll('button')).find(b => b.textContent?.trim() === 'Leave Puzzle');
+        if (leave) {
+          leave.click();
+          return true;
+        }
+        return false;
+      })()`);
+      if (confirmLeaveClicked) results.exitConfirmWorked = true;
       await sleep(250);
     }
+
+    // Verify /download route is blocked / redirected inside desktop app
+    await client.eval(`window.location.replace('app://puzzleverse/download')`);
+    await sleep(900);
+    results.downloadRouteRedirected = await client.eval(`location.pathname !== '/download'`);
 
     // Collect console/exception events
     results.consoleErrors = client.events

@@ -2,6 +2,21 @@
 
 All notable releases of **PuzzleVerse** (Web, PWA, Desktop, and Mobile) are documented in this file.
 
+## [1.2.0] - 2026-11-28 — Cross-Platform Auth Fix, Native Gaming UI & App Isolation
+
+### Fixed
+- **Cross-Platform Google Sign-In (`src/services/authService.ts`, `src/services/firebase.ts`):**
+  - **Android & iOS:** Registered Firebase Android (`1:473636983543:android:3a790666582f4f808eb9f2`, release SHA-1 & SHA-256) and iOS (`1:473636983543:ios:afce5358441e728d8eb9f2`) apps, added `google-services.json` and `GoogleService-Info.plist`, and integrated `@capawesome/capacitor-google-sign-in@0.1.4` for native Credential Manager / Google Identity authentication instead of Chrome Custom Tab URL fragments.
+  - **Electron Desktop (`electron/main.cjs`, `src/pages/DesktopAuthPage.tsx`):** Fixed Chrome/Edge Private Network Access (PNA) blocking on localhost OAuth callbacks by adding `Access-Control-Allow-Private-Network: true` on `OPTIONS`/`POST`, added `S256` PKCE challenge binding, hidden `<form method="POST">` HTML callback fallback, and popup-blocked `signInWithRedirect` fallback.
+  - **Installed PWA (`src/App.tsx`, `src/services/firebase.ts`):** Switched to synchronous atomic `initializeAuth` (`indexedDBLocalPersistence`, `browserLocalPersistence`) and removed the premature 2-second redirect timeout race on startup.
+- **Installed App Download Hiding (`src/platform/detectPlatform.ts`):** Extended strict hiding of all download buttons, banners, sidebar/bottom-nav links, search quick-actions, and `/download` route access to **all** installed runtimes (`Electron`, `Capacitor`, and `Installed standalone PWA`).
+
+### Improved
+- **Native Gaming Interface:** Added branded splash overlay during initial auth hydration, dedicated desktop gaming sidebar (`All Games`, `Daily Puzzle`, `Challenge Run`, `Leaderboard`, `Achievements`, `Game History`, `Profile`, `Settings`), 5-tab mobile `BottomNavigation` (hidden during active gameplay), compact mobile header (`Lv N · #Rank` chip), and active match exit confirmation (`Leave Active Puzzle?` / `Exit to Games`).
+- **Release Artifacts (`v1.2.0`):** Published updated Windows `x64`/`ARM64` Setup & Portable EXEs (`latest.yml`, `SHA256SUMS.txt`), signed Universal Android APK (`PuzzleVerse-v1.2.0-Android.apk`, `versionCode 120`, `4,911,848` B) & Play AAB (`PuzzleVerse-v1.2.0-Android.aab`, `4,585,670` B) on GitHub Release `v1.2.0`, and deployed web + PWA updates to Firebase Hosting and Netlify.
+
+---
+
 ## [1.1.0] - 2026-11-27 — Universal Cross-Platform Edition
 
 ### Added

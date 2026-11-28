@@ -3,7 +3,7 @@ import { BrandLogo } from './BrandLogo';
 import { AuthModal } from './AuthModal';
 import { PuzzleCoverArt } from './PuzzleArt';
 import { Download } from 'lucide-react';
-import { Capacitor } from '@capacitor/core';
+import { usePlatformInfo } from '../platform/detectPlatform';
 
 const PREVIEW_MODES = [
   { type: 'laser_mirror' as const, title: 'Laser Mirror', tag: 'Spatial' },
@@ -17,15 +17,16 @@ interface AuthLayoutProps {
 }
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ onOpenDownload }) => {
-  const isNativeContainer = Boolean(window.puzzleverseDesktop?.isDesktop) || Capacitor.isNativePlatform();
+  const platform = usePlatformInfo();
+  const showDownloads = platform.canShowDownloadOptions;
 
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row bg-[#142331] text-[#F5F7F8] font-sans selection:bg-[#38C6BA]/30 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row bg-[#142331] text-[#F5F7F8] font-sans selection:bg-[#38C6BA]/30 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-y-auto">
       {/* Left Column: Puzzle Game Visual Showcase (Desktop) */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#1C2D3B] border-r border-[#36515F] p-10 xl:p-14 flex-col justify-between">
         <div className="flex items-center justify-between">
           <BrandLogo size={34} />
-          {!isNativeContainer && onOpenDownload && (
+          {showDownloads && onOpenDownload && (
             <button
               type="button"
               onClick={onOpenDownload}
@@ -74,10 +75,10 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ onOpenDownload }) => {
       </div>
 
       {/* Right Column: Clean Sign-In Card */}
-      <div className="flex-1 flex flex-col justify-center items-center p-4 sm:p-8 lg:p-12">
+      <div className="flex-1 flex flex-col justify-center items-center p-4 sm:p-8 lg:p-12 my-auto">
         <div className="lg:hidden mb-6 flex items-center justify-between w-full max-w-[420px]">
           <BrandLogo size={32} />
-          {!isNativeContainer && onOpenDownload && (
+          {showDownloads && onOpenDownload && (
             <button
               type="button"
               onClick={onOpenDownload}

@@ -22,15 +22,16 @@ import {
 } from 'lucide-react';
 import {
   auth,
+  fetchPlayerGlobalRank,
   fetchUserNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from '../services/firebase';
-import { signOut } from 'firebase/auth';
+import { signOutCurrentUser } from '../services/authService';
 import { NotificationItem } from '../types';
 import { PUZZLE_MODES } from '../data/puzzles';
 import { BrandLogo } from './BrandLogo';
-import { Capacitor } from '@capacitor/core';
+import { usePlatformInfo } from '../platform/detectPlatform';
 
 const ROUTE_TITLES: Record<string, string> = {
   dashboard: 'Home',
@@ -93,6 +94,8 @@ export const Navbar: React.FC = () => {
     playGame,
   } = useStore();
 
+  const platform = usePlatformInfo();
+  const [globalRank, setGlobalRank] = useState<number | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -124,8 +127,15 @@ export const Navbar: React.FC = () => {
   useEffect(() => {
     if (user && !user.uid.startsWith('guest_')) {
       loadNotifications();
+      if (isOnline && !isGuest) {
+        fetchPlayerGlobalRank(user.uid)
+          .then((res) => setGlobalRank(res.rank))
+          .catch(() => {});
+      }
+    } else {
+      setGlobalRank(null);
     }
-  }, [user]);
+  }, [user, isOnline, isGuest]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -214,7 +224,11 @@ export const Navbar: React.FC = () => {
     : [];
 
   const matchedRoutes = trimmedQuery
-    ? QUICK_ROUTES.filter((r) => r.label.toLowerCase().includes(trimmedQuery)).slice(0, 4)
+    ? QUICK_ROUTES.filter(
+        (r) =>
+          (platform.canShowDownloadOptions || r.id !== 'download') &&
+          r.label.toLowerCase().includes(trimmedQuery)
+      ).slice(0, 4)
     : [];
 
   const photoUrl =
@@ -290,7 +304,7 @@ export const Navbar: React.FC = () => {
           </button>
         )}
 
-        {!window.puzzleverseDesktop?.isDesktop && !Capacitor.isNativePlatform() && activeTab !== 'download' && (
+        {platform.canShowDownloadOptions && activeTab !== 'download' && (
           <button
             type="button"
             onClick={() => setActiveTab('download')}
@@ -299,6 +313,18 @@ export const Navbar: React.FC = () => {
             <Download className="w-3.5 h-3.5" />
             <span>Get Apps</span>
           </button>
+        )}
+
+        {user && (
+          <div className="inline-flex items-center gap-1.5 h-7 px-2 rounded-lg bg-[#142331] border border-[#36515F] text-[11px] font-bold font-tabular shrink-0">
+            <span className="text-[#38C6BA]">Lv {user.level || 1}</span>
+            {globalRank !== null && !isGuest && (
+              <>
+                <span className="text-[#4A6A7B]">·</span>
+                <span className="text-[#A8E5D5]">#{globalRank}</span>
+              </>
+            )}
+          </div>
         )}
 
         <button
@@ -568,7 +594,7 @@ export const Navbar: React.FC = () => {
                     if (isGuest) {
                       setUser(null, false);
                     } else {
-                      await signOut(auth);
+                      await signOutCurrentUser();
                     }
                   }}
                   className="w-full px-4 py-2 text-left text-xs font-semibold text-[#FCA5A5] hover:bg-[#EF4444]/15 transition-colors flex items-center gap-2.5"

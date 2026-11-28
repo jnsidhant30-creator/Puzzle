@@ -14,7 +14,7 @@ import {
 } from '../platform/adapter';
 import {
   DetectedPlatformInfo,
-  detectPlatformSync,
+  usePlatformInfo,
   subscribePwaInstallPrompt,
 } from '../platform/detectPlatform';
 import {
@@ -66,7 +66,7 @@ export const SettingsPage: React.FC = () => {
   } = useStore();
 
   const isDesktop = Boolean(window.puzzleverseDesktop?.isDesktop);
-  const [platformInfo, setPlatformInfo] = useState<DetectedPlatformInfo>(() => detectPlatformSync());
+  const platformInfo = usePlatformInfo();
   const [pwaInstallReady, setPwaInstallReady] = useState(false);
   const [pwaUpdateReady, setPwaUpdateReady] = useState(false);
   const [shareMsg, setShareMsg] = useState<string | null>(null);
@@ -107,8 +107,6 @@ export const SettingsPage: React.FC = () => {
 
   useEffect(() => {
     computeStorageSummary();
-    const adapter = getPlatformAdapter();
-    adapter.getPlatformInfo().then(setPlatformInfo).catch(() => {});
     const unsubPwaInstall = subscribePwaInstallPrompt(setPwaInstallReady);
     const unsubPwaUpdate = subscribePwaUpdate(setPwaUpdateReady);
 
@@ -236,7 +234,7 @@ export const SettingsPage: React.FC = () => {
       subject: bugSubject.trim(),
       details: bugDetails.trim(),
       version: appInfo?.version || DESKTOP_RELEASE_META.version,
-      platform: isDesktop ? 'Windows Desktop' : 'Web Browser',
+      platform: platformInfo.runtimeLabel,
       createdAt: new Date().toISOString(),
     });
     localStorage.setItem('puzzleverse_local_reports', JSON.stringify(reports.slice(0, 10)));
@@ -317,7 +315,7 @@ export const SettingsPage: React.FC = () => {
                   <span>Reload PWA Update</span>
                 </Button>
               )}
-              {pwaInstallReady && !isDesktop && !platformInfo.isCapacitor && (
+              {pwaInstallReady && platformInfo.canShowInstallPrompt && (
                 <Button
                   variant="secondary"
                   size="sm"
@@ -327,7 +325,7 @@ export const SettingsPage: React.FC = () => {
                   <span>Install Web App</span>
                 </Button>
               )}
-              {!isDesktop && !platformInfo.isCapacitor && (
+              {platformInfo.canShowDownloadOptions && (
                 <Button variant="outline" size="sm" onClick={() => setActiveTab('download')}>
                   <Download className="w-3.5 h-3.5" />
                   <span>All Platforms</span>
@@ -371,20 +369,20 @@ export const SettingsPage: React.FC = () => {
                     <span>Download v{updateInfo.latestVersion}</span>
                   </Button>
                 )}
-                {updateState === 'available' && updateInfo?.downloadPageUrl && (
+                {updateState === 'available' && updateInfo?.downloadPageUrl && (platformInfo.canShowDownloadOptions || isDesktop) && (
                   <Button
                     variant="secondary"
                     size="sm"
                     onClick={() => {
                       if (window.puzzleverseDesktop?.isDesktop) {
                         window.puzzleverseDesktop.openExternal(updateInfo.downloadPageUrl);
-                      } else {
+                      } else if (platformInfo.canShowDownloadOptions) {
                         setActiveTab('download');
                       }
                     }}
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    <span>Open Download Page</span>
+                    <span>{isDesktop ? 'View Release Notes' : 'Open Download Page'}</span>
                   </Button>
                 )}
                 {updateState === 'downloaded' && (

@@ -3,11 +3,13 @@ import { useStore } from './store/useStore';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { onAuthStateChanged, auth, syncUserProfile, getChallenge2ById } from './services/firebase';
-import { getRedirectResult } from 'firebase/auth';
+import { completePendingRedirectSignIn, hasPendingRedirectSignIn } from './services/authService';
 import { ToastContainer } from './components/ToastContainer';
 import { BottomNavigation } from './components/BottomNavigation';
+import { BrandLogo } from './components/BrandLogo';
 import { PUZZLE_MODES } from './data/puzzles';
 import { getPlatformAdapter, initPlatformBridge } from './platform/adapter';
+import { usePlatformInfo } from './platform/detectPlatform';
 
 const AuthLayout = lazy(() => import('./components/AuthLayout').then((m) => ({ default: m.AuthLayout })));
 const DownloadPage = lazy(() => import('./pages/DownloadPage').then((m) => ({ default: m.DownloadPage })));
@@ -90,7 +92,12 @@ export default function App() {
     setActiveTab,
   } = useStore();
   const [targetShowcaseId, setTargetShowcaseId] = React.useState<string | undefined>(undefined);
-  const [publicRoute, setPublicRoute] = React.useState<'download' | 'desktop_auth' | null>(getInitialPathRoute);
+  const platform = usePlatformInfo();
+  const [publicRoute, setPublicRoute] = React.useState<'download' | 'desktop_auth' | null>(() => {
+    const initial = getInitialPathRoute();
+    if (initial === 'download' && !platform.canShowDownloadOptions) return null;
+    return initial;
+  });
   const [pwaUpdateAction, setPwaUpdateAction] = React.useState<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
@@ -174,7 +181,6 @@ export default function App() {
   useEffect(() => {
     let isMounted = true;
     let unsubscribe = () => {};
-    const isDesktop = Boolean(window.puzzleverseDesktop?.isDesktop);
 
     const initAuth = async () => {
       let isSyncing = false;
@@ -184,29 +190,16 @@ export default function App() {
         }
       }, 1200);
 
-      if (!isDesktop && navigator.onLine) {
-        try {
-          const redirectResult = await Promise.race([
-            getRedirectResult(auth),
-            new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),
-          ]);
-          sessionStorage.removeItem('pv_auth_redirect_in_progress');
-
-          if (redirectResult?.user && isMounted) {
-            isSyncing = true;
-            const profile = await syncUserProfile(redirectResult.user);
-            if (isMounted) {
-              setUser(profile, false);
-              setAuthLoading(false);
-            }
-            isSyncing = false;
-          }
-        } catch (err: any) {
-          sessionStorage.removeItem('pv_auth_redirect_in_progress');
-          console.error('Google Auth Redirect Error:', err);
+      try {
+        const redirectProfile = await completePendingRedirectSignIn();
+        if (redirectProfile && isMounted) {
+          isSyncing = true;
+          setUser(redirectProfile, false);
+          setAuthLoading(false);
+          isSyncing = false;
         }
-      } else {
-        sessionStorage.removeItem('pv_auth_redirect_in_progress');
+      } catch (err) {
+        console.error('Google Auth Redirect Error:', err);
       }
 
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -221,8 +214,7 @@ export default function App() {
             }
           } else {
             const state = useStore.getState();
-            const redirectPending = sessionStorage.getItem('pv_auth_redirect_in_progress') === '1';
-            if (!redirectPending && !state.isGuest && isMounted) {
+            if (!hasPendingRedirectSignIn() && !state.isGuest && isMounted) {
               setUser(null, false);
             }
           }
@@ -230,8 +222,7 @@ export default function App() {
           console.error('Auth state change error:', err);
           if (isMounted && !useStore.getState().isGuest) setUser(null, false);
         } finally {
-          const redirectPending = sessionStorage.getItem('pv_auth_redirect_in_progress') === '1';
-          if (!redirectPending && isMounted) {
+          if (!hasPendingRedirectSignIn() && isMounted) {
             setAuthLoading(false);
           }
         }
@@ -244,7 +235,10 @@ export default function App() {
 
     const p = window.location.pathname.toLowerCase();
     if (p === '/settings') setActiveTab('settings');
-    else if (p === '/download') setActiveTab('download');
+    else if (p === '/download') {
+      if (platform.canShowDownloadOptions) setActiveTab('download');
+      else setActiveTab('dashboard');
+    }
     else if (p === '/games') setActiveTab('games');
     else if (p === '/daily') setActiveTab('daily');
     else if (p === '/leaderboard') setActiveTab('leaderboard');
@@ -287,19 +281,32 @@ export default function App() {
       isMounted = false;
       unsubscribe();
     };
-  }, [theme]);
+  }, []);
+
+  // Strictly block /download routes when running inside any installed app (Electron, Capacitor, or Installed PWA)
+  useEffect(() => {
+    if (platform.canShowDownloadOptions) return;
+    if (publicRoute === 'download') {
+      setPublicRoute(null);
+      window.history.replaceState(null, '', user ? '/dashboard' : '/login');
+    }
+    if (activeTab === 'download') {
+      setActiveTab('dashboard');
+      window.history.replaceState(null, '', '/dashboard');
+    }
+  }, [platform.canShowDownloadOptions, publicRoute, activeTab, user, setActiveTab]);
 
   useEffect(() => {
     if (authLoading) return;
     const path = window.location.pathname;
-    if (publicRoute === 'download' || publicRoute === 'desktop_auth') {
+    if (publicRoute === 'desktop_auth' || (publicRoute === 'download' && platform.canShowDownloadOptions)) {
       return;
     }
     if (!user) {
-      if (path !== '/login' && path !== '/register' && path !== '/download' && path !== '/desktop-auth') {
+      if (path !== '/login' && path !== '/register' && path !== '/desktop-auth' && !(path === '/download' && platform.canShowDownloadOptions)) {
         window.history.replaceState(null, '', '/login');
       }
-    } else if (activeTab === 'download') {
+    } else if (activeTab === 'download' && platform.canShowDownloadOptions) {
       if (path !== '/download') window.history.replaceState(null, '', '/download');
     } else if (activeTab === 'settings') {
       if (path !== '/settings') window.history.replaceState(null, '', '/settings');
@@ -308,7 +315,7 @@ export default function App() {
         window.history.replaceState(null, '', '/dashboard');
       }
     }
-  }, [user, authLoading, publicRoute, activeTab]);
+  }, [user, authLoading, publicRoute, activeTab, platform.canShowDownloadOptions]);
 
   if (publicRoute === 'desktop_auth') {
     return (
@@ -318,7 +325,7 @@ export default function App() {
     );
   }
 
-  if (publicRoute === 'download' && !user) {
+  if (publicRoute === 'download' && !user && platform.canShowDownloadOptions) {
     return (
       <Suspense fallback={<div className="min-h-screen bg-[#142331]" />}>
         <DownloadPage
@@ -383,7 +390,11 @@ export default function App() {
       case 'settings':
         return <SettingsPage />;
       case 'download':
-        return <DownloadPage embedded onPlayWeb={() => setActiveTab('dashboard')} />;
+        return platform.canShowDownloadOptions ? (
+          <DownloadPage embedded onPlayWeb={() => setActiveTab('dashboard')} />
+        ) : (
+          <DashboardPage />
+        );
       case 'events':
         return <EventsPage />;
       case 'event_detail':
@@ -397,8 +408,17 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#142331] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#36515F] border-t-[#38C6BA]" />
+      <div className="min-h-[100dvh] bg-[#142331] text-[#F5F7F8] flex flex-col items-center justify-center p-6 select-none">
+        <div className="flex flex-col items-center gap-4 text-center max-w-xs w-full">
+          <BrandLogo size={44} />
+          <p className="text-xs font-semibold text-[#A8E5D5]">Challenge Your Mind. Beat Your Best.</p>
+          <div className="w-48 h-1.5 rounded-full bg-[#1C2D3B] border border-[#36515F] overflow-hidden">
+            <div className="w-1/2 h-full bg-[#38C6BA] rounded-full animate-pulse" />
+          </div>
+          <p className="text-[11px] text-[#98AAB8]">
+            {navigator.onLine ? 'Restoring player session...' : 'Loading offline puzzle library...'}
+          </p>
+        </div>
       </div>
     );
   }
@@ -407,10 +427,14 @@ export default function App() {
     return (
       <Suspense fallback={<div className="min-h-screen bg-[#142331]" />}>
         <AuthLayout
-          onOpenDownload={() => {
-            setPublicRoute('download');
-            window.history.replaceState(null, '', '/download');
-          }}
+          onOpenDownload={
+            platform.canShowDownloadOptions
+              ? () => {
+                  setPublicRoute('download');
+                  window.history.replaceState(null, '', '/download');
+                }
+              : undefined
+          }
         />
       </Suspense>
     );
@@ -442,7 +466,11 @@ export default function App() {
             </div>
           </div>
         )}
-        <main className="flex-1 pb-[88px] lg:pb-10 pt-5 px-4 sm:px-6 lg:px-8 relative w-full max-w-[1440px] mx-auto">
+        <main
+          className={`flex-1 relative w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 ${
+            activeTab === 'game_play' ? 'pb-4 pt-3 lg:pb-8 lg:pt-5' : 'pb-[88px] lg:pb-10 pt-5'
+          }`}
+        >
           <Suspense fallback={<PageLoader />}>{renderActiveTab()}</Suspense>
         </main>
       </div>

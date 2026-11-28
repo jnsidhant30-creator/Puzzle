@@ -1,8 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
-  getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, 
+  initializeAuth, getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, 
   signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, 
-  onAuthStateChanged, setPersistence, browserLocalPersistence, User as FirebaseUser
+  onAuthStateChanged, indexedDBLocalPersistence, browserLocalPersistence, User as FirebaseUser
 } from 'firebase/auth';
 import { 
   getFirestore, doc, getDoc, setDoc, updateDoc, collection, 
@@ -37,15 +37,21 @@ const getDynamicConfig = () => {
   return { ...firebaseConfig };
 };
 
+export const GOOGLE_WEB_CLIENT_ID = '473636983543-e094a8bra4gf92g6s0pl4hrnmito0f2q.apps.googleusercontent.com';
+
 const app = !getApps().length ? initializeApp(getDynamicConfig()) : getApp(); 
 export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
-export const auth = getAuth(app);
-if (typeof window !== 'undefined') {
-  setPersistence(auth, browserLocalPersistence).catch((err) => {
-    console.warn('Firebase setPersistence error:', err);
+let authInstance: ReturnType<typeof getAuth>;
+try {
+  authInstance = initializeAuth(app, {
+    persistence: [indexedDBLocalPersistence, browserLocalPersistence],
   });
+} catch {
+  authInstance = getAuth(app);
 }
-export const googleProvider = new GoogleAuthProvider(); 
+export const auth = authInstance;
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export enum OperationType { 
   CREATE = 'create', 

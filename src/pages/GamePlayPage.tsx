@@ -79,6 +79,7 @@ export const GamePlayPage: React.FC = () => {
   const [resetKey, setResetKey] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [didPause, setDidPause] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const stageWrapperRef = useRef<HTMLDivElement>(null);
 
   const isCompetitiveOrTimed = Boolean(
@@ -380,7 +381,13 @@ export const GamePlayPage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setActiveTab('games')}
+          onClick={() => {
+            if (winResult) {
+              setActiveTab('games');
+            } else {
+              setShowExitConfirm(true);
+            }
+          }}
           className="-ml-2"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -490,10 +497,23 @@ export const GamePlayPage: React.FC = () => {
                   Gameplay timer and board inputs are paused. Pausing excludes this run from leaderboard ranking to prevent timer exploits.
                 </p>
               </div>
-              <Button variant="primary" size="md" onClick={() => setIsPaused(false)}>
-                <Play className="w-4 h-4 fill-current" />
-                <span>Resume match</span>
-              </Button>
+              <div className="flex flex-wrap items-center justify-center gap-2.5">
+                <Button variant="primary" size="md" onClick={() => setIsPaused(false)}>
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>Resume match</span>
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => {
+                    setIsPaused(false);
+                    setActiveTab('games');
+                  }}
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Exit to Games</span>
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -764,6 +784,40 @@ export const GamePlayPage: React.FC = () => {
               >
                 <Share2 className="w-3.5 h-3.5" />
                 <span>Share Result</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active Match Exit Confirmation Dialog */}
+      {showExitConfirm && !winResult && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="exit-match-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 animate-fade-in"
+        >
+          <div className="bg-[#233D4A] border border-[#4A6A7B] rounded-xl p-6 max-w-sm w-full space-y-4">
+            <h2 id="exit-match-title" className="text-lg font-bold text-[#F5F7F8]">
+              Leave Active Puzzle?
+            </h2>
+            <p className="text-xs sm:text-sm text-[#B4C3CE] leading-relaxed">
+              Leaving {puzzleInfo?.name || 'this match'} now will forfeit your current round progress.
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <Button variant="secondary" size="sm" onClick={() => setShowExitConfirm(false)}>
+                Keep Playing
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setShowExitConfirm(false);
+                  setActiveTab('games');
+                }}
+              >
+                Leave Puzzle
               </Button>
             </div>
           </div>

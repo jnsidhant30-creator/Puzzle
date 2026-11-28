@@ -1,20 +1,34 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
-import { Home, LayoutGrid, Calendar, BarChart3, User } from 'lucide-react';
+import { Home, LayoutGrid, Swords, Trophy, User } from 'lucide-react';
 
 export const BottomNavigation: React.FC = () => {
   const { activeTab, setActiveTab } = useStore();
 
-  const isProgressTab = ['mastery', 'mastery_practice', 'journey', 'achievements', 'goals', 'insights'].includes(
-    activeTab
-  );
+  // Hide bottom bar completely during active gameplay so the board owns the viewport cleanly
+  if (activeTab === 'game_play') {
+    return null;
+  }
+
+  const isChallengeTab = ['challenges', 'daily', 'events', 'event_detail'].includes(activeTab);
+  const isProfileOrSecondaryTab = [
+    'profile',
+    'settings',
+    'achievements',
+    'mastery',
+    'mastery_practice',
+    'journey',
+    'goals',
+    'insights',
+    'learn',
+  ].includes(activeTab);
 
   const navItems = [
     { id: 'dashboard', label: 'Home', icon: Home, active: activeTab === 'dashboard' },
     { id: 'games', label: 'Games', icon: LayoutGrid, active: activeTab === 'games' },
-    { id: 'daily', label: 'Daily', icon: Calendar, active: activeTab === 'daily' },
-    { id: 'mastery', label: 'Progress', icon: BarChart3, active: isProgressTab },
-    { id: 'profile', label: 'Profile', icon: User, active: activeTab === 'profile' || activeTab === 'settings' },
+    { id: 'challenges', label: 'Challenges', icon: Swords, active: isChallengeTab },
+    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy, active: activeTab === 'leaderboard' },
+    { id: 'profile', label: 'Profile', icon: User, active: isProfileOrSecondaryTab },
   ];
 
   return (

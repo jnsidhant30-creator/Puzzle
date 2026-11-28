@@ -27,10 +27,11 @@ import {
   PanelLeftOpen,
   Settings,
   Download,
+  History,
+  Flame,
 } from 'lucide-react';
-import { signOut } from 'firebase/auth';
-import { auth } from '../services/firebase';
-import { Capacitor } from '@capacitor/core';
+import { signOutCurrentUser } from '../services/authService';
+import { usePlatformInfo } from '../platform/detectPlatform';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -39,11 +40,14 @@ export const Sidebar: React.FC = () => {
     user,
     isGuest,
     setUser,
+    selectedPuzzle,
+    playGame,
     isMobileMenuOpen,
     setIsMobileMenuOpen,
     isSidebarCollapsed,
     toggleSidebarCollapse,
   } = useStore();
+  const platform = usePlatformInfo();
 
   const [progressExpanded, setProgressExpanded] = useState(false);
   const [moreExpanded, setMoreExpanded] = useState(false);
@@ -121,6 +125,14 @@ export const Sidebar: React.FC = () => {
 
   const handleNavClick = (tabId: string) => {
     setActiveTab(tabId as any);
+    if (window.innerWidth < 1024) setIsMobileMenuOpen(false);
+  };
+
+  const handleOpenGameHistory = () => {
+    setActiveTab('profile');
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('pv:profile-tab', { detail: 'history' }));
+    }, 30);
     if (window.innerWidth < 1024) setIsMobileMenuOpen(false);
   };
 
@@ -203,55 +215,102 @@ export const Sidebar: React.FC = () => {
 
         {/* Scrollable Navigation */}
         <nav className="flex-1 overflow-y-auto scrollbar-none px-3 py-3 space-y-1.5 relative">
-          {primaryItems.map((item) => renderNavButton(item))}
+          {platform.isDesktopApp ? (
+            <>
+              {renderNavButton({ id: 'dashboard', label: 'Home', icon: Home })}
+              {renderNavButton({ id: 'games', label: 'All Games', icon: LayoutGrid })}
+              {renderNavButton({ id: 'daily', label: 'Daily Puzzle', icon: Calendar })}
+              <button
+                type="button"
+                onClick={() => {
+                  playGame('challenge_mode', 'medium');
+                  if (window.innerWidth < 1024) setIsMobileMenuOpen(false);
+                }}
+                aria-current={activeTab === 'game_play' && selectedPuzzle === 'challenge_mode' ? 'page' : undefined}
+                title={isSidebarCollapsed ? 'Challenge Run' : undefined}
+                className={`w-full flex items-center gap-3 px-3 min-h-[40px] text-[14px] rounded-lg font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#38C6BA] ${
+                  isSidebarCollapsed ? 'lg:justify-center lg:px-0' : ''
+                } ${
+                  activeTab === 'game_play' && selectedPuzzle === 'challenge_mode'
+                    ? 'bg-[#38C6BA] text-[#142331]'
+                    : 'text-[#B4C3CE] hover:text-[#F5F7F8] hover:bg-[#233D4A]'
+                }`}
+              >
+                <Flame
+                  className={`w-[18px] h-[18px] shrink-0 ${
+                    activeTab === 'game_play' && selectedPuzzle === 'challenge_mode' ? 'text-[#142331]' : 'text-[#93D1F2]'
+                  }`}
+                />
+                {!isSidebarCollapsed && <span className="truncate">Challenge Run</span>}
+              </button>
+              {renderNavButton({ id: 'leaderboard', label: 'Leaderboard', icon: Trophy })}
+              {renderNavButton({ id: 'achievements', label: 'Achievements', icon: Award })}
+              <button
+                type="button"
+                onClick={handleOpenGameHistory}
+                title={isSidebarCollapsed ? 'Game History' : undefined}
+                className={`w-full flex items-center gap-3 px-3 min-h-[40px] text-[14px] rounded-lg font-semibold text-[#B4C3CE] hover:text-[#F5F7F8] hover:bg-[#233D4A] transition-colors ${
+                  isSidebarCollapsed ? 'lg:justify-center lg:px-0' : ''
+                }`}
+              >
+                <History className="w-[18px] h-[18px] shrink-0 text-[#93D1F2]" />
+                {!isSidebarCollapsed && <span className="truncate">Game History</span>}
+              </button>
+              {renderNavButton({ id: 'profile', label: 'Profile', icon: User })}
+            </>
+          ) : (
+            <>
+              {primaryItems.map((item) => renderNavButton(item))}
 
-          {/* Expandable Progress Hub */}
-          <div className="pt-0.5">
-            {isSidebarCollapsed ? (
-              renderNavButton({ id: 'mastery', label: 'Progress', icon: BarChart3 })
-            ) : (
-              <>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => {
-                      handleNavClick('mastery');
-                      setProgressExpanded(true);
-                    }}
-                    aria-current={isProgressRoute ? 'page' : undefined}
-                    className={`flex-1 flex items-center gap-3 px-3 min-h-[40px] rounded-lg text-[14px] font-semibold transition-colors ${
-                      isProgressRoute
-                        ? 'bg-[#38C6BA] text-[#142331]'
-                        : 'text-[#B4C3CE] hover:text-[#F5F7F8] hover:bg-[#233D4A]'
-                    }`}
-                  >
-                    <BarChart3
-                      className={`w-[18px] h-[18px] shrink-0 ${
-                        isProgressRoute ? 'text-[#142331]' : 'text-[#93D1F2]'
-                      }`}
-                    />
-                    <span>Progress</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setProgressExpanded((p) => !p)}
-                    aria-expanded={progressExpanded}
-                    aria-label="Toggle Progress pages"
-                    className="p-2 rounded-lg text-[#98AAB8] hover:text-[#F5F7F8] hover:bg-[#233D4A]"
-                  >
-                    {progressExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                  </button>
-                </div>
+              {/* Expandable Progress Hub */}
+              <div className="pt-0.5">
+                {isSidebarCollapsed ? (
+                  renderNavButton({ id: 'mastery', label: 'Progress', icon: BarChart3 })
+                ) : (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          handleNavClick('mastery');
+                          setProgressExpanded(true);
+                        }}
+                        aria-current={isProgressRoute ? 'page' : undefined}
+                        className={`flex-1 flex items-center gap-3 px-3 min-h-[40px] rounded-lg text-[14px] font-semibold transition-colors ${
+                          isProgressRoute
+                            ? 'bg-[#38C6BA] text-[#142331]'
+                            : 'text-[#B4C3CE] hover:text-[#F5F7F8] hover:bg-[#233D4A]'
+                        }`}
+                      >
+                        <BarChart3
+                          className={`w-[18px] h-[18px] shrink-0 ${
+                            isProgressRoute ? 'text-[#142331]' : 'text-[#93D1F2]'
+                          }`}
+                        />
+                        <span>Progress</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProgressExpanded((p) => !p)}
+                        aria-expanded={progressExpanded}
+                        aria-label="Toggle Progress pages"
+                        className="p-2 rounded-lg text-[#98AAB8] hover:text-[#F5F7F8] hover:bg-[#233D4A]"
+                      >
+                        {progressExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      </button>
+                    </div>
 
-                {progressExpanded && (
-                  <div className="mt-1 ml-3 pl-2.5 border-l border-[#36515F] space-y-0.5">
-                    {progressSubItems.map((sub) => renderNavButton(sub, true))}
-                  </div>
+                    {progressExpanded && (
+                      <div className="mt-1 ml-3 pl-2.5 border-l border-[#36515F] space-y-0.5">
+                        {progressSubItems.map((sub) => renderNavButton(sub, true))}
+                      </div>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </div>
+              </div>
 
-          {socialItems.map((item) => renderNavButton(item))}
+              {socialItems.map((item) => renderNavButton(item))}
+            </>
+          )}
 
           {/* Collapsible More Section */}
           <div className="pt-2 border-t border-[#36515F]/70 mt-2">
@@ -293,10 +352,10 @@ export const Sidebar: React.FC = () => {
           )}
         </nav>
 
-        {/* Bottom Settings, Download App (Web), Admin & Collapse Controls */}
+        {/* Bottom Settings, Download App (Web browser only), Admin & Collapse Controls */}
         {user && (
           <div className="p-3 border-t border-[#36515F] space-y-1 pb-4 lg:pb-3 shrink-0 bg-[#1C2D3B]">
-            {!window.puzzleverseDesktop?.isDesktop && !Capacitor.isNativePlatform() &&
+            {platform.canShowDownloadOptions &&
               renderNavButton({ id: 'download', label: 'Apps & Downloads', icon: Download }, true)}
 
             {user.role === 'ADMIN' &&
@@ -327,7 +386,7 @@ export const Sidebar: React.FC = () => {
                 if (isGuest) {
                   setUser(null, false);
                 } else {
-                  await signOut(auth);
+                  await signOutCurrentUser();
                 }
               }}
               title={isSidebarCollapsed ? (isGuest ? 'Exit Guest Mode' : 'Log out') : undefined}

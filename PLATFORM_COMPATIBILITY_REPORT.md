@@ -1,11 +1,11 @@
-# PuzzleVerse Universal Cross-Platform Compatibility Report (`v1.1.0`)
+# PuzzleVerse Universal Cross-Platform Compatibility Report (`v1.2.0`)
 
 **Application:** PuzzleVerse (`Challenge Your Mind. Beat Your Best.`)  
-**Version:** `1.1.0`  
-**Audit & Test Date:** 2026-11-27  
-**Website & PWA Production:** https://puzzleverse-e16e4.web.app/  
+**Version:** `1.2.0`  
+**Audit & Test Date:** 2026-11-28 (`RELEASE_DATE: 2026-11-27`)  
+**Website & PWA Production:** https://puzzleverse-e16e4.web.app/ (Mirror: https://puzzzleverse.netlify.app/)  
 **Universal Download Portal:** https://puzzleverse-e16e4.web.app/download  
-**Public Release Assets:** https://github.com/jnsidhant30-creator/Puzzle/releases/tag/v1.1.0  
+**Public Release Assets:** https://github.com/jnsidhant30-creator/Puzzle/releases/tag/v1.2.0  
 
 ---
 
@@ -13,30 +13,16 @@
 
 | Platform / Target | Package / Artifact | Build Status | Runtime Test Status | Honest Scope & Notes |
 |---|---|---|---|---|
-| **Windows 10/11 (x64)** | `PuzzleVerse-Setup-1.1.0-x64.exe` (`122,371,946` B) & `PuzzleVerse-Portable-1.1.0-x64.exe` (`111,403,405` B) | **PASS** | **PASS** | Unpacked, Portable, silent install (`/S`), installed launch (`SingleInstanceBlocked: true`), Desktop & Start Menu shortcuts, silent per-user uninstall (`/currentuser /S _?=dir`), all 16 games, `Escape` pause, Arrows, Settings updater, `0` console errors; published publicly with HTTP `206` check (`NotSigned`). |
-| **Windows 11 (ARM64)** | `PuzzleVerse-Setup-1.1.0-arm64.exe` (`116,363,966` B) & `PuzzleVerse-Portable-1.1.0-arm64.exe` (`106,075,894` B) | **PASS** | **NOT TESTED** | Cross-built cleanly on Windows x64, SHA-256 checksummed, uploaded to GitHub Release `v1.1.0`, public HTTP `206` verified (`NotSigned`); ARM64 CPU hardware not available locally to run executable. |
-| **macOS (Apple Silicon / Intel / Universal)** | `*.dmg`, `*.zip` configured via [electron-builder.json](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron-builder.json) & [entitlements.mac.plist](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/entitlements.mac.plist) | **CI CONFIGURED ONLY** | **NOT TESTED** | Requires macOS runner (`macos-latest` in [universal-release.yml](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/.github/workflows/universal-release.yml)) and optional Apple Developer ID for notarization; kept cleanly disabled on `/download` until built. Browser & Web App PWA play works today. |
-| **Linux (`x64` & `ARM64`)** | `.AppImage`, `.deb`, `.rpm` + freedesktop icons (`build/icons/`) | **CI CONFIGURED ONLY** | **NOT TESTED** | Configured cleanly in `electron-builder.json` and `universal-release.yml`; Ubuntu packaging tools (`rpm`, `fakeroot`) not available on local Windows workstation. Kept disabled on `/download` until built; Web App PWA works today. |
-| **Android (Capacitor 8 APK & AAB)** | `PuzzleVerse-v1.0.0-Android.apk` (`3,970,575` B) & `PuzzleVerse-v1.0.0-Android.aab` (`3,789,930` B) | **PASS** | **PASS** (Emulator + Chrome PWA) | Built & signed with developer release keystore (`minSdk 24` / Android 7.0+, `targetSdk 36`, universal DEX bytecode), `apksigner` v2 verified, published to GitHub Release `v1.1.0` (`HTTP 206`), verified on Android 14 (`API 34`) emulator (install, offline cold launch, Guest Practice, 16-game Catalog, Number Puzzle gameplay, Hardware Back pause, `0` fatals). Physical device sideload & interactive OAuth consent tap remain `NOT TESTED`. |
-| **iPhone & iPad (iOS / iPadOS)** | `ios/` Universal Xcode project (`TARGETED_DEVICE_FAMILY = "1,2"`, `MARKETING_VERSION 1.1.0`) | **SYNCED (`cap sync`)** | **NOT TESTED** (Xcode `.ipa`) / **PASS** (PWA Meta & Touch CSS) | Xcode project synced cleanly with `AppIcon-512@2x.png`; signed `.ipa` export requires macOS Xcode & Apple Developer membership. Safari `apple-touch-icon-180x180.png`, manifest, and mobile safe-area layout verified. |
-| **Web & ChromeOS (Vite PWA)** | `dist/` (`sw.js`, `manifest.json`, raster PNG icons `64`..`512`, maskable `512`) | **PASS** | **PASS** | Built via `vite-plugin-pwa@2.0.0` (`84` precached entries / `1725.92 KiB`), deployed to Firebase Hosting (`81` files) and Netlify (`80` files); live Chrome CDP verified active SW registration, `Install Web App` prompt, desktop/mobile responsive layout, `0` console/request errors. |
+| **Windows 10/11 (x64)** | `PuzzleVerse-Setup-1.2.0-x64.exe` (`122,376,942` B) & `PuzzleVerse-Portable-1.2.0-x64.exe` (`111,408,349` B) | **PASS** | **PASS** | Tested `win-unpacked\PuzzleVerse.exe` and `PuzzleVerse-Portable-1.2.0-x64.exe` via `test-desktop-packaged.mjs` & `test-desktop-extra.mjs`: all 16 games `true`, desktop gaming sidebar, `noDownloadPromotionsInDesktop: true`, `/download` blocked (`downloadRouteRedirected: true`), `exitConfirmWorked: true`, `escapePauseWorked: true`, `mazeArrowWorked: true`, Firestore REST read `200`, `consoleErrors: []`, anonymous HTTP `206` verified (`NotSigned`). Interactive human Google login round-trip inside external Chrome + loopback remains `NOT TESTED`. |
+| **Windows 11 (ARM64)** | `PuzzleVerse-Setup-1.2.0-arm64.exe` (`116,369,122` B) & `PuzzleVerse-Portable-1.2.0-arm64.exe` (`106,079,317` B) | **PASS** | **NOT TESTED** | Cross-compiled on Windows x64, SHA-256 verified, published on GitHub Release `v1.2.0` (`NotSigned`); ARM64 Windows CPU hardware unavailable locally. |
+| **Android (Capacitor 8 APK & AAB)** | `PuzzleVerse-v1.2.0-Android.apk` (`4,911,848` B) & `PuzzleVerse-v1.2.0-Android.aab` (`4,585,670` B) | **PASS** | **PASS** (Emulator + Live Android Web) | Signed (`apksigner` v2 verified, `minSdk 24` / `targetSdk 36`), registered Firebase Android app & SHA-1/SHA-256 fingerprints, published to GitHub Release `v1.2.0` (HTTP `206`), verified upgrade (`v1.0.0` -> `v1.2.0`) on Android 14 API 34 emulator (native Credential Manager invocation, zero download promos, `/download` blocked, 5-tab mobile nav hidden in gameplay, back pause modal, all 16 games, offline cold launch, `0` fatal errors). Physical phone sideload & interactive Google account selection remain `NOT TESTED`. |
+| **iPhone & iPad (iOS / iPadOS)** | `ios/` Xcode project (`MARKETING_VERSION = 1.2.0`, `CURRENT_PROJECT_VERSION = 120`, Firebase iOS app + `GoogleService-Info.plist` + `Info.plist`) | **SYNCED (`cap sync`)** | **NOT TESTED** | Configured `@capawesome/capacitor-google-sign-in@0.1.4` and Google OAuth URL types via `npx cap sync ios`; native Xcode compile & `.ipa` signing require macOS + Apple Developer membership (`NOT TESTED` on Windows). Safari PWA remains playable immediately. |
+| **macOS (Apple Silicon / Intel / Universal)** | `electron-builder.json` & `.github/workflows/universal-release.yml` | **CI CONFIGURED ONLY** | **NOT TESTED** | Requires macOS CI runner (`macos-latest`) and Apple Developer ID for `.dmg` Gatekeeper notarization; Web/PWA playable today. |
+| **Linux (`x64` & `ARM64`)** | `.AppImage`, `.deb`, `.rpm` + icons in `build/icons/` | **CI CONFIGURED ONLY** | **NOT TESTED** | Configured for Ubuntu CI runner; kept disabled on `/download` until built and published. Web/PWA playable today. |
+| **Web & Installed PWA (`ChromeOS` / Desktop / Mobile)** | `dist/` (`sw.js`, `manifest.json`, `87` Workbox precache entries / `1743.56 KiB`) | **PASS** | **PASS** | Deployed to Firebase Hosting (`84` files) & Netlify (`https://puzzzleverse.netlify.app`); headless Chrome CDP verified desktop & Android UA `/download` detection, valid `/desktop-auth` session UI, live `workbox-precache-v2` registration, and emulated `display-mode: standalone` Installed PWA hiding all downloads and redirecting `/download` -> `/login` with `0` console errors. |
 
 ---
 
-## 2. Core Functional & Cross-Platform Feature Checks
+## 2. Repository Build Scope Note (`root dist/` vs legacy `client/`)
 
-| Feature / Requirement | Status | Observed Evidence |
-|---|---|---|
-| Single Shared React/TS/Zustand Codebase (All 16 Games Preserved) | **PASS** | Verified root `src/` compiles cleanly (`npm run lint` exit `0`), renders all 16 games in Electron Desktop (`win-unpacked`, `portable`, `installed`) and Live Web (`gameCardsOnDashboard: 16`, `overflowX: false`). |
-| Automatic Platform Detection + Manual Override | **PASS** | Verified [detectPlatform.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/platform/detectPlatform.ts) and `/download` live UI detect `Windows · 64-bit (x64)`, expose `manual-os-select` & `manual-arch-select`, filter packages (`macSwitchCheck: true`, `macFilteredText: true`), and degrade gracefully when architecture is `'unknown'`. |
-| Universal Platform Adapter (`Web` / `Electron` / `Capacitor`) | **PASS** | Compiled cleanly under TypeScript (`src/platform/adapter.ts`), verified in Desktop (`checkForUpdates`, `toggleFullscreen`, `setActiveGameState`, `quitApp`) and Web (`Share PuzzleVerse`, `Install Web App`, `navigator.serviceWorker` update hooks). Capacitor native plugin calls remain unexecuted on real Android/iOS hardware until device testing. |
-| Universal Public `/download` Portal | **PASS** | Accessible unauthenticated on `https://puzzleverse-e16e4.web.app/download` and `https://puzzzleverse.netlify.app/download`; shows real versions (`1.1.0` desktop, `1.0.0` Android), file sizes, copyable SHA-256 sums, auto-detects Android & Desktop targets cleanly (`PuzzleVerse-v1.0.0-Android.apk`), and keeps unbuilt CI targets disabled. |
-| Guest Mode, Offline Support & Leaderboard Isolation | **PASS** | Verified via `scripts/test-desktop-extra.mjs` (`onlineFirebaseRead: 200`, `showsOfflineLbGuard: true`, `onlineLeaderboardLoaded: true`, `reloadMounted: true`) and live Web Guest mode without Firestore errors. |
-| Interactive Google OAuth Round-Trip inside Packaged Desktop EXE | **NOT TESTED** | System-browser handoff route `/desktop-auth` verified (`0` errors) and loopback `127.0.0.1` server implemented; interactive human Google consent click inside Chrome/EXE requires manual user login verification. |
-| Clean-Room Physical PC / VM (Zero Developer Tools) | **NOT TESTED** | Verified in isolated `--user-data-dir` profiles and silent per-user install/uninstall on the Windows build host; separate clean-room PC/VM not tested. |
-
----
-
-## 3. Repository Structure Note (`root dist` vs legacy `client/`)
-
-Firebase Hosting ([firebase.json](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/firebase.json) -> `"public": "dist"`) and Netlify ([netlify.toml](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/netlify.toml) -> `publish = "dist"`) deploy directly from the root React + Vite workspace (`src/` → `dist/`), which hosts all 16 games, Capacitor sync outputs, Electron assets, and the live `/download` portal. The older `client/` directory predates project flattening and was intentionally left untouched so production deployments never regress.
+Firebase Hosting (`firebase.json` -> `"public": "dist"`) and Netlify (`netlify.toml` -> `publish = "dist"`) deploy directly from the root React 19 + TypeScript + Vite 8 workspace (`src/` -> `dist/`), which powers the Electron desktop builds, Capacitor Android/iOS bundles, PWA service worker, authentication adapters, and public `/download` portal. The older `client/` folder predates project flattening and was left untouched.

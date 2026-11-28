@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 
 export type PlatformOS = 'windows' | 'macos' | 'linux' | 'android' | 'ios' | 'chromeos' | 'unknown';
@@ -43,6 +44,14 @@ export interface DetectedPlatformInfo {
   arch: CpuArch;
   deviceCategory: DeviceCategory;
   runtime: RuntimeContainer;
+  isWebBrowser: boolean;
+  isNativeApp: boolean;
+  isDesktopApp: boolean;
+  isMobileApp: boolean;
+  isInstalledPWA: boolean;
+  isInstalledApp: boolean;
+  canShowDownloadOptions: boolean;
+  canShowInstallPrompt: boolean;
   isElectron: boolean;
   isCapacitor: boolean;
   isMobileNative: boolean;
@@ -266,6 +275,10 @@ function buildInfo(os: PlatformOS, arch: CpuArch): DetectedPlatformInfo {
     ? 'unknown'
     : 'unsupported';
 
+  const isNativeApp = isElectron || isCapacitor;
+  const isInstalledApp = isNativeApp || isPwaInstalled;
+  const isWebBrowser = !isInstalledApp;
+
   const capabilities: PlatformCapabilities = {
     fullscreen: isElectron || (typeof document !== 'undefined' && Boolean(document.documentElement?.requestFullscreen)),
     notifications: isElectron || (typeof window !== 'undefined' && 'Notification' in window),
@@ -277,7 +290,7 @@ function buildInfo(os: PlatformOS, arch: CpuArch): DetectedPlatformInfo {
     appExit: isElectron || isCapacitor,
     haptics: isCapacitor || (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function'),
     offlineStorage: typeof localStorage !== 'undefined',
-    installPrompt: !isElectron && !isCapacitor && (isPwaPromptAvailable() || os === 'ios' || os === 'chromeos' || os === 'android'),
+    installPrompt: !isInstalledApp && (isPwaPromptAvailable() || os === 'ios' || os === 'chromeos' || os === 'android'),
   };
 
   return {
@@ -285,6 +298,14 @@ function buildInfo(os: PlatformOS, arch: CpuArch): DetectedPlatformInfo {
     arch,
     deviceCategory: detectDeviceCategory(os),
     runtime,
+    isWebBrowser,
+    isNativeApp,
+    isDesktopApp: isElectron,
+    isMobileApp: isCapacitor,
+    isInstalledPWA: isPwaInstalled,
+    isInstalledApp,
+    canShowDownloadOptions: !isInstalledApp,
+    canShowInstallPrompt: !isInstalledApp && capabilities.installPrompt,
     isElectron,
     isCapacitor,
     isMobileNative: isCapacitor,
@@ -305,6 +326,51 @@ function buildInfo(os: PlatformOS, arch: CpuArch): DetectedPlatformInfo {
     capabilities,
     recommendedTargetId: getRecommendedTargetFor(os, arch),
   };
+}
+
+/**
+ * Subscribe to runtime platform changes (PWA install state, display-mode transitions, network status).
+ */
+export function usePlatformInfo(): DetectedPlatformInfo {
+  const [info, setInfo] = useState<DetectedPlatformInfo>(() => detectPlatformSync());
+
+  useEffect(() => {
+    let active = true;
+    const refresh = () => {
+      detectPlatformAsync()
+        .then((next) => {
+          if (active) setInfo(next);
+        })
+        .catch(() => {
+          if (active) setInfo(detectPlatformSync());
+        });
+    };
+
+    refresh();
+    const unsubPwa = subscribePwaInstallPrompt(() => refresh());
+    window.addEventListener('online', refresh);
+    window.addEventListener('offline', refresh);
+    window.addEventListener('appinstalled', refresh);
+
+    let mql: MediaQueryList | null = null;
+    try {
+      mql = window.matchMedia('(display-mode: standalone)');
+      mql.addEventListener?.('change', refresh);
+    } catch {
+      // Ignore matchMedia listener errors
+    }
+
+    return () => {
+      active = false;
+      unsubPwa();
+      window.removeEventListener('online', refresh);
+      window.removeEventListener('offline', refresh);
+      window.removeEventListener('appinstalled', refresh);
+      mql?.removeEventListener?.('change', refresh);
+    };
+  }, []);
+
+  return info;
 }
 
 export function detectPlatformSync(): DetectedPlatformInfo {

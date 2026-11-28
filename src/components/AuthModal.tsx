@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
 import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signInWithPopup,
-  signInWithRedirect,
-  GoogleAuthProvider,
-  signInWithCredential,
-} from 'firebase/auth';
-import { auth, syncUserProfile, googleProvider } from '../services/firebase';
+  mapAuthError,
+  registerWithEmail,
+  sendPasswordReset,
+  signInWithEmail,
+  signInWithGoogle,
+} from '../services/authService';
+import { usePlatformInfo } from '../platform/detectPlatform';
 import { Mail, Lock, EyeOff, Eye, WifiOff, RefreshCw, Compass, Download } from 'lucide-react';
 import { Button } from './ui/Button';
-import { Capacitor } from '@capacitor/core';
-import { startMobileGoogleAuth } from '../platform/adapter';
 
 interface Props {
   onClose?: () => void;
@@ -24,6 +20,7 @@ interface Props {
 
 export const AuthModal: React.FC<Props> = ({ onOpenDownload }) => {
   const { setUser, isOnline, retryConnection, enterOfflineGuestMode } = useStore();
+  const platform = usePlatformInfo();
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,40 +37,17 @@ export const AuthModal: React.FC<Props> = ({ onOpenDownload }) => {
     setResetSent(false);
     try {
       if (mode === 'register') {
-        const res = await createUserWithEmailAndPassword(auth, email, password);
-        const profile = await syncUserProfile(res.user);
+        const profile = await registerWithEmail(email, password);
         setUser(profile, false);
       } else if (mode === 'login') {
-        const res = await signInWithEmailAndPassword(auth, email, password);
-        const profile = await syncUserProfile(res.user);
+        const profile = await signInWithEmail(email, password);
         setUser(profile, false);
       } else if (mode === 'forgot') {
-        await sendPasswordResetEmail(auth, email);
+        await sendPasswordReset(email);
         setResetSent(true);
       }
-    } catch (err: any) {
-      const errMsg = err.message || 'Authentication failed';
-      console.error('Authentication Error:', err);
-      let friendlyError = 'Authentication failed. Please try again.';
-      const errorCode = err.code || '';
-      if (
-        errorCode === 'auth/invalid-credential' ||
-        errorCode === 'auth/user-not-found' ||
-        errorCode === 'auth/wrong-password'
-      ) {
-        friendlyError = 'Incorrect email or password.';
-      } else if (errorCode === 'auth/email-already-in-use') {
-        friendlyError = 'This email is already registered. Please sign in.';
-      } else if (errorCode === 'auth/weak-password') {
-        friendlyError = 'Password should be at least 6 characters.';
-      } else if (errorCode === 'auth/network-request-failed' || errMsg.includes('network')) {
-        friendlyError = 'Network error. Check your connection and try again.';
-      } else if (errorCode === 'auth/too-many-requests') {
-        friendlyError = 'Too many attempts. Please wait a few minutes and try again.';
-      } else {
-        friendlyError = errMsg;
-      }
-      setError(friendlyError);
+    } catch (err: unknown) {
+      setError(mapAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -82,74 +56,19 @@ export const AuthModal: React.FC<Props> = ({ onOpenDownload }) => {
   const handleGoogleAuth = async () => {
     if (loading) return;
     if (!isOnline) {
-      setError('Internet connection required for Google sign-in. You can still Play Offline in Guest Practice mode below.');
+      setError('No internet connection. Connect to sign in with Google, or Play Offline in Guest mode below.');
       return;
     }
     setError(null);
     setLoading(true);
     try {
-      if (window.puzzleverseDesktop?.isDesktop) {
-        const authRes = await window.puzzleverseDesktop.startGoogleAuth();
-        if (!authRes.ok || (!authRes.idToken && !authRes.accessToken)) {
-          throw new Error(authRes.error || 'Google sign-in in browser did not complete.');
-        }
-        const credential = GoogleAuthProvider.credential(
-          authRes.idToken || null,
-          authRes.accessToken || null
-        );
-        const res = await signInWithCredential(auth, credential);
-        const profile = await syncUserProfile(res.user);
+      const profile = await signInWithGoogle();
+      if (profile) {
         setUser(profile, false);
-        setLoading(false);
-        return;
       }
-
-      if (Capacitor.isNativePlatform()) {
-        const mobileRes = await startMobileGoogleAuth();
-        if (!mobileRes.ok || (!mobileRes.idToken && !mobileRes.accessToken)) {
-          throw new Error(mobileRes.error || 'Google sign-in in system browser did not complete.');
-        }
-        const credential = GoogleAuthProvider.credential(
-          mobileRes.idToken || null,
-          mobileRes.accessToken || null
-        );
-        const res = await signInWithCredential(auth, credential);
-        const profile = await syncUserProfile(res.user);
-        setUser(profile, false);
-        setLoading(false);
-        return;
-      }
-
-      // Popup-first within click gesture across desktop & mobile web browsers
-      const res = await signInWithPopup(auth, googleProvider);
-      const profile = await syncUserProfile(res.user);
-      setUser(profile, false);
       setLoading(false);
-    } catch (err: any) {
-      if (
-        err?.code === 'auth/popup-blocked' ||
-        err?.code === 'auth/operation-not-supported-in-this-environment'
-      ) {
-        try {
-          sessionStorage.setItem('pv_auth_redirect_in_progress', '1');
-          await signInWithRedirect(auth, googleProvider);
-          return;
-        } catch (redirectErr: any) {
-          sessionStorage.removeItem('pv_auth_redirect_in_progress');
-          setError(redirectErr?.message || 'Google sign-in redirect failed.');
-          setLoading(false);
-          return;
-        }
-      }
-      sessionStorage.removeItem('pv_auth_redirect_in_progress');
-      console.error('Google Auth Error:', err);
-      let msg = err.message || 'Google sign-in failed.';
-      if (err.code === 'auth/unauthorized-domain') {
-        msg = 'This domain is not authorized in Firebase settings.';
-      } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
-        msg = 'Google sign-in popup was closed before completion.';
-      }
-      setError(msg);
+    } catch (err: unknown) {
+      setError(mapAuthError(err));
       setLoading(false);
     }
   };
@@ -344,7 +263,7 @@ export const AuthModal: React.FC<Props> = ({ onOpenDownload }) => {
         )}
       </form>
 
-      {!window.puzzleverseDesktop?.isDesktop && !Capacitor.isNativePlatform() && onOpenDownload && (
+      {platform.canShowDownloadOptions && onOpenDownload && (
         <div className="mt-4 pt-3 border-t border-[#D5DEDB] flex items-center justify-between text-xs">
           <span className="text-[#526575] font-medium">Desktop, Mobile, or PWA?</span>
           <button
