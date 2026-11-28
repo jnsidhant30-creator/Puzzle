@@ -245,7 +245,7 @@ export const Navbar: React.FC = () => {
     .toUpperCase();
 
   return (
-    <header className="h-16 bg-[#1C2D3B] border-b border-[#36515F] px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30 shrink-0">
+    <header className="h-16 bg-[#1C2D3B] border-b border-[#36515F] px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 sticky top-0 z-30 shrink-0 pv-navbar">
       {/* Left: Mobile Drawer Toggle + Route Title / Mobile Brand */}
       <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
         <button

@@ -441,7 +441,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#142331] text-[#F5F7F8] font-sans selection:bg-[#38C6BA]/30 selection:text-[#F5F7F8]">
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#142331] text-[#F5F7F8] font-sans selection:bg-[#38C6BA]/30 selection:text-[#F5F7F8] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] lg:pt-0 lg:pb-0">
         <Navbar />
@@ -468,7 +468,7 @@ export default function App() {
         )}
         <main
           className={`flex-1 relative w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 ${
-            activeTab === 'game_play' ? 'pb-4 pt-3 lg:pb-8 lg:pt-5' : 'pb-[88px] lg:pb-10 pt-5'
+            activeTab === 'game_play' ? 'pb-4 pt-2 sm:pt-3 lg:pb-8 lg:pt-5 pv-main-play' : 'pb-[88px] lg:pb-10 pt-5'
           }`}
         >
           <Suspense fallback={<PageLoader />}>{renderActiveTab()}</Suspense>

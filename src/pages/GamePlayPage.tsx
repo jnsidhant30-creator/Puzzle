@@ -375,9 +375,9 @@ export const GamePlayPage: React.FC = () => {
   const playGame = useStore((s) => s.playGame);
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-2.5 sm:space-y-4 animate-fade-in pv-gameplay-shell">
       {/* Focused Arena Top Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#36515F]">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 pb-2 sm:pb-3 border-b border-[#36515F] pv-gameplay-topbar">
         <Button
           variant="ghost"
           size="sm"
@@ -463,7 +463,7 @@ export const GamePlayPage: React.FC = () => {
       {/* Board-Dominant Arena Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Main Interactive Board Stage (9 cols desktop -> dominant focus) */}
-        <div className="lg:col-span-9 pv-board-matte border border-[#36515F] rounded-xl p-3 sm:p-6 min-h-[460px] lg:min-h-[540px] flex items-center justify-center relative overflow-hidden">
+        <div className="lg:col-span-9 pv-board-matte border border-[#36515F] rounded-xl p-2.5 sm:p-6 min-h-[240px] sm:min-h-[340px] lg:min-h-[540px] flex items-center justify-center relative overflow-hidden pv-gameplay-stage">
           <div
             ref={stageWrapperRef}
             aria-hidden={isPaused}

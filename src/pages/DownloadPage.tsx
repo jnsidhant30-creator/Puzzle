@@ -548,7 +548,7 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({ onPlayWeb, embedded 
                 <strong className="text-[#F5F7F8]">macOS &amp; Linux:</strong> Install immediately as a Chrome/Edge/Safari Web App, or build `.dmg` / `.AppImage` / `.deb` / `.rpm` via the GitHub Actions macOS/Linux workflows.
               </li>
               <li>
-                <strong className="text-[#F5F7F8]">Android &amp; ChromeOS:</strong> Download <strong>PuzzleVerse-v1.0.0-Android.apk</strong> directly (Android 7.0+ / API 24+, signed release keystore), or click <strong>Install Web App (PWA)</strong> for instant browser installation.
+                <strong className="text-[#F5F7F8]">Android &amp; ChromeOS:</strong> Download <strong>PuzzleVerse-v{RELEASE_VERSION}-Android.apk</strong> directly (Android 7.0+ / API 24+, signed release keystore), or click <strong>Install Web App (PWA)</strong> for instant browser installation.
               </li>
               <li>
                 <strong className="text-[#F5F7F8]">iPhone &amp; iPad:</strong> Open in Safari → tap <strong>Share</strong> → <strong>Add to Home Screen</strong> for full-screen standalone play.

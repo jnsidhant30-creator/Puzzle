@@ -29,8 +29,8 @@ export interface UniversalPackageMeta {
   requirements: string;
 }
 
-export const RELEASE_VERSION = '1.2.0';
-export const RELEASE_DATE = '2026-11-27';
+export const RELEASE_VERSION = '1.2.1';
+export const RELEASE_DATE = '2026-11-28';
 export const RELEASE_TAG_URL = `https://github.com/jnsidhant30-creator/Puzzle/releases/tag/v${RELEASE_VERSION}`;
 export const RELEASE_DOWNLOAD_BASE = `https://github.com/jnsidhant30-creator/Puzzle/releases/download/v${RELEASE_VERSION}`;
 
@@ -55,17 +55,17 @@ export const DESKTOP_RELEASE_META = {
   installer: {
     fileName: `PuzzleVerse-Setup-${RELEASE_VERSION}-x64.exe`,
     label: 'Download for Windows (x64 Installer)',
-    sizeBytes: 122376942,
-    sizeLabel: '116.71 MB (122,376,942 bytes)',
-    sha256: '14f53113c1b630c96475df17d06714b2e0a59536d5a29b8f5b3460f8fac13143',
+    sizeBytes: 122377604,
+    sizeLabel: '116.71 MB (122,377,604 bytes)',
+    sha256: 'ce11cc46e84df1d0e93c4199dac8560ea1e56d994e896d1e2f22534470eec61f',
     downloadUrl: `${RELEASE_DOWNLOAD_BASE}/PuzzleVerse-Setup-${RELEASE_VERSION}-x64.exe`,
   } as DesktopArtifactMeta,
   portable: {
     fileName: `PuzzleVerse-Portable-${RELEASE_VERSION}-x64.exe`,
     label: 'Portable Windows (x64 .exe)',
-    sizeBytes: 111408349,
-    sizeLabel: '106.25 MB (111,408,349 bytes)',
-    sha256: '69135b6f39fa94de3884257baac6f8472764c72e2c0098757dc9bf698e16b6db',
+    sizeBytes: 111410021,
+    sizeLabel: '106.25 MB (111,410,021 bytes)',
+    sha256: 'ac4e5d3b5f6c232d9edb420fa2b1ca9e688db8b6a1f5ee255ac61dd1c3db1e2c',
     downloadUrl: `${RELEASE_DOWNLOAD_BASE}/PuzzleVerse-Portable-${RELEASE_VERSION}-x64.exe`,
   } as DesktopArtifactMeta,
   releaseNotes: [
@@ -85,9 +85,9 @@ export const UNIVERSAL_PACKAGES: UniversalPackageMeta[] = [
     badge: 'Recommended · Per-User NSIS Wizard',
     format: 'Windows Installer (.exe)',
     fileName: `PuzzleVerse-Setup-${RELEASE_VERSION}-x64.exe`,
-    sizeBytes: 122376942,
-    sizeLabel: '116.71 MB (122,376,942 bytes)',
-    sha256: '14f53113c1b630c96475df17d06714b2e0a59536d5a29b8f5b3460f8fac13143',
+    sizeBytes: 122377604,
+    sizeLabel: '116.71 MB (122,377,604 bytes)',
+    sha256: 'ce11cc46e84df1d0e93c4199dac8560ea1e56d994e896d1e2f22534470eec61f',
     downloadUrl: `${RELEASE_DOWNLOAD_BASE}/PuzzleVerse-Setup-${RELEASE_VERSION}-x64.exe`,
     available: true,
     signed: false,
@@ -103,9 +103,9 @@ export const UNIVERSAL_PACKAGES: UniversalPackageMeta[] = [
     badge: 'Zero-Install · Standalone',
     format: 'Portable Executable (.exe)',
     fileName: `PuzzleVerse-Portable-${RELEASE_VERSION}-x64.exe`,
-    sizeBytes: 111408349,
-    sizeLabel: '106.25 MB (111,408,349 bytes)',
-    sha256: '69135b6f39fa94de3884257baac6f8472764c72e2c0098757dc9bf698e16b6db',
+    sizeBytes: 111410021,
+    sizeLabel: '106.25 MB (111,410,021 bytes)',
+    sha256: 'ac4e5d3b5f6c232d9edb420fa2b1ca9e688db8b6a1f5ee255ac61dd1c3db1e2c',
     downloadUrl: `${RELEASE_DOWNLOAD_BASE}/PuzzleVerse-Portable-${RELEASE_VERSION}-x64.exe`,
     available: true,
     signed: false,
@@ -121,9 +121,9 @@ export const UNIVERSAL_PACKAGES: UniversalPackageMeta[] = [
     badge: 'Copilot+ / Snapdragon PCs',
     format: 'Windows ARM64 Setup (.exe)',
     fileName: `PuzzleVerse-Setup-${RELEASE_VERSION}-arm64.exe`,
-    sizeBytes: 116369122,
-    sizeLabel: '110.98 MB (116,369,122 bytes)',
-    sha256: '3133ea87874834b6eb102e5d34138a92a9cb04e867a0dbfed0ab6fe8a77687c7',
+    sizeBytes: 116369498,
+    sizeLabel: '110.98 MB (116,369,498 bytes)',
+    sha256: 'cfde0237fa28d23a35c49cb20ed2c6eec13fc2b5134f1b133d39c492dbc16b52',
     downloadUrl: `${RELEASE_DOWNLOAD_BASE}/PuzzleVerse-Setup-${RELEASE_VERSION}-arm64.exe`,
     available: true,
     signed: false,
@@ -139,9 +139,9 @@ export const UNIVERSAL_PACKAGES: UniversalPackageMeta[] = [
     badge: 'Zero-Install · ARM64',
     format: 'Portable ARM64 (.exe)',
     fileName: `PuzzleVerse-Portable-${RELEASE_VERSION}-arm64.exe`,
-    sizeBytes: 106079317,
-    sizeLabel: '101.17 MB (106,079,317 bytes)',
-    sha256: '26ef35398758ebbefab1d23cec3fab8394bbd8dba181a7d16d89ccc25fd257ee',
+    sizeBytes: 106078004,
+    sizeLabel: '101.16 MB (106,078,004 bytes)',
+    sha256: 'bee0af8878916cc96fb8a9731b5de3c08d29f1f89a284c6f3469a3fd1dc7a0fe',
     downloadUrl: `${RELEASE_DOWNLOAD_BASE}/PuzzleVerse-Portable-${RELEASE_VERSION}-arm64.exe`,
     available: true,
     signed: false,
@@ -284,14 +284,14 @@ export const UNIVERSAL_PACKAGES: UniversalPackageMeta[] = [
     format: 'Android APK (Universal)',
     version: RELEASE_VERSION,
     fileName: `PuzzleVerse-v${RELEASE_VERSION}-Android.apk`,
-    sizeBytes: 4911848,
-    sizeLabel: '4.68 MB (4,911,848 bytes)',
-    sha256: '01b940057739c7ee0f949d53d67443167bdfd5e075a841a6a48f142cd12b489d',
+    sizeBytes: 4913100,
+    sizeLabel: '4.69 MB (4,913,100 bytes)',
+    sha256: 'b3a7acba7836e145a4d16832b1969a95924c5b23ecfd9786389f18c2be1aa9fd',
     downloadUrl: `${RELEASE_DOWNLOAD_BASE}/PuzzleVerse-v${RELEASE_VERSION}-Android.apk`,
     available: true,
     signed: true,
     signingNote:
-      'Signed via APK Signature Scheme v2 with PuzzleVerse release keystore (cert SHA-256 38ecc6bd...f7). Google Play Store AAB (PuzzleVerse-v1.2.0-Android.aab, 4.37 MB) also published in release v1.2.0.',
+      'Signed via APK Signature Scheme v2 with PuzzleVerse release keystore (cert SHA-256 38ecc6bd...f7). Google Play Store AAB (PuzzleVerse-v1.2.1-Android.aab, 4.37 MB) also published in release v1.2.1.',
     description:
       'Universal Android APK for smartphones & tablets supporting arm64-v8a, armeabi-v7a, x86, and x86_64 with all 16 games, offline launch, and native Google Credential Manager sign-in.',
     requirements: 'Android 7.0+ (API 24 – 36) · Smartphones & Tablets',

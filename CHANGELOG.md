@@ -2,6 +2,23 @@
 
 All notable releases of **PuzzleVerse** (Web, PWA, Desktop, and Mobile) are documented in this file.
 
+## [1.2.1] - 2026-11-28 — Android Landscape Rotation Fix, ColorPath Hints & Full E2E Verification
+
+### Fixed
+- **Android Landscape Rotation & System Bars (`MainActivity.java`, `src/platform/adapter.ts`, `src/index.css`, `src/App.tsx`, `src/components/Navbar.tsx`, `src/pages/GamePlayPage.tsx`):**
+  - Overrode `onCreate`, `onConfigurationChanged`, and `onWindowFocusChanged` with `applyOceanNavySystemBars()` (`0xFF142331`, `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`, light icons preserved on status & navigation bars) alongside an `orientationchange` listener in `initPlatformBridge()`.
+  - Added display-cutout safe padding (`env(safe-area-inset-left/right)`) and compact landscape styling so board state, timer, placed tiles, white status bar icons, and horizontal bounds remain intact across `Portrait -> Landscape -> Portrait` rotation with zero Activity restarts.
+- **Color Path Solver & Hints (`src/games/ColorPath.tsx`):**
+  - Replaced solvability checks with `findPairSolutionPaths(size, pairs)` storing verified solution paths and wired `Connect Pair ({hintsLeft})` hints.
+- **Download Portal Metadata (`src/pages/DownloadPage.tsx`):**
+  - Updated Android APK filename reference to use dynamic `PuzzleVerse-v{RELEASE_VERSION}-Android.apk` instead of static `v1.0.0`.
+
+### Verified & Published
+- **Release `v1.2.1` (`versionCode 121`):** Built and published signed universal Android APK (`4,913,100` B, `apksigner` v2 verified), Google Play AAB (`4,586,902` B, `jarsigner` verified), Windows `x64`/`ARM64` Setup & Portable EXEs, `SHA256SUMS.txt`, `ANDROID_SHA256SUMS.txt`, and `latest.yml` to GitHub Release `v1.2.1`, plus deployed web/PWA updates to Firebase Hosting and Netlify.
+- **Cross-Platform Test Coverage:** Passed `16/16` individual game E2E tests (Launch, Generation, Controls, Hints, Timer, Pause/Resume, Reset, Real Completion, Scoring/XP Results, Offline Save), Windows Unpacked & Portable Electron suites, `test-desktop-extra.mjs`, live Web/Netlify/SW/PWA standalone isolation checks, and real Android 14 emulator in-place upgrade + rotation tests (`0` console errors / `0` fatal exceptions).
+
+---
+
 ## [1.2.0] - 2026-11-28 — Cross-Platform Auth Fix, Native Gaming UI & App Isolation
 
 ### Fixed

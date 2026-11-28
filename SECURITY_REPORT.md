@@ -1,4 +1,4 @@
-# PuzzleVerse Cross-Platform Security Audit Report (`v1.2.0`)
+# PuzzleVerse Cross-Platform Security Audit Report (`v1.2.1`)
 
 **Application:** PuzzleVerse  
 **Audit Date:** 2026-11-28  
@@ -6,7 +6,7 @@
 
 ---
 
-## 1. Cross-Platform Google OAuth & Session Hardening (`v1.2.0`)
+## 1. Cross-Platform Google OAuth & Session Hardening (`v1.2.0` / `v1.2.1`)
 
 - **Atomic Firebase Auth Persistence ([firebase.ts](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/src/services/firebase.ts)):**
   - Uses `initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] })` at module boot rather than async post-init `setPersistence`, preventing login drops after Installed PWA reloads or redirects.
@@ -21,7 +21,7 @@
 
 ## 2. Electron Desktop Security Controls ([main.cjs](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/main.cjs), [preload.cjs](file:///c:/Users/jnsid/OneDrive/Documents/Puzzle/electron/preload.cjs))
 
-- **Renderer Isolation:** `nodeIntegration: false`, `contextIsolation: true`, `sandbox: true`, `webSecurity: true`, `webviewTag: false`, `allowRunningInsecureContent: false`, `devTools: !app.isPackaged`. Runtime tests on `v1.2.0` packaged executables verified `hasNodeRequire: false`, `hasNodeProcess: false`, `hasDesktopBridge: true`.
+- **Renderer Isolation:** `nodeIntegration: false`, `contextIsolation: true`, `sandbox: true`, `webSecurity: true`, `webviewTag: false`, `allowRunningInsecureContent: false`, `devTools: !app.isPackaged`. Runtime tests on `v1.2.1` unpacked and portable executables verified `hasNodeRequire: false`, `hasNodeProcess: false`, `hasDesktopBridge: true`.
 - **Custom Scheme & Path Traversal Protection:** Static production assets load strictly from `resources/app.asar/dist` via `app://puzzleverse/` with canonical path enforcement blocking traversal.
 - **CSP & Navigation Controls:** Dynamic `onHeadersReceived` CSP (`script-src 'self' app://puzzleverse`, `frame-src 'none'`, `object-src 'none'`), IPC sender origin checks (`assertTrustedSender`), and allowlisted external HTTPS links (`isApprovedExternalUrl`).
 - **Update Integrity:** Downloads restricted to GitHub Releases domains with SHA-256/SHA-512 hash verification before saving.
@@ -30,7 +30,8 @@
 
 ## 3. Mobile, Installed PWA & Signing Hygiene
 
+- **Verified Firebase Auth Authorized Domains (`getProjectConfig` `200 OK`):** `localhost`, `puzzleverse-e16e4.firebaseapp.com`, `puzzleverse-e16e4.web.app`, `puzzleverse-e16e4--test-0nn9a615.web.app`, and `puzzzleverse.netlify.app`.
 - **Android Manifest & Network Security:** Declares `android:allowBackup="false"`, `android:usesCleartextTraffic="false"`, and `androidScheme: 'https'`, verified via `aapt2`.
-- **Installed App Isolation (`detectPlatform.ts`, `App.tsx`):** Strictly hides all download/install promotions inside Electron, Capacitor, and Installed standalone PWA (`canShowDownloadOptions === false`) and redirects direct `/download` visits away from the download portal.
+- **Installed App Isolation (`detectPlatform.ts`, `App.tsx`):** Strictly hides all download/install promotions inside Electron, Capacitor, and Installed standalone PWA (`canShowDownloadOptions === false`) and prevents `/download` exposure across login and post-login views.
 - **Keystore Custody:** Developer Android release keystore lives strictly outside the repository at `C:\Users\jnsid\.puzzleverse-keys\puzzleverse-android-release.jks` with `android/keystore.properties` gitignored. Zero Admin SDK credentials or private keys exist anywhere in client code.
-- **Code Signing Transparency:** Windows desktop executables (`Setup` & `Portable` `x64`/`arm64`) remain unsigned (`NotSigned`); Android `.apk` and `.aab` are legitimately signed (`apksigner` v2 verified, Cert SHA-256 `38ecc6bd...f7`). OS security prompts (SmartScreen, Gatekeeper, Play Protect) are never bypassed or disabled.
+- **Code Signing Transparency:** Windows desktop executables (`Setup` & `Portable` `x64`/`arm64`) remain unsigned (`NotSigned`); Android `.apk` and `.aab` (`v1.2.1`) are legitimately signed (`apksigner` v2 verified & `jarsigner -verify` passed, Cert SHA-256 `38ecc6bd...f7`). OS security prompts (SmartScreen, Gatekeeper, Play Protect) are never bypassed or disabled.

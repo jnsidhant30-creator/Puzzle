@@ -105,17 +105,12 @@ async function main() {
     await client.eval(`window.dispatchEvent(new Event('offline'))`);
     await new Promise((r) => setTimeout(r, 300));
 
-    // Open More features -> Leaderboards while offline
+    // Open Leaderboard while offline
     await client.eval(`(() => {
-      const more = Array.from(document.querySelectorAll('aside button')).find(b => b.textContent?.includes('More features'));
-      if (more && more.getAttribute('aria-expanded') === 'false') more.click();
-    })()`);
-    await new Promise((r) => setTimeout(r, 150));
-    await client.eval(`(() => {
-      const lb = Array.from(document.querySelectorAll('aside button')).find(b => b.textContent?.trim() === 'Leaderboards');
+      const lb = Array.from(document.querySelectorAll('aside button')).find(b => b.textContent?.trim() === 'Leaderboard');
       if (lb) lb.click();
     })()`);
-    await new Promise((r) => setTimeout(r, 350));
+    await new Promise((r) => setTimeout(r, 400));
 
     const offlineLeaderboardText = await client.eval(`document.body.innerText`);
     const showsOfflineLbGuard =
@@ -127,16 +122,16 @@ async function main() {
       offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1,
     });
     await client.eval(`window.dispatchEvent(new Event('online'))`);
-    await new Promise((r) => setTimeout(r, 400));
+    await new Promise((r) => setTimeout(r, 600));
 
     const onlineLeaderboardLoaded = await client.eval(`(() => {
       const txt = document.body.innerText;
-      return !txt.includes('Global Leaderboard Requires Internet') && (txt.includes('RANK') || txt.includes('Verified Score') || txt.includes('Leaderboard'));
+      return !txt.includes('Global Leaderboard Requires Internet') && (txt.includes('RANK') || txt.includes('Verified Score') || txt.includes('Global Leaderboard'));
     })()`);
 
     // Verify Reload Recovery (window.location.reload on /leaderboard or /dashboard does NOT produce blank screen!)
     await client.eval(`window.location.reload()`);
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 1500));
     const reloadMounted = await client.eval(`Boolean(document.getElementById('root')?.innerText?.trim().length > 20)`);
 
     console.log(JSON.stringify({

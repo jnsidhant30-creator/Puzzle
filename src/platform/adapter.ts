@@ -92,7 +92,7 @@ export interface PlatformAdapter {
   setActiveGameState(inActiveGame: boolean, gameName?: string): void;
 }
 
-const APP_FALLBACK_VERSION = '1.2.0';
+const APP_FALLBACK_VERSION = '1.2.1';
 const GITHUB_RELEASES_API = 'https://api.github.com/repos/jnsidhant30-creator/Puzzle/releases/latest';
 const DOWNLOAD_PAGE_URL = 'https://puzzleverse-e16e4.web.app/download';
 
@@ -663,15 +663,25 @@ export async function initPlatformBridge(options?: {
   const cleanups: Array<() => void> = [];
 
   if (Capacitor.isNativePlatform()) {
-    try {
-      await StatusBar.setStyle({ style: StatusBarStyle.Dark });
-      if (Capacitor.getPlatform() === 'android') {
-        await StatusBar.setBackgroundColor({ color: '#142331' });
-        await StatusBar.setOverlaysWebView({ overlay: false });
+    const syncNativeStatusBar = async () => {
+      try {
+        await StatusBar.setStyle({ style: StatusBarStyle.Dark });
+        if (Capacitor.getPlatform() === 'android') {
+          await StatusBar.setBackgroundColor({ color: '#142331' });
+          await StatusBar.setOverlaysWebView({ overlay: false });
+        }
+      } catch {
+        // Safe no-op on web/unsupported simulator
       }
-    } catch {
-      // Safe no-op on web/unsupported simulator
-    }
+    };
+    await syncNativeStatusBar();
+    const handleOrient = () => {
+      setTimeout(() => {
+        void syncNativeStatusBar();
+      }, 60);
+    };
+    window.addEventListener('orientationchange', handleOrient);
+    cleanups.push(() => window.removeEventListener('orientationchange', handleOrient));
 
     try {
       const listener = await CapApp.addListener('backButton', ({ canGoBack }) => {

@@ -1,7 +1,7 @@
 {
   "name": "puzzleverse",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Challenge Your Mind. Beat Your Best.",
   "author": "Sidhant Jain <jnsidhu30@gmail.com>",
   "main": "electron/main.cjs",

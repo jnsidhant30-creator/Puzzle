@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Difficulty } from '../types';
 import { sound } from '../services/sound';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Lightbulb } from 'lucide-react';
 import { GameHudBar } from '../components/ui/GameHudBar';
 import { useGameTimer } from '../hooks/useGameTimer';
 
@@ -20,7 +20,7 @@ const COLOR_PAIRS = [
   { id: 'amber', label: '4', bg: 'bg-amber-400', textOnFill: 'text-[#142331]', border: 'border-amber-300', name: 'Gold (4)' },
 ];
 
-function arePairsSolvable(size: number, pairs: [number, number][]): boolean {
+function findPairSolutionPaths(size: number, pairs: [number, number][]): number[][] | null {
   const total = size * size;
   const blockedEndpoints = new Set<number>();
   pairs.forEach(([a, b]) => {
@@ -28,13 +28,16 @@ function arePairsSolvable(size: number, pairs: [number, number][]): boolean {
     blockedEndpoints.add(b);
   });
 
-  const sortedPairs = [...pairs].sort((a, b) => {
-    const da = Math.abs(Math.floor(a[0] / size) - Math.floor(a[1] / size)) + Math.abs((a[0] % size) - (a[1] % size));
-    const db = Math.abs(Math.floor(b[0] / size) - Math.floor(b[1] / size)) + Math.abs((b[0] % size) - (b[1] % size));
-    return da - db;
-  });
+  const indexedPairs = pairs
+    .map((pair, origIdx) => ({ pair, origIdx }))
+    .sort((a, b) => {
+      const da = Math.abs(Math.floor(a.pair[0] / size) - Math.floor(a.pair[1] / size)) + Math.abs((a.pair[0] % size) - (a.pair[1] % size));
+      const db = Math.abs(Math.floor(b.pair[0] / size) - Math.floor(b.pair[1] / size)) + Math.abs((b.pair[0] % size) - (b.pair[1] % size));
+      return da - db;
+    });
 
   const used = new Uint8Array(total);
+  const solvedPaths: number[][] = Array.from({ length: pairs.length }, () => []);
   let budget = 2500;
 
   const canReach = (src: number, target: number): boolean => {
@@ -64,15 +67,18 @@ function arePairsSolvable(size: number, pairs: [number, number][]): boolean {
     return false;
   };
 
-  const solvePair = (pairIdx: number, cur: number): boolean => {
+  const solvePair = (pairIdx: number, cur: number, pathAcc: number[]): boolean => {
     if (budget-- <= 0) return false;
-    const [, target] = sortedPairs[pairIdx];
+    const { pair, origIdx } = indexedPairs[pairIdx];
+    const [, target] = pair;
     if (cur === target) {
-      if (pairIdx + 1 === sortedPairs.length) return true;
-      for (let i = pairIdx + 1; i < sortedPairs.length; i++) {
-        if (!canReach(sortedPairs[i][0], sortedPairs[i][1])) return false;
+      solvedPaths[origIdx] = [...pathAcc];
+      if (pairIdx + 1 === indexedPairs.length) return true;
+      for (let i = pairIdx + 1; i < indexedPairs.length; i++) {
+        if (!canReach(indexedPairs[i].pair[0], indexedPairs[i].pair[1])) return false;
       }
-      return solvePair(pairIdx + 1, sortedPairs[pairIdx + 1][0]);
+      const nextStart = indexedPairs[pairIdx + 1].pair[0];
+      return solvePair(pairIdx + 1, nextStart, [nextStart]);
     }
 
     const r = Math.floor(cur / size);
@@ -94,22 +100,25 @@ function arePairsSolvable(size: number, pairs: [number, number][]): boolean {
 
     for (const next of candidates) {
       if (next !== target) used[next] = 1;
-      if (solvePair(pairIdx, next)) return true;
+      pathAcc.push(next);
+      if (solvePair(pairIdx, next, pathAcc)) return true;
+      pathAcc.pop();
       if (next !== target) used[next] = 0;
     }
     return false;
   };
 
-  return solvePair(0, sortedPairs[0][0]);
+  return solvePair(0, indexedPairs[0].pair[0], [indexedPairs[0].pair[0]]) ? solvedPaths : null;
 }
 
-export const ColorPath: React.FC<Props> = ({ difficulty, onComplete, isPaused = false }) => {
+export const ColorPath: React.FC<Props> = ({ difficulty, onComplete, useHint, hintsLeft, isPaused = false }) => {
   const size = difficulty === 'easy' ? 4 : 5;
   const gridColsClass = size === 4 ? 'grid-cols-4' : 'grid-cols-5';
   const pairCount = difficulty === 'easy' ? 3 : 4;
   const [board, setBoard] = useState<{ colorId: string | null; isEndpoint: boolean }[]>([]);
   const [activeColor, setActiveColor] = useState<string | null>(null);
   const [paths, setPaths] = useState<{ [colorId: string]: number[] }>({});
+  const solutionRef = useRef<Record<string, number[]>>({});
   const [isWon, setIsWon] = useState(false);
   const [timer, setTimer] = useGameTimer(isPaused, isWon);
 
@@ -123,6 +132,7 @@ export const ColorPath: React.FC<Props> = ({ difficulty, onComplete, isPaused = 
     const initialPaths: { [colorId: string]: number[] } = {};
     let chosenPairs: [number, number][] | null = null;
 
+    let solvedRoutes: number[][] | null = null;
     for (let attempt = 0; attempt < 60; attempt++) {
       const taken = new Set<number>();
       const candidatePairs: [number, number][] = [];
@@ -151,13 +161,17 @@ export const ColorPath: React.FC<Props> = ({ difficulty, onComplete, isPaused = 
         candidatePairs.push([p1, p2]);
       }
 
-      if (validSpread && arePairsSolvable(size, candidatePairs)) {
-        chosenPairs = candidatePairs;
-        break;
+      if (validSpread) {
+        const candidateRoutes = findPairSolutionPaths(size, candidatePairs);
+        if (candidateRoutes) {
+          chosenPairs = candidatePairs;
+          solvedRoutes = candidateRoutes;
+          break;
+        }
       }
     }
 
-    if (!chosenPairs) {
+    if (!chosenPairs || !solvedRoutes) {
       chosenPairs =
         size === 4
           ? [
@@ -171,6 +185,7 @@ export const ColorPath: React.FC<Props> = ({ difficulty, onComplete, isPaused = 
               [3, 23],
               [4, 24],
             ];
+      solvedRoutes = findPairSolutionPaths(size, chosenPairs) || chosenPairs;
     }
 
     const newBoard = Array.from({ length: total }, () => ({
@@ -178,12 +193,15 @@ export const ColorPath: React.FC<Props> = ({ difficulty, onComplete, isPaused = 
       isEndpoint: false,
     }));
 
+    const solMap: Record<string, number[]> = {};
     activePairs.forEach((pair, idx) => {
       const [p1, p2] = chosenPairs![idx];
       newBoard[p1] = { colorId: pair.id, isEndpoint: true };
       newBoard[p2] = { colorId: pair.id, isEndpoint: true };
       initialPaths[pair.id] = [];
+      solMap[pair.id] = solvedRoutes![idx] || [p1, p2];
     });
+    solutionRef.current = solMap;
 
     setBoard(newBoard);
     setPaths(initialPaths);
@@ -272,6 +290,43 @@ export const ColorPath: React.FC<Props> = ({ difficulty, onComplete, isPaused = 
 
   const activePairMeta = COLOR_PAIRS.find((c) => c.id === activeColor);
 
+  const handleHint = () => {
+    if (isWon || isPaused || hintsLeft <= 0) return;
+    const isPairDone = (cId: string, p: number[] | undefined) =>
+      Boolean(
+        p &&
+          p.length > 1 &&
+          board[p[0]]?.isEndpoint &&
+          board[p[0]]?.colorId === cId &&
+          board[p[p.length - 1]]?.isEndpoint &&
+          board[p[p.length - 1]]?.colorId === cId
+      );
+    const activePairs = COLOR_PAIRS.slice(0, pairCount);
+    const targetPair = activePairs.find((p) => !isPairDone(p.id, paths[p.id]));
+    if (!targetPair || !useHint()) return;
+
+    const solPath = solutionRef.current[targetPair.id];
+    if (!solPath || solPath.length < 2) return;
+    sound.playSuccess();
+    const cleanedPaths: { [colorId: string]: number[] } = {};
+    const solCells = new Set(solPath);
+    for (const [cId, pList] of Object.entries(paths)) {
+      if (cId === targetPair.id) continue;
+      const collides = pList.some((cellIdx) => solCells.has(cellIdx));
+      cleanedPaths[cId] = collides ? [] : pList;
+    }
+    const updatedPaths = { ...cleanedPaths, [targetPair.id]: solPath };
+    setPaths(updatedPaths);
+    setActiveColor(null);
+
+    const completedCount = activePairs.filter((p) => isPairDone(p.id, updatedPaths[p.id])).length;
+    if (completedCount >= pairCount) {
+      setIsWon(true);
+      const score = Math.max(100, 1000 - timer * 8);
+      setTimeout(() => onComplete(score, timer, true), 600);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center p-2 sm:p-4 max-w-lg mx-auto w-full">
       <GameHudBar
@@ -329,13 +384,22 @@ export const ColorPath: React.FC<Props> = ({ difficulty, onComplete, isPaused = 
         </div>
       </div>
 
-      {/* Reset Action */}
-      <button
-        onClick={initBoard}
-        className="w-full h-9 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
-      >
-        <RefreshCw className="w-3.5 h-3.5" /> Reset Board
-      </button>
+      {/* Actions */}
+      <div className="flex items-center gap-2.5 w-full">
+        <button
+          onClick={handleHint}
+          disabled={hintsLeft <= 0 || isWon}
+          className="flex-1 h-9 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-primary border border-pv-border hover:border-[#38C6BA] rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        >
+          <Lightbulb className="w-3.5 h-3.5 text-[#38C6BA]" /> Connect Pair ({hintsLeft})
+        </button>
+        <button
+          onClick={initBoard}
+          className="flex-1 h-9 bg-pv-surface-primary hover:bg-pv-surface-secondary text-pv-text-secondary hover:text-pv-text-primary border border-pv-border rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+        >
+          <RefreshCw className="w-3.5 h-3.5" /> Reset Board
+        </button>
+      </div>
     </div>
   );
 };
